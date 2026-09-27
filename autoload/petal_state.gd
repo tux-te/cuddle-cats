@@ -126,6 +126,9 @@ const PETS := {
 		"rooms": {
 			"grooming": "res://Sprites/backgrounds/bird_grooming.jpg",
 			"dressup": "res://Sprites/backgrounds/bird_dressup.jpg",
+			# A big cozy decorated perch stand (toys, a plush sleep hammock,
+			# fairy lights and ribbons) in place of Petal's bed.
+			"bedroom": "res://Sprites/backgrounds/kiwi_perch.jpg",
 		},
 		"tricks": ["sing"],
 		"friends": ["raspberry", "seafoam"],
