@@ -5,10 +5,13 @@ const PetCameo = preload("res://scripts/pet_cameo.gd")
 
 @onready var background: TextureRect = %Background
 
+var perch_busy := false
+
 func _ready() -> void:
 	_refresh_background()
 	_place_on_perch_if_kiwi()
 	_build_perch_toggles()
+	_build_perch_action_buttons()
 	PetCameo.spawn(%Petal)
 	%CuddleButton.pressed.connect(_on_cuddle)
 	%NapButton.pressed.connect(_on_nap)
@@ -60,12 +63,102 @@ func _on_perch_toggle(id: String) -> void:
 # artwork: Kiwi on the swing seat, her friend on the lower ladder branch.
 const PERCH_PETAL_BOX := Rect2(0.594, 0.295, 0.061, 0.080)
 const PERCH_FRIEND_BOX := Rect2(0.364, 0.456, 0.078, 0.063)
+const PERCH_FEEDER_BOX := Rect2(0.710, 0.411, 0.112, 0.143)
+const PERCH_TOY_BOX := Rect2(0.599, 0.590, 0.068, 0.179)
+const PERCH_BED_BOX := Rect2(0.297, 0.304, 0.145, 0.286)
 
 func _place_on_perch_if_kiwi() -> void:
 	if PetalState.perch_items().is_empty():
 		return
 	_apply_perch_box(%Petal, PERCH_PETAL_BOX)
 	_apply_perch_box(%Friend, PERCH_FRIEND_BOX)
+
+# Feed/Rest/Play buttons that send Kiwi over to the feeder, the bed, or the
+# bell toy instead of the generic Cuddle/Nap this scene normally offers -
+# those don't make sense for a bird on a perch.
+func _build_perch_action_buttons() -> void:
+	if PetalState.perch_items().is_empty():
+		return
+	%CuddleButton.visible = false
+	%NapButton.visible = false
+	var container := %CuddleButton.get_parent()
+
+	var feed_btn := Button.new()
+	feed_btn.text = "🍽️ Feed"
+	feed_btn.custom_minimum_size = Vector2(160, 90)
+	feed_btn.add_theme_font_size_override("font_size", 22)
+	feed_btn.pressed.connect(_on_perch_feed)
+	container.add_child(feed_btn)
+	container.move_child(feed_btn, %CuddleButton.get_index())
+
+	var rest_btn := Button.new()
+	rest_btn.text = "💤 Rest"
+	rest_btn.custom_minimum_size = Vector2(160, 90)
+	rest_btn.add_theme_font_size_override("font_size", 22)
+	rest_btn.pressed.connect(_on_perch_rest)
+	container.add_child(rest_btn)
+	container.move_child(rest_btn, feed_btn.get_index() + 1)
+
+	var play_btn := Button.new()
+	play_btn.text = "🔔 Play"
+	play_btn.custom_minimum_size = Vector2(160, 90)
+	play_btn.add_theme_font_size_override("font_size", 22)
+	play_btn.pressed.connect(_on_perch_play)
+	container.add_child(play_btn)
+	container.move_child(play_btn, rest_btn.get_index() + 1)
+
+func _on_perch_feed() -> void:
+	if perch_busy:
+		return
+	perch_busy = true
+	PetalState.feed()
+	Feedback.pop(self, "😋 yum!", %Petal.global_position)
+	await _visit_perch_spot(PERCH_FEEDER_BOX, 1.4)
+	perch_busy = false
+
+func _on_perch_rest() -> void:
+	if perch_busy:
+		return
+	perch_busy = true
+	PetalState.nap()
+	Feedback.pop(self, "💤 zzz", %Petal.global_position)
+	_apply_perch_box(%Petal, PERCH_BED_BOX)
+	await PetCameo.sleep(%Petal)
+	await get_tree().create_timer(1.5).timeout
+	if is_instance_valid(%Petal):
+		PetCameo.wake(%Petal)
+		_apply_perch_box(%Petal, PERCH_PETAL_BOX)
+	perch_busy = false
+
+func _on_perch_play() -> void:
+	if perch_busy:
+		return
+	perch_busy = true
+	PetalState.ring_bell_locally()
+	Feedback.pop(self, "🔔 jingle jingle!", %Petal.global_position)
+	_apply_perch_box(%Petal, PERCH_TOY_BOX)
+	if PetalState.has_anim("toy_bell"):
+		var frames := PetalState.anim_frames("toy_bell")
+		for frame in frames:
+			if not is_instance_valid(%Petal):
+				perch_busy = false
+				return
+			%Petal.texture = frame
+			await get_tree().create_timer(0.35).timeout
+	else:
+		await get_tree().create_timer(1.0).timeout
+	if is_instance_valid(%Petal):
+		%Petal.texture = load(PetalState.cutout_path())
+		_apply_perch_box(%Petal, PERCH_PETAL_BOX)
+	perch_busy = false
+
+# Moves Kiwi over to a perch spot (e.g. the feeder), holds her there a
+# moment, then sends her back to her usual perch box.
+func _visit_perch_spot(box: Rect2, hold_seconds: float) -> void:
+	_apply_perch_box(%Petal, box)
+	await get_tree().create_timer(hold_seconds).timeout
+	if is_instance_valid(%Petal):
+		_apply_perch_box(%Petal, PERCH_PETAL_BOX)
 
 func _apply_perch_box(node: TextureRect, box: Rect2) -> void:
 	node.anchor_left = box.position.x

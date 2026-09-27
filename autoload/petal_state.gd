@@ -494,11 +494,14 @@ func go_swimming() -> void:
 	award_sticker("swim")
 	add_coins(5)
 
-func ring_bell() -> void:
+func ring_bell_locally() -> void:
 	happiness = minf(MAX_STAT, happiness + 15.0)
 	stats_changed.emit()
 	award_sticker("bell")
 	add_coins(3)
+
+func ring_bell() -> void:
+	ring_bell_locally()
 	bell_animation_requested.emit()
 
 func invite_friend(id: String) -> void:
