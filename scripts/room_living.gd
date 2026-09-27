@@ -235,6 +235,7 @@ func _refresh_friend() -> void:
 	_walk_in_friend()
 
 func _walk_in_friend() -> void:
+	var visiting: String = PetalState.visiting_friend
 	%Friend.visible = true
 	%Friend.modulate.a = 1.0
 	%Friend.scale = Vector2.ONE
@@ -244,15 +245,22 @@ func _walk_in_friend() -> void:
 	var start_x: float = target_x + 160.0
 	%Friend.position.x = start_x
 
+	# A friend with a "fly" set (e.g. Seafoam) flaps in using those frames
+	# instead of just sliding in as a flat picture.
+	var fly_frames := PetalState.friend_anim_frames(visiting, "fly")
+
 	friend_busy = true
 	var steps := 16
 	for i in range(steps):
 		if not is_instance_valid(%Friend):
 			return
 		%Friend.position.x = lerp(start_x, target_x, float(i + 1) / float(steps))
+		if not fly_frames.is_empty():
+			%Friend.texture = fly_frames[i % fly_frames.size()]
 		await get_tree().create_timer(0.05).timeout
 	if is_instance_valid(%Friend):
 		%Friend.position.x = target_x
+		%Friend.texture = load(PetalState.FRIENDS[visiting]["cutout"])
 	friend_busy = false
 
 func _on_friend_input(event: InputEvent) -> void:
@@ -272,11 +280,31 @@ func _bounce_friend() -> void:
 	tween.tween_property(%Friend, "scale", Vector2(1.0, 1.0), 0.18).set_trans(Tween.TRANS_ELASTIC)
 
 # Small periodic hop so the friend doesn't just stand frozen between
-# interactions - skipped while she's mid walk-in or mid play-together.
+# interactions - skipped while she's mid walk-in or mid play-together. A
+# friend with a "sleep" set (e.g. Seafoam) occasionally dozes off instead.
 func _on_friend_idle_tick() -> void:
 	if not %Friend.visible or friend_busy:
 		return
-	_hop(%Friend, 1, 14.0)
+	var visiting: String = PetalState.visiting_friend
+	if visiting != "" and PetalState.friend_has_anim(visiting, "sleep") and randf() < 0.35:
+		_nap_friend(visiting)
+	else:
+		_hop(%Friend, 1, 14.0)
+
+func _nap_friend(visiting: String) -> void:
+	friend_busy = true
+	var frames := PetalState.friend_anim_frames(visiting, "sleep")
+	for frame in frames:
+		if not is_instance_valid(%Friend):
+			return
+		%Friend.texture = frame
+		await get_tree().create_timer(0.5).timeout
+	if not is_instance_valid(%Friend):
+		return
+	await get_tree().create_timer(2.0).timeout
+	if is_instance_valid(%Friend):
+		%Friend.texture = load(PetalState.FRIENDS[visiting]["cutout"])
+	friend_busy = false
 
 func _play_with_friend() -> void:
 	if friend_busy:

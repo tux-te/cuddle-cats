@@ -128,7 +128,7 @@ const PETS := {
 			"dressup": "res://Sprites/backgrounds/bird_dressup.jpg",
 		},
 		"tricks": ["sing"],
-		"friends": ["raspberry"],
+		"friends": ["raspberry", "seafoam"],
 	},
 }
 
@@ -174,6 +174,18 @@ func anim_frames(kind: String) -> Array[Texture2D]:
 
 func cutout_path() -> String:
 	return String(PETS[active_pet]["cutout"])
+
+func friend_has_anim(id: String, kind: String) -> bool:
+	return FRIENDS.has(id) and FRIENDS[id].has(kind)
+
+func friend_anim_frames(id: String, kind: String) -> Array[Texture2D]:
+	var frames: Array[Texture2D] = []
+	if not friend_has_anim(id, kind):
+		return frames
+	var info: Dictionary = FRIENDS[id][kind]
+	for i in range(int(info["count"])):
+		frames.append(load(String(info["path"]) % i))
+	return frames
 
 # Petting reactions, by species - dogs shouldn't purr and meow like a cat.
 const SPECIES_REACTIONS := {
@@ -239,6 +251,13 @@ const FRIENDS := {
 	"biscuit": {"name": "Biscuit", "species": "dog", "cutout": "res://Sprites/friend_biscuit.png"},
 	"coco": {"name": "Coco", "species": "dog", "cutout": "res://Sprites/friend_coco.png"},
 	"raspberry": {"name": "Raspberry", "species": "bird", "cutout": "res://Sprites/friend_raspberry.png"},
+	"seafoam": {
+		"name": "Seafoam",
+		"species": "bird",
+		"cutout": "res://Sprites/friend_seafoam.png",
+		"fly": {"path": "res://Sprites/friend_seafoam_fly/frame_%02d.png", "count": 5},
+		"sleep": {"path": "res://Sprites/friend_seafoam_sleep/frame_%02d.png", "count": 7},
+	},
 }
 const DEFAULT_FRIEND_OPTIONS: Array[String] = ["marigold", "blossom", "iris", "lily"]
 var visiting_friend := ""
