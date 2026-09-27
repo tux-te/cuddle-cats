@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bs5m80ppfvuai"
-path="res://.godot/imported/frame_06.png-79c8d5c9dbb8367c3ecc3f12bf582d43.ctex"
+uid="uid://x4dtc8nm28kq"
+path="res://.godot/imported/frame_00.png-84c62db0cb0d23938eb108a8c4de6167.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Sprites/gerbil_dig/frame_06.png"
-dest_files=["res://.godot/imported/frame_06.png-79c8d5c9dbb8367c3ecc3f12bf582d43.ctex"]
+source_file="res://Sprites/gerbil_brush/frame_00.png"
+dest_files=["res://.godot/imported/frame_00.png-84c62db0cb0d23938eb108a8c4de6167.ctex"]
 
 [params]
 
