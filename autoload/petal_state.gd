@@ -6,6 +6,7 @@ extends Node
 
 signal stats_changed
 signal accessories_changed
+signal perch_decor_changed
 signal play_animation_requested
 signal bell_animation_requested
 signal friend_changed
@@ -126,9 +127,23 @@ const PETS := {
 		"rooms": {
 			"grooming": "res://Sprites/backgrounds/bird_grooming.jpg",
 			"dressup": "res://Sprites/backgrounds/bird_dressup.jpg",
-			# A big cozy decorated perch stand (toys, a plush sleep hammock,
-			# fairy lights and ribbons) in place of Petal's bed.
-			"bedroom": "res://Sprites/backgrounds/kiwi_perch.jpg",
+			# A big cozy perch stand in place of Petal's bed - the bed/toy/
+			# feeder are each optional (see perch_items/perch_combos below),
+			# this is just the fallback if that lookup ever comes up empty.
+			"bedroom": "res://Sprites/backgrounds/kiwi_perch_bed_feeder_toy.jpg",
+		},
+		# Toggleable perch decorations. Each combo was hand-painted as its own
+		# flat image (not a layered overlay), so the lookup key is the sorted,
+		# comma-joined list of active item ids - see perch_background_path().
+		"perch_items": ["bed", "toy", "feeder"],
+		"perch_combos": {
+			"": "res://Sprites/backgrounds/kiwi_perch_base.jpg",
+			"bed": "res://Sprites/backgrounds/kiwi_perch_bed.jpg",
+			"toy": "res://Sprites/backgrounds/kiwi_perch_toy.jpg",
+			"feeder": "res://Sprites/backgrounds/kiwi_perch_feeder.jpg",
+			"bed,toy": "res://Sprites/backgrounds/kiwi_perch_bed_toy.jpg",
+			"bed,feeder": "res://Sprites/backgrounds/kiwi_perch_bed_feeder.jpg",
+			"bed,feeder,toy": "res://Sprites/backgrounds/kiwi_perch_bed_feeder_toy.jpg",
 		},
 		"tricks": ["sing"],
 		"friends": ["raspberry", "seafoam"],
@@ -144,12 +159,16 @@ func _init_pet_records() -> void:
 		var acc := {}
 		for acc_id in PETS[id]["accessories"]:
 			acc[acc_id] = false
+		var perch := {}
+		for item_id in PETS[id].get("perch_items", []):
+			perch[item_id] = true
 		pet_records[id] = {
 			"hunger": 80.0,
 			"happiness": 80.0,
 			"energy": 80.0,
 			"cleanliness": 80.0,
 			"accessories": acc,
+			"perch_decor": perch,
 		}
 
 var pet_name: String:
@@ -507,6 +526,40 @@ func toggle_accessory(id: String) -> void:
 	happiness = minf(MAX_STAT, happiness + 3.0)
 	accessories_changed.emit()
 	stats_changed.emit()
+
+func perch_items() -> Array:
+	return PETS[active_pet].get("perch_items", [])
+
+func perch_decor() -> Dictionary:
+	return pet_records[active_pet].get("perch_decor", {})
+
+func toggle_perch_item(id: String) -> void:
+	var decor: Dictionary = perch_decor()
+	if not decor.has(id):
+		return
+	decor[id] = not decor[id]
+	perch_decor_changed.emit()
+
+# Each bed/toy/feeder combo was hand-painted as its own flat image rather
+# than transparent overlays, so this looks up the sorted, comma-joined list
+# of currently-on item ids - dropping items (toy first, since that's the
+# only combo never painted) until a painted combo is found.
+func perch_background_path() -> String:
+	var combos: Dictionary = PETS[active_pet].get("perch_combos", {})
+	if combos.is_empty():
+		return String(PETS[active_pet].get("rooms", {}).get("bedroom", ""))
+	var decor: Dictionary = perch_decor()
+	var on: Array = []
+	for id in perch_items():
+		if decor.get(id, false):
+			on.append(id)
+	for drop_priority in [[], ["toy"], ["toy", "feeder"], ["toy", "feeder", "bed"]]:
+		var key := on.filter(func(id): return not drop_priority.has(id))
+		key.sort()
+		var key_str := ",".join(key)
+		if combos.has(key_str):
+			return String(combos[key_str])
+	return String(combos.values()[0])
 
 const MAKEUP_IDS := ["blush", "mascara", "lipstick"]
 

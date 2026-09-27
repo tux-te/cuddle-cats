@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bwhawxfvsoghu"
-path="res://.godot/imported/kiwi_perch.jpg-696735bdc3221113c8fedbf59c2fb8d7.ctex"
+uid="uid://cgsx5i31a25qp"
+path="res://.godot/imported/kiwi_perch_toy.jpg-0f8e46e11415a55d26cd78f92405ce8a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Sprites/backgrounds/kiwi_perch.jpg"
-dest_files=["res://.godot/imported/kiwi_perch.jpg-696735bdc3221113c8fedbf59c2fb8d7.ctex"]
+source_file="res://Sprites/backgrounds/kiwi_perch_toy.jpg"
+dest_files=["res://.godot/imported/kiwi_perch_toy.jpg-0f8e46e11415a55d26cd78f92405ce8a.ctex"]
 
 [params]
 
