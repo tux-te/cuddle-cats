@@ -117,6 +117,7 @@ const PETS := {
 		"jump_still": "res://Sprites/kiwi_jump_pose.png",
 		"trick_sing": {"path": "res://Sprites/kiwi_sing_trick/frame_%02d.png", "count": 6},
 		"toy_bell": {"path": "res://Sprites/kiwi_bell_toy/frame_%02d.png", "count": 6},
+		"eat": {"path": "res://Sprites/kiwi_eat/frame_%02d.png", "count": 5},
 		"play_still": "res://Sprites/lucy_and_kiwi.png",
 		# A little illustrated comic of Lucy brushing her, shown instead of
 		# the generic disembodied-hand brush animation (see room_grooming.gd).

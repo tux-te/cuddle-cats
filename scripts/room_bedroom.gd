@@ -113,7 +113,20 @@ func _on_perch_feed() -> void:
 	perch_busy = true
 	PetalState.feed()
 	Feedback.pop(self, "😋 yum!", %Petal.global_position)
-	await _visit_perch_spot(PERCH_FEEDER_BOX, 1.4)
+	_apply_perch_box(%Petal, PERCH_FEEDER_BOX)
+	if PetalState.has_anim("eat"):
+		var frames := PetalState.anim_frames("eat")
+		for frame in frames:
+			if not is_instance_valid(%Petal):
+				perch_busy = false
+				return
+			%Petal.texture = frame
+			await get_tree().create_timer(0.35).timeout
+	else:
+		await get_tree().create_timer(1.4).timeout
+	if is_instance_valid(%Petal):
+		%Petal.texture = load(PetalState.cutout_path())
+		_apply_perch_box(%Petal, PERCH_PETAL_BOX)
 	perch_busy = false
 
 func _on_perch_rest() -> void:
@@ -151,14 +164,6 @@ func _on_perch_play() -> void:
 		%Petal.texture = load(PetalState.cutout_path())
 		_apply_perch_box(%Petal, PERCH_PETAL_BOX)
 	perch_busy = false
-
-# Moves Kiwi over to a perch spot (e.g. the feeder), holds her there a
-# moment, then sends her back to her usual perch box.
-func _visit_perch_spot(box: Rect2, hold_seconds: float) -> void:
-	_apply_perch_box(%Petal, box)
-	await get_tree().create_timer(hold_seconds).timeout
-	if is_instance_valid(%Petal):
-		_apply_perch_box(%Petal, PERCH_PETAL_BOX)
 
 func _apply_perch_box(node: TextureRect, box: Rect2) -> void:
 	node.anchor_left = box.position.x
