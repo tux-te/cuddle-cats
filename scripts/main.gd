@@ -29,7 +29,7 @@ const OWNER_WALK_FRAME_COUNT := 5
 # so far - she still slides in beside them, just without frame-by-frame
 # walking (same fallback style used elsewhere for pets with no walk art).
 const LUCY_OWNER := "res://Sprites/lucy_cutout.png"
-const LUCY_OWNER_PETS := ["pompom", "sheila", "kiwi"]
+const LUCY_OWNER_PETS := ["pompom", "sheila", "kiwi", "gerbil"]
 
 @onready var room_slot: Control = %RoomSlot
 @onready var name_label: Label = %NameLabel
@@ -66,7 +66,8 @@ func _ready() -> void:
 	_refresh_stats()
 	_refresh_coins()
 
-	%BedroomButton.pressed.connect(_show_room.bind("bedroom"))
+	%BedroomButton.pressed.connect(_enter_bedroom)
+	%EnterButton.pressed.connect(_on_gerbil_door_enter)
 	_refresh_bedroom_button()
 	%LivingButton.pressed.connect(_show_room.bind("living"))
 	%DressUpButton.pressed.connect(_show_room.bind("dressup"))
@@ -80,7 +81,7 @@ func _ready() -> void:
 	pets_button.pressed.connect(_open_pet_picker)
 	%ClosePetPickerButton.pressed.connect(_close_pet_picker)
 
-	_show_room("bedroom")
+	_enter_bedroom()
 
 	var idle_timer := Timer.new()
 	idle_timer.wait_time = 1.0
@@ -149,19 +150,44 @@ func _on_pet_picked(id: String) -> void:
 func _on_pet_changed() -> void:
 	name_label.text = PetalState.pet_name
 	_refresh_bedroom_button()
-	_show_room(current_room_id)
+	if current_room_id == "bedroom":
+		_enter_bedroom()
+	else:
+		_show_room(current_room_id)
 
-# Kiwi's bedroom is a decorated perch, not a bed - swap the nav button for
-# a tiny fairy door leading up to it instead of the generic bed icon/text.
+# Kiwi's bedroom is a decorated perch, Pumpkin's is a burrow - both get a
+# themed label instead of the generic bed text (no icon anymore now that
+# each has its own full "door" screen instead - see _enter_bedroom).
+const HABITAT_DOOR_ART := {
+	"kiwi": "res://Sprites/backgrounds/kiwi_perch_door.jpg",
+	"gerbil": "res://Sprites/backgrounds/gerbil_house_door.jpg",
+}
+
 func _refresh_bedroom_button() -> void:
 	if not PetalState.perch_items().is_empty():
-		%BedroomButton.text = " Perch"
-		%BedroomButton.icon = load("res://Sprites/door_to_perch.png")
+		%BedroomButton.text = "🪺 Perch"
+	elif PetalState.active_pet == "gerbil":
+		%BedroomButton.text = "🕳️ Burrow"
 	else:
 		%BedroomButton.text = "🛏️ Bedroom"
-		%BedroomButton.icon = null
+	%BedroomButton.icon = null
 	%BedroomButton.expand_icon = true
 	%BedroomButton.add_theme_constant_override("icon_max_width", 32)
+
+# Kiwi and Pumpkin are reached through a real "door" screen (their own
+# illustrated entrance) rather than jumping straight in like every other
+# room - Lucy is shown standing outside it, since she can't fit through.
+func _enter_bedroom() -> void:
+	var door_art: String = HABITAT_DOOR_ART.get(PetalState.active_pet, "")
+	if door_art != "":
+		%DoorArt.texture = load(door_art)
+		%GerbilDoorScreen.visible = true
+	else:
+		_show_room("bedroom")
+
+func _on_gerbil_door_enter() -> void:
+	%GerbilDoorScreen.visible = false
+	_show_room("bedroom")
 
 # Rooms that show Petal (all but the Obstacle Course and Sticker Book)
 # expose her via a unique "Petal" TextureRect - that's the one cat in
@@ -177,7 +203,11 @@ func _wire_room_pet() -> void:
 
 	_build_accessory_overlays()
 	_refresh_accessories()
-	_spawn_owner_beside(room_petal)
+	# The perch and burrow doors are pet-sized - Lucy waits outside instead
+	# of squeezing through, unlike every other room where she tags along.
+	var lucy_locked_out := current_room_id == "bedroom" and HABITAT_DOOR_ART.has(PetalState.active_pet)
+	if not lucy_locked_out:
+		_spawn_owner_beside(room_petal)
 
 func _build_accessory_overlays() -> void:
 	var pet_accessories: Dictionary = PetalState.PETS[PetalState.active_pet]["accessories"]

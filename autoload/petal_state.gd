@@ -151,6 +151,24 @@ const PETS := {
 		"tricks": ["sing"],
 		"friends": ["raspberry", "seafoam"],
 	},
+	"gerbil": {
+		"name": "Pumpkin",
+		"species": "gerbil",
+		"cutout": "res://Sprites/gerbil_cutout.png",
+		"sleep_still": "res://Sprites/gerbil_sleep_pose.png",
+		"dig": {"path": "res://Sprites/gerbil_dig/frame_%02d.png", "count": 7},
+		"walk": {"path": "res://Sprites/gerbil_walk/frame_%02d.png", "count": 9},
+		"eat": {"path": "res://Sprites/gerbil_eat/frame_%02d.png", "count": 6},
+		"play": {"path": "res://Sprites/gerbil_play/frame_%02d.png", "count": 9},
+		"dance": {"path": "res://Sprites/gerbil_dance/frame_%02d.png", "count": 10},
+		"accessories": {},
+		"exclusive_groups": [],
+		"rooms": {
+			"bedroom": "res://Sprites/backgrounds/gerbil_bedroom.jpg",
+			"dressup": "res://Sprites/backgrounds/gerbil_dressup.jpg",
+			"party": "res://Sprites/backgrounds/gerbil_party.jpg",
+		},
+	},
 }
 
 var active_pet := "petal"
@@ -220,6 +238,7 @@ const SPECIES_REACTIONS := {
 	"cat": ["🥰 purr~", "💕", "😻"],
 	"dog": ["🐾 yip!", "💕", "🐶 woof!"],
 	"bird": ["🐦 tweet!", "💕", "🎶 chirp!"],
+	"gerbil": ["🐹 squeak!", "💕", "🥜 nibble nibble"],
 }
 
 func pet_reactions() -> Array:
@@ -234,6 +253,7 @@ const SPECIES_IDLE_BLINK := {
 	"cat": "😽 blink",
 	"dog": "🐶 blink",
 	"bird": "🐦 blink",
+	"gerbil": "🐹 blink",
 }
 
 func idle_reactions() -> Array:

@@ -83,8 +83,15 @@ static func wake(node: TextureRect) -> void:
 static func dance(node: TextureRect, loops: int = 2) -> void:
 	var dance_frames := PetalState.anim_frames("dance")
 	if dance_frames.is_empty():
+		# No real dance frames - show her dance pose art (if she has one,
+		# e.g. Pumpkin's) and wiggle that instead of the plain cutout.
+		var has_still := PetalState.has_anim("dance_still")
+		if has_still:
+			node.texture = load(PetalState.static_pose("dance_still"))
 		for _loop in range(loops):
-			await _wiggle_tween(node)
+			await _wiggle_tween(node, has_still)
+		if is_instance_valid(node):
+			node.texture = load(PetalState.cutout_path())
 		return
 	for _loop in range(loops):
 		for frame in dance_frames:
@@ -95,14 +102,14 @@ static func dance(node: TextureRect, loops: int = 2) -> void:
 	if is_instance_valid(node):
 		node.texture = load(PetalState.cutout_path())
 
-static func _wiggle_tween(node: TextureRect) -> void:
+static func _wiggle_tween(node: TextureRect, keep_texture: bool = false) -> void:
 	node.pivot_offset = node.size / 2.0
 	var tween := node.create_tween()
 	tween.tween_property(node, "rotation_degrees", -8.0, 0.15)
 	tween.tween_property(node, "rotation_degrees", 8.0, 0.3)
 	tween.tween_property(node, "rotation_degrees", 0.0, 0.15)
 	await tween.finished
-	if is_instance_valid(node):
+	if not keep_texture and is_instance_valid(node):
 		node.texture = load(PetalState.cutout_path())
 
 static func eat(node: TextureRect) -> void:

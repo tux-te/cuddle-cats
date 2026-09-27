@@ -9,9 +9,9 @@ var perch_busy := false
 
 func _ready() -> void:
 	_refresh_background()
-	_place_on_perch_if_kiwi()
+	_place_pet_for_habitat()
 	_build_perch_toggles()
-	_build_perch_action_buttons()
+	_build_habitat_action_buttons()
 	PetCameo.spawn(%Petal)
 	%CuddleButton.pressed.connect(_on_cuddle)
 	%NapButton.pressed.connect(_on_nap)
@@ -67,17 +67,26 @@ const PERCH_FEEDER_BOX := Rect2(0.688, 0.382, 0.157, 0.200)
 const PERCH_TOY_BOX := Rect2(0.585, 0.554, 0.095, 0.251)
 const PERCH_BED_BOX := Rect2(0.268, 0.247, 0.203, 0.400)
 
-func _place_on_perch_if_kiwi() -> void:
-	if PetalState.perch_items().is_empty():
-		return
-	_apply_perch_box(%Petal, PERCH_PETAL_BOX)
-	_apply_perch_box(%Friend, PERCH_FRIEND_BOX)
+# Pumpkin's burrow has no separate hand-painted feeder/bed/toy spots like
+# Kiwi's perch, just one hole in the ground art she pops in and out of for
+# every action - may need nudging once someone's actually looked at the art.
+const BURROW_PETAL_BOX := Rect2(0.38, 0.50, 0.24, 0.32)
 
-# Feed/Rest/Play buttons that send Kiwi over to the feeder, the bed, or the
-# bell toy instead of the generic Cuddle/Nap this scene normally offers -
-# those don't make sense for a bird on a perch.
-func _build_perch_action_buttons() -> void:
-	if PetalState.perch_items().is_empty():
+func _has_habitat() -> bool:
+	return not PetalState.perch_items().is_empty() or PetalState.active_pet == "gerbil"
+
+func _place_pet_for_habitat() -> void:
+	if not PetalState.perch_items().is_empty():
+		_apply_perch_box(%Petal, PERCH_PETAL_BOX)
+		_apply_perch_box(%Friend, PERCH_FRIEND_BOX)
+	elif PetalState.active_pet == "gerbil":
+		_apply_perch_box(%Petal, BURROW_PETAL_BOX)
+
+# Feed/Rest/Play buttons instead of the generic Cuddle/Nap this scene
+# normally offers - those don't make sense for a bird on a perch or a
+# gerbil in a burrow.
+func _build_habitat_action_buttons() -> void:
+	if not _has_habitat():
 		return
 	%CuddleButton.visible = false
 	%NapButton.visible = false
@@ -87,7 +96,7 @@ func _build_perch_action_buttons() -> void:
 	feed_btn.text = "🍽️ Feed"
 	feed_btn.custom_minimum_size = Vector2(160, 90)
 	feed_btn.add_theme_font_size_override("font_size", 22)
-	feed_btn.pressed.connect(_on_perch_feed)
+	feed_btn.pressed.connect(_on_habitat_feed)
 	container.add_child(feed_btn)
 	container.move_child(feed_btn, %CuddleButton.get_index())
 
@@ -95,25 +104,27 @@ func _build_perch_action_buttons() -> void:
 	rest_btn.text = "💤 Rest"
 	rest_btn.custom_minimum_size = Vector2(160, 90)
 	rest_btn.add_theme_font_size_override("font_size", 22)
-	rest_btn.pressed.connect(_on_perch_rest)
+	rest_btn.pressed.connect(_on_habitat_rest)
 	container.add_child(rest_btn)
 	container.move_child(rest_btn, feed_btn.get_index() + 1)
 
 	var play_btn := Button.new()
-	play_btn.text = "🔔 Play"
+	play_btn.text = "🔔 Play" if not PetalState.perch_items().is_empty() else "🥎 Play"
 	play_btn.custom_minimum_size = Vector2(160, 90)
 	play_btn.add_theme_font_size_override("font_size", 22)
-	play_btn.pressed.connect(_on_perch_play)
+	play_btn.pressed.connect(_on_habitat_play)
 	container.add_child(play_btn)
 	container.move_child(play_btn, rest_btn.get_index() + 1)
 
-func _on_perch_feed() -> void:
+func _on_habitat_feed() -> void:
 	if perch_busy:
 		return
 	perch_busy = true
 	PetalState.feed()
 	Feedback.pop(self, "😋 yum!", %Petal.global_position)
-	_apply_perch_box(%Petal, PERCH_FEEDER_BOX)
+	var is_perch := not PetalState.perch_items().is_empty()
+	if is_perch:
+		_apply_perch_box(%Petal, PERCH_FEEDER_BOX)
 	if PetalState.has_anim("eat"):
 		var frames := PetalState.anim_frames("eat")
 		for frame in frames:
@@ -126,43 +137,64 @@ func _on_perch_feed() -> void:
 		await get_tree().create_timer(1.4).timeout
 	if is_instance_valid(%Petal):
 		%Petal.texture = load(PetalState.cutout_path())
-		_apply_perch_box(%Petal, PERCH_PETAL_BOX)
+		if is_perch:
+			_apply_perch_box(%Petal, PERCH_PETAL_BOX)
 	perch_busy = false
 
-func _on_perch_rest() -> void:
+func _on_habitat_rest() -> void:
 	if perch_busy:
 		return
 	perch_busy = true
 	PetalState.nap()
 	Feedback.pop(self, "💤 zzz", %Petal.global_position)
-	_apply_perch_box(%Petal, PERCH_BED_BOX)
+	var is_perch := not PetalState.perch_items().is_empty()
+	if is_perch:
+		_apply_perch_box(%Petal, PERCH_BED_BOX)
 	await PetCameo.sleep(%Petal)
 	await get_tree().create_timer(1.5).timeout
 	if is_instance_valid(%Petal):
 		PetCameo.wake(%Petal)
-		_apply_perch_box(%Petal, PERCH_PETAL_BOX)
+		if is_perch:
+			_apply_perch_box(%Petal, PERCH_PETAL_BOX)
 	perch_busy = false
 
-func _on_perch_play() -> void:
+func _on_habitat_play() -> void:
 	if perch_busy:
 		return
 	perch_busy = true
-	PetalState.ring_bell_locally()
-	Feedback.pop(self, "🔔 jingle jingle!", %Petal.global_position)
-	_apply_perch_box(%Petal, PERCH_TOY_BOX)
-	if PetalState.has_anim("toy_bell"):
-		var frames := PetalState.anim_frames("toy_bell")
+	if not PetalState.perch_items().is_empty():
+		PetalState.ring_bell_locally()
+		Feedback.pop(self, "🔔 jingle jingle!", %Petal.global_position)
+		_apply_perch_box(%Petal, PERCH_TOY_BOX)
+		if PetalState.has_anim("toy_bell"):
+			var frames := PetalState.anim_frames("toy_bell")
+			for frame in frames:
+				if not is_instance_valid(%Petal):
+					perch_busy = false
+					return
+				%Petal.texture = frame
+				await get_tree().create_timer(0.35).timeout
+		else:
+			await get_tree().create_timer(1.0).timeout
+		if is_instance_valid(%Petal):
+			%Petal.texture = load(PetalState.cutout_path())
+			_apply_perch_box(%Petal, PERCH_PETAL_BOX)
+	elif PetalState.has_anim("dig"):
+		PetalState.play()
+		Feedback.pop(self, "⛏️ digging!", %Petal.global_position)
+		var frames := PetalState.anim_frames("dig")
 		for frame in frames:
 			if not is_instance_valid(%Petal):
 				perch_busy = false
 				return
 			%Petal.texture = frame
-			await get_tree().create_timer(0.35).timeout
+			await get_tree().create_timer(0.2).timeout
+		if is_instance_valid(%Petal):
+			%Petal.texture = load(PetalState.cutout_path())
 	else:
-		await get_tree().create_timer(1.0).timeout
-	if is_instance_valid(%Petal):
-		%Petal.texture = load(PetalState.cutout_path())
-		_apply_perch_box(%Petal, PERCH_PETAL_BOX)
+		PetalState.play()
+		Feedback.pop(self, "🥎 having fun!", %Petal.global_position)
+		await PetCameo.jump_for_joy(%Petal)
 	perch_busy = false
 
 func _apply_perch_box(node: TextureRect, box: Rect2) -> void:
