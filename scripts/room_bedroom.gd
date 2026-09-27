@@ -61,11 +61,11 @@ func _on_perch_toggle(id: String) -> void:
 # get moved onto them instead of floating in the usual bottom-left corner.
 # Boxes are fractions of the room's canvas, hand-picked against the perch
 # artwork: Kiwi on the swing seat, her friend on the lower ladder branch.
-const PERCH_PETAL_BOX := Rect2(0.594, 0.295, 0.061, 0.080)
+const PERCH_PETAL_BOX := Rect2(0.582, 0.279, 0.085, 0.112)
 const PERCH_FRIEND_BOX := Rect2(0.364, 0.456, 0.078, 0.063)
-const PERCH_FEEDER_BOX := Rect2(0.710, 0.411, 0.112, 0.143)
-const PERCH_TOY_BOX := Rect2(0.599, 0.590, 0.068, 0.179)
-const PERCH_BED_BOX := Rect2(0.297, 0.304, 0.145, 0.286)
+const PERCH_FEEDER_BOX := Rect2(0.688, 0.382, 0.157, 0.200)
+const PERCH_TOY_BOX := Rect2(0.585, 0.554, 0.095, 0.251)
+const PERCH_BED_BOX := Rect2(0.268, 0.247, 0.203, 0.400)
 
 func _place_on_perch_if_kiwi() -> void:
 	if PetalState.perch_items().is_empty():
