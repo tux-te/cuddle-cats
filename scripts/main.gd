@@ -67,6 +67,7 @@ func _ready() -> void:
 	_refresh_coins()
 
 	%BedroomButton.pressed.connect(_show_room.bind("bedroom"))
+	_refresh_bedroom_button()
 	%LivingButton.pressed.connect(_show_room.bind("living"))
 	%DressUpButton.pressed.connect(_show_room.bind("dressup"))
 	%GroomingButton.pressed.connect(_show_room.bind("grooming"))
@@ -147,7 +148,20 @@ func _on_pet_picked(id: String) -> void:
 
 func _on_pet_changed() -> void:
 	name_label.text = PetalState.pet_name
+	_refresh_bedroom_button()
 	_show_room(current_room_id)
+
+# Kiwi's bedroom is a decorated perch, not a bed - swap the nav button for
+# a tiny fairy door leading up to it instead of the generic bed icon/text.
+func _refresh_bedroom_button() -> void:
+	if not PetalState.perch_items().is_empty():
+		%BedroomButton.text = " Perch"
+		%BedroomButton.icon = load("res://Sprites/door_to_perch.png")
+	else:
+		%BedroomButton.text = "🛏️ Bedroom"
+		%BedroomButton.icon = null
+	%BedroomButton.expand_icon = true
+	%BedroomButton.add_theme_constant_override("icon_max_width", 32)
 
 # Rooms that show Petal (all but the Obstacle Course and Sticker Book)
 # expose her via a unique "Petal" TextureRect - that's the one cat in
