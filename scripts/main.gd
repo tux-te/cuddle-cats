@@ -189,15 +189,18 @@ func _spawn_owner_beside(petal_node: TextureRect) -> void:
 	owner_node.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	owner_node.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	owner_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	owner_node.anchor_left = petal_node.anchor_left
-	owner_node.anchor_top = petal_node.anchor_top
-	owner_node.anchor_right = petal_node.anchor_right
-	owner_node.anchor_bottom = petal_node.anchor_bottom
-	owner_node.offset_left = petal_node.offset_right + 24.0
-	owner_node.offset_right = owner_node.offset_left + 140.0
-	owner_node.offset_top = petal_node.offset_bottom - 170.0
-	owner_node.offset_bottom = petal_node.offset_bottom
-	owner_node.grow_vertical = petal_node.grow_vertical
+	# Lucy always stands in the room's bottom-left corner, regardless of
+	# where the pet herself ends up (e.g. Kiwi's perch room moves %Petal up
+	# onto a branch - Lucy shouldn't follow her up there).
+	owner_node.anchor_left = 0.0
+	owner_node.anchor_top = 1.0
+	owner_node.anchor_right = 0.0
+	owner_node.anchor_bottom = 1.0
+	owner_node.offset_left = 218.0
+	owner_node.offset_right = 358.0
+	owner_node.offset_top = -186.0
+	owner_node.offset_bottom = -16.0
+	owner_node.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	petal_node.get_parent().add_child(owner_node)
 	# Keep the owner drawn behind the cat, since her walk-in path
 	# crosses through Petal's box and would otherwise cover her.
