@@ -105,6 +105,12 @@ static func _wiggle_tween(node: TextureRect) -> void:
 	if is_instance_valid(node):
 		node.texture = load(PetalState.cutout_path())
 
+static func eat(node: TextureRect) -> void:
+	if PetalState.has_anim("eat"):
+		await _play_frames_once(node, "eat", 0.35)
+		return
+	await _bounce_tween(node)
+
 # Trick training: sit / come / wave. None of these need dedicated art -
 # they read from whatever pose art the pet already has (falling back to
 # her sit pose) and act the trick out with a tween.

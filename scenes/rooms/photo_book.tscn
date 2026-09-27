@@ -61,11 +61,14 @@ autowrap_mode = 2
 text = "No photos yet! Visit the Photo Booth and press Snap to fill your book. 📸"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 offset_left = 40.0
 offset_top = 96.0
 offset_right = 1240.0
 offset_bottom = 740.0
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
 
 [node name="Grid" type="GridContainer" parent="ScrollContainer"]
 unique_name_in_owner = true

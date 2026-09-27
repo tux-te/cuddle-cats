@@ -13,6 +13,7 @@ const TREAT_FALL_SPEED := 140.0
 @onready var background: TextureRect = %Background
 
 var friend_busy := false
+var feed_busy := false
 
 var treat_overlay: Control = null
 var treat_score := 0
@@ -184,6 +185,11 @@ func _hunger_level() -> int:
 func _on_feed() -> void:
 	PetalState.feed()
 	Feedback.pop(self, "🍓 yum!", %FeedButton.global_position)
+	if feed_busy:
+		return
+	feed_busy = true
+	await PetCameo.eat(%Petal)
+	feed_busy = false
 
 func _on_play() -> void:
 	PetalState.play()

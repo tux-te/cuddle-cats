@@ -39,13 +39,13 @@ const PETS := {
 		"play": {"path": "res://Sprites/petal_play/frame_%02d.png", "count": 10},
 		"blowdried": "res://Sprites/petal_blowdried.png",
 		"accessories": {
-			"bow": {"icon": "res://Sprites/bow.png", "anchor": {"l": 0.327, "t": 0.025, "r": 0.427, "b": 0.196}},
-			"flower": {"icon": "res://Sprites/flower.png", "anchor": {"l": 0.573, "t": 0.025, "r": 0.673, "b": 0.196}},
-			"sunglasses": {"icon": "res://Sprites/sunglasses.png", "anchor": {"l": 0.373, "t": 0.294, "r": 0.633, "b": 0.491}},
-			"scarf": {"icon": "res://Sprites/scarf.png", "anchor": {"l": 0.333, "t": 0.515, "r": 0.667, "b": 0.699}},
-			"blush": {"icon": "res://Sprites/blush.png", "anchor": {"l": 0.28, "t": 0.32, "r": 0.72, "b": 0.5}},
-			"mascara": {"icon": "res://Sprites/mascara.png", "anchor": {"l": 0.373, "t": 0.294, "r": 0.633, "b": 0.44}},
-			"lipstick": {"icon": "res://Sprites/lipstick.png", "anchor": {"l": 0.40, "t": 0.44, "r": 0.60, "b": 0.52}},
+			"bow": {"icon": "res://Sprites/bow.png", "anchor": {"l": 0.327, "t": 0.025, "r": 0.427, "b": 0.196}, "cost": 0},
+			"flower": {"icon": "res://Sprites/flower.png", "anchor": {"l": 0.573, "t": 0.025, "r": 0.673, "b": 0.196}, "cost": 0},
+			"sunglasses": {"icon": "res://Sprites/sunglasses.png", "anchor": {"l": 0.373, "t": 0.294, "r": 0.633, "b": 0.491}, "cost": 15},
+			"scarf": {"icon": "res://Sprites/scarf.png", "anchor": {"l": 0.333, "t": 0.515, "r": 0.667, "b": 0.699}, "cost": 15},
+			"blush": {"icon": "res://Sprites/blush.png", "anchor": {"l": 0.28, "t": 0.32, "r": 0.72, "b": 0.5}, "cost": 10},
+			"mascara": {"icon": "res://Sprites/mascara.png", "anchor": {"l": 0.373, "t": 0.294, "r": 0.633, "b": 0.44}, "cost": 10},
+			"lipstick": {"icon": "res://Sprites/lipstick.png", "anchor": {"l": 0.40, "t": 0.44, "r": 0.60, "b": 0.52}, "cost": 10},
 		},
 		"exclusive_groups": [],
 	},
@@ -61,14 +61,15 @@ const PETS := {
 		"brush": {"path": "res://Sprites/pompom_brush/frame_%02d.png", "count": 10},
 		"dance": {"path": "res://Sprites/pompom_dance/frame_%02d.png", "count": 12},
 		"swim": {"path": "res://Sprites/pompom_swim/frame_%02d.png", "count": 16},
+		"eat": {"path": "res://Sprites/pompom_eat/frame_%02d.png", "count": 4},
 		"bath_comic": {"path": "res://Sprites/pompom_bath_comic/frame_%02d.png", "count": 14},
 		"wave": "res://Sprites/pompom_wave.png",
 		"sleep_still": "res://Sprites/pompom_sleep_pose.png",
 		"come_still": "res://Sprites/pompom_come_pose.png",
 		"accessories": {
-			"blush": {"icon": "res://Sprites/blush.png", "anchor": {"l": 0.03, "t": 0.28, "r": 0.50, "b": 0.52}},
-			"mascara": {"icon": "res://Sprites/mascara.png", "anchor": {"l": 0.06, "t": 0.26, "r": 0.40, "b": 0.38}},
-			"lipstick": {"icon": "res://Sprites/lipstick.png", "anchor": {"l": 0.12, "t": 0.42, "r": 0.35, "b": 0.53}},
+			"blush": {"icon": "res://Sprites/blush.png", "anchor": {"l": 0.03, "t": 0.28, "r": 0.50, "b": 0.52}, "cost": 10},
+			"mascara": {"icon": "res://Sprites/mascara.png", "anchor": {"l": 0.06, "t": 0.26, "r": 0.40, "b": 0.38}, "cost": 10},
+			"lipstick": {"icon": "res://Sprites/lipstick.png", "anchor": {"l": 0.12, "t": 0.42, "r": 0.35, "b": 0.53}, "cost": 10},
 		},
 		"exclusive_groups": [],
 		"tricks": ["sit", "come", "wave"],
@@ -92,11 +93,12 @@ const PETS := {
 		"trick_wave": {"path": "res://Sprites/sheila_wave_trick/frame_%02d.png", "count": 7},
 		"swim": {"path": "res://Sprites/sheila_swim/frame_%02d.png", "count": 16},
 		"brush": {"path": "res://Sprites/sheila_brush/frame_%02d.png", "count": 5},
+		"eat": {"path": "res://Sprites/sheila_eat/frame_%02d.png", "count": 4},
 		"accessories": {
-			"collar_pink": {"icon": "res://Sprites/pompom_collars/pink.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}},
-			"collar_lavender": {"icon": "res://Sprites/pompom_collars/lavender.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}},
-			"collar_blue": {"icon": "res://Sprites/pompom_collars/blue.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}},
-			"collar_green": {"icon": "res://Sprites/pompom_collars/green.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}},
+			"collar_pink": {"icon": "res://Sprites/pompom_collars/pink.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 0},
+			"collar_lavender": {"icon": "res://Sprites/pompom_collars/lavender.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
+			"collar_blue": {"icon": "res://Sprites/pompom_collars/blue.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
+			"collar_green": {"icon": "res://Sprites/pompom_collars/green.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
 		},
 		"exclusive_groups": [["collar_pink", "collar_lavender", "collar_blue", "collar_green"]],
 		"rooms": {
@@ -158,8 +160,10 @@ var pet_records := {}
 func _init_pet_records() -> void:
 	for id in PETS:
 		var acc := {}
+		var unlocked := {}
 		for acc_id in PETS[id]["accessories"]:
 			acc[acc_id] = false
+			unlocked[acc_id] = int(PETS[id]["accessories"][acc_id].get("cost", 0)) <= 0
 		var perch := {}
 		for item_id in PETS[id].get("perch_items", []):
 			perch[item_id] = true
@@ -169,6 +173,7 @@ func _init_pet_records() -> void:
 			"energy": 80.0,
 			"cleanliness": 80.0,
 			"accessories": acc,
+			"unlocked_accessories": unlocked,
 			"perch_decor": perch,
 		}
 
@@ -341,9 +346,22 @@ const STICKERS := {
 var earned_stickers := {}
 
 # Photo Book: snapshots taken in the Photo Booth, newest last. Capped so
-# the game doesn't hoard an unbounded number of full-screen textures.
+# the game doesn't hoard an unbounded number of full-screen textures. Each
+# entry is {"texture": Texture2D, "caption": String, "stickers": Array[String]}
+# - a light scrapbook feel without any per-pixel placement UI.
 const MAX_PHOTOS := 12
-var photos: Array[Texture2D] = []
+var photos: Array[Dictionary] = []
+
+const PHOTO_CAPTIONS := [
+	"Say cheese! 🧀",
+	"Best friends forever 💕",
+	"Camera-ready! ✨",
+	"What a cutie! 😍",
+	"Snapshot of a happy day 🌟",
+	"Picture-perfect moment 📷",
+	"Smile for the camera! 😄",
+	"A memory worth keeping 💖",
+]
 
 func award_sticker(id: String) -> void:
 	if not STICKERS.has(id) or earned_stickers.get(id, false):
@@ -458,7 +476,12 @@ func obstacle_course() -> void:
 	add_coins(5)
 
 func take_photo(snapshot: Texture2D) -> void:
-	photos.append(snapshot)
+	var stickers: Array[String] = []
+	photos.append({
+		"texture": snapshot,
+		"caption": PHOTO_CAPTIONS.pick_random(),
+		"stickers": stickers,
+	})
 	if photos.size() > MAX_PHOTOS:
 		photos.pop_front()
 	photo_taken.emit()
@@ -466,6 +489,18 @@ func take_photo(snapshot: Texture2D) -> void:
 	stats_changed.emit()
 	award_sticker("photo")
 	add_coins(3)
+
+# Decorates a Photo Book page with one of the player's already-earned
+# stickers (toggling it back off if it's already on that page).
+func toggle_photo_sticker(index: int, sticker_id: String) -> void:
+	if index < 0 or index >= photos.size() or not earned_stickers.get(sticker_id, false):
+		return
+	var stickers: Array = photos[index]["stickers"]
+	if stickers.has(sticker_id):
+		stickers.erase(sticker_id)
+	else:
+		stickers.append(sticker_id)
+	photo_taken.emit()
 
 func celebrate_party() -> void:
 	happiness = MAX_STAT
@@ -517,8 +552,28 @@ func say_bye_to_friend() -> void:
 	visiting_friend = ""
 	friend_changed.emit()
 
+func accessory_cost(id: String) -> int:
+	return int(PETS[active_pet]["accessories"].get(id, {}).get("cost", 0))
+
+func is_accessory_unlocked(id: String) -> bool:
+	return pet_records[active_pet]["unlocked_accessories"].get(id, true)
+
+# Spends Treat Coins to permanently unlock an accessory for the active pet.
+# Returns true if it's unlocked afterward (already-unlocked counts as
+# success); false if she can't yet afford it.
+func try_unlock_accessory(id: String) -> bool:
+	if is_accessory_unlocked(id):
+		return true
+	var cost := accessory_cost(id)
+	if coins < cost:
+		return false
+	coins -= cost
+	coins_changed.emit()
+	pet_records[active_pet]["unlocked_accessories"][id] = true
+	return true
+
 func toggle_accessory(id: String) -> void:
-	if not accessories.has(id):
+	if not accessories.has(id) or not is_accessory_unlocked(id):
 		return
 	var turning_on: bool = not accessories[id]
 	if turning_on:
@@ -573,13 +628,37 @@ func remove_all_makeup() -> void:
 			accessories[id] = false
 	accessories_changed.emit()
 
-func mood() -> String:
+const MOOD_TIERS := {
+	"great": {"emoji": "🤩", "color": Color(0.29, 0.62, 0.29, 1)},
+	"okay": {"emoji": "🙂", "color": Color(0.42, 0.42, 0.42, 1)},
+	"meh": {"emoji": "😕", "color": Color(0.78, 0.55, 0.1, 1)},
+	"low": {"emoji": "🥺", "color": Color(0.8, 0.28, 0.28, 1)},
+}
+
+func mood_tier() -> String:
 	var avg := (hunger + happiness + energy + cleanliness) / 4.0
 	if avg >= 80.0:
-		return "%s feels radiant!" % pet_name
+		return "great"
 	elif avg >= 55.0:
-		return "%s is doing okay." % pet_name
+		return "okay"
 	elif avg >= 30.0:
-		return "%s could use some care." % pet_name
+		return "meh"
 	else:
-		return "%s really needs you!" % pet_name
+		return "low"
+
+func mood_emoji() -> String:
+	return String(MOOD_TIERS[mood_tier()]["emoji"])
+
+func mood_color() -> Color:
+	return MOOD_TIERS[mood_tier()]["color"]
+
+func mood() -> String:
+	match mood_tier():
+		"great":
+			return "%s feels radiant!" % pet_name
+		"okay":
+			return "%s is doing okay." % pet_name
+		"meh":
+			return "%s could use some care." % pet_name
+		_:
+			return "%s really needs you!" % pet_name

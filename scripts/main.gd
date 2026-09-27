@@ -355,7 +355,8 @@ func _refresh_stats() -> void:
 	happiness_bar.value = PetalState.happiness
 	energy_bar.value = PetalState.energy
 	clean_bar.value = PetalState.cleanliness
-	mood_label.text = PetalState.mood()
+	mood_label.text = "%s %s" % [PetalState.mood_emoji(), PetalState.mood()]
+	mood_label.add_theme_color_override("font_color", PetalState.mood_color())
 
 func _refresh_accessories() -> void:
 	if not room_petal or not is_instance_valid(room_petal):
