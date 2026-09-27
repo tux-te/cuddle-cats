@@ -27,7 +27,7 @@ func _build_perch_toggles() -> void:
 	var items := PetalState.perch_items()
 	if items.is_empty():
 		return
-	var labels := {"bed": "🛏️ Bed", "toy": "🔔 Toy", "feeder": "🍽️ Feeder"}
+	var labels := {"bed": "🛏️ Bed", "toy": "🔔 Toy", "feeder": "🏠 Feeder"}
 	var row := HBoxContainer.new()
 	row.anchor_left = 0.5
 	row.anchor_right = 0.5
