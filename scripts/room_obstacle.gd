@@ -22,6 +22,7 @@ func _ready() -> void:
 	walk_frames = PetalState.anim_frames("walk")
 	jump_frames = PetalState.anim_frames("jump")
 	runner.texture = load(PetalState.cutout_path())
+	PetalState.apply_tint(runner)
 	go_button.pressed.connect(_on_go)
 
 func _on_go() -> void:

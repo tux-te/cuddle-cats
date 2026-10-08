@@ -123,6 +123,7 @@ func _start_blowdry() -> void:
 	background.texture = load(PetalState.room_bg("grooming", GROOMING_BG))
 	%Title.text = "💨 Blow Dry"
 	petal.texture = load(PetalState.cutout_path())
+	PetalState.apply_tint(petal)
 	petal.visible = true
 	dryer_sprite.texture = load(DRYER_IDLE)
 	dryer_sprite.visible = true

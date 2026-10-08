@@ -133,6 +133,7 @@ func _open_pet_picker() -> void:
 	for id in PetalState.PETS:
 		var btn := TextureButton.new()
 		btn.texture_normal = load(String(PetalState.PETS[id]["cutout"]))
+		PetalState.apply_tint(btn, id)
 		btn.ignore_texture_size = true
 		btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 		btn.custom_minimum_size = Vector2(160, 220)
@@ -199,6 +200,7 @@ func _wire_room_pet() -> void:
 		return
 
 	room_petal.mouse_filter = Control.MOUSE_FILTER_STOP
+	PetalState.apply_tint(room_petal)
 	room_petal.gui_input.connect(_on_room_pet_input)
 
 	_build_accessory_overlays()

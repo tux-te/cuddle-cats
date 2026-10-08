@@ -15,6 +15,7 @@ static func spawn(node: TextureRect) -> void:
 	node.scale = Vector2.ONE
 	node.pivot_offset = node.size / 2.0
 	node.texture = load(PetalState.cutout_path())
+	PetalState.apply_tint(node)
 
 	var target_x := node.position.x
 	var start_x := target_x - 160.0

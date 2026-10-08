@@ -49,6 +49,25 @@ const PETS := {
 		},
 		"exclusive_groups": [],
 	},
+	"noodles": {
+		"name": "Noodles",
+		"species": "cat",
+		# The ETCGAME kitten art as drawn. Her frames are a seated kitten, so
+		# idle stands in for walking and happy for jumping.
+		"cutout": "res://Sprites/noodles_cutout.png",
+		"walk": {"path": "res://Sprites/noodles_idle/frame_%02d.png", "count": 9},
+		"jump": {"path": "res://Sprites/noodles_happy/frame_%02d.png", "count": 9},
+		"dance": {"path": "res://Sprites/noodles_happy/frame_%02d.png", "count": 9},
+		"play": {"path": "res://Sprites/noodles_wave/frame_%02d.png", "count": 9},
+		"accessories": {
+			"crown_gold": {"icon": "res://Sprites/crown_gold.png", "anchor": {"l": 0.33, "t": 0.06, "r": 0.63, "b": 0.22}},
+			"crown_silver": {"icon": "res://Sprites/crown_silver.png", "anchor": {"l": 0.33, "t": 0.06, "r": 0.63, "b": 0.22}},
+			"crown_tiara": {"icon": "res://Sprites/crown_tiara.png", "anchor": {"l": 0.33, "t": 0.06, "r": 0.63, "b": 0.22}},
+			"crown_flower": {"icon": "res://Sprites/crown_flower.png", "anchor": {"l": 0.33, "t": 0.06, "r": 0.63, "b": 0.22}},
+		},
+		# One crown at a time.
+		"exclusive_groups": [["crown_gold", "crown_silver", "crown_tiara", "crown_flower"]],
+	},
 	"pompom": {
 		"name": "Pompom",
 		"species": "dog",
@@ -219,6 +238,22 @@ func anim_frames(kind: String) -> Array[Texture2D]:
 	for i in range(int(info["count"])):
 		frames.append(load(String(info["path"]) % i))
 	return frames
+
+const PET_TINT_SHADER := preload("res://shaders/pet_tint.gdshader")
+
+# Gives a pet's TextureRect the active pet's coat colour (or clears it for
+# pets that use their art as drawn).
+func apply_tint(node: CanvasItem, id: String = "") -> void:
+	var info: Dictionary = PETS[active_pet if id == "" else id].get("tint", {})
+	if info.is_empty():
+		node.material = null
+		return
+	var mat := ShaderMaterial.new()
+	mat.shader = PET_TINT_SHADER
+	for key in info:
+		var uniform_name: String = {"shadow": "shadow_color", "highlight": "highlight_color"}.get(key, key)
+		mat.set_shader_parameter(uniform_name, info[key])
+	node.material = mat
 
 func cutout_path() -> String:
 	return String(PETS[active_pet]["cutout"])
