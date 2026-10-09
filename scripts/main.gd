@@ -301,6 +301,27 @@ func _on_room_pet_input(event: InputEvent) -> void:
 		Sfx.pop(self)
 		Feedback.pop(self, PetalState.pet_reactions().pick_random(), room_petal.global_position + Vector2(60, 20))
 		_bounce_pet()
+		_show_pet_still()
+
+# Pets with a drawn "being petted" picture (e.g. Stardust with PJ) swap to it
+# for a moment. PJ is in the picture, so her usual cameo steps out meanwhile.
+func _show_pet_still() -> void:
+	if not PetalState.has_anim("pet_still") or is_playing:
+		return
+	is_playing = true
+	for id in accessory_nodes:
+		accessory_nodes[id].visible = false
+	var owner_was_visible := is_instance_valid(room_owner) and room_owner.visible
+	if is_instance_valid(room_owner):
+		room_owner.visible = false
+	room_petal.texture = load(PetalState.static_pose("pet_still"))
+	await get_tree().create_timer(1.2).timeout
+	is_playing = false
+	if is_instance_valid(room_owner):
+		room_owner.visible = owner_was_visible
+	if is_instance_valid(room_petal):
+		room_petal.texture = load(PetalState.cutout_path())
+		_refresh_accessories()
 
 func _bounce_pet() -> void:
 	room_petal.pivot_offset = room_petal.size / 2.0

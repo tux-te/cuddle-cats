@@ -81,6 +81,7 @@ const PETS := {
 		"walk": {"path": "res://Sprites/stardust_walk_gem/frame_%02d.png", "count": 8},
 		"jump": {"path": "res://Sprites/stardust_jump_gem/frame_%02d.png", "count": 8},
 		"eat": {"path": "res://Sprites/stardust_eat/frame_%02d.png", "count": 3},
+		"pet_still": "res://Sprites/pj_pets_stardust.png",
 		"cuddle": {"path": "res://Sprites/pj_carry_stardust/frame_%02d.png", "count": 8},
 		"sleep": {"path": "res://Sprites/stardust_sleep_gem/frame_%02d.png", "count": 8},
 		"dance": {"path": "res://Sprites/stardust_dance_gem/frame_%02d.png", "count": 8},
