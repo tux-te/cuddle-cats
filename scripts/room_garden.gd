@@ -39,6 +39,9 @@ func _ready() -> void:
 	status_label.text = "🌤️ Checking today's weather in Washington, DC..."
 
 	fish_button.pressed.connect(_on_fish)
+	# Only pets with swimming art get the pool.
+	%SwimPoolButton.visible = PetalState.has_anim("swim")
+	%SwimPoolButton.pressed.connect(func(): PetalState.navigate_to_room.emit("swimpool"))
 
 	http.request_completed.connect(_on_weather_response)
 	var err := http.request(WEATHER_URL)
