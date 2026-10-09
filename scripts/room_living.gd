@@ -5,7 +5,6 @@ const PetCameo = preload("res://scripts/pet_cameo.gd")
 const Confetti = preload("res://scripts/confetti.gd")
 const Sfx = preload("res://scripts/sfx.gd")
 
-const TREAT_EMOJIS := ["🍬", "🍪", "🧁", "🍓", "🍩"]
 const TREAT_GAME_SECONDS := 16.0
 const TREAT_SPAWN_EVERY := 0.85
 const TREAT_FALL_SPEED := 140.0
@@ -26,6 +25,9 @@ func _ready() -> void:
 	background.texture = load("res://Sprites/backgrounds/living_room.jpg")
 	PetCameo.spawn(%Petal)
 	%FeedButton.pressed.connect(_on_feed)
+	%FeedButton.text = "%s Feed" % PetalState.food_emoji()
+	%PlayButton.text = "%s Play" % PetalState.toy_emoji()
+	%TreatCatchButton.text = "%s Treat Catch" % PetalState.food_emoji()
 	%PlayButton.pressed.connect(_on_play)
 	%PlayButton.icon = load("res://Sprites/toy_wand.png")
 	%PlayButton.expand_icon = true
@@ -101,18 +103,18 @@ func _start_treat_catch() -> void:
 	add_child(treat_overlay)
 
 	var title := Label.new()
-	title.text = "🍬 Catch the treats!"
+	title.text = "%s Catch the treats!" % PetalState.food_emoji()
 	title.add_theme_font_size_override("font_size", 24)
 	title.position = Vector2(20, 70)
 	treat_overlay.add_child(title)
 
-	Feedback.pop(self, "🍬 tap the treats before they land!", %TreatCatchButton.global_position + Vector2(0, -20))
+	Feedback.pop(self, "%s tap the treats before they land!" % PetalState.food_emoji(), %TreatCatchButton.global_position + Vector2(0, -20))
 
 func _spawn_treat() -> void:
 	if not is_instance_valid(treat_overlay):
 		return
 	var treat := Label.new()
-	treat.text = TREAT_EMOJIS.pick_random()
+	treat.text = PetalState.treat_emojis().pick_random()
 	treat.add_theme_font_size_override("font_size", 40)
 	treat.mouse_filter = Control.MOUSE_FILTER_STOP
 	treat.position = Vector2(randf_range(20.0, maxf(40.0, size.x - 60.0)), -40.0)
@@ -184,7 +186,7 @@ func _hunger_level() -> int:
 
 func _on_feed() -> void:
 	PetalState.feed()
-	Feedback.pop(self, "🍓 yum!", %FeedButton.global_position)
+	Feedback.pop(self, "%s yum!" % PetalState.food_emoji(), %FeedButton.global_position)
 	if feed_busy:
 		return
 	feed_busy = true
@@ -229,11 +231,11 @@ func _on_friend_chosen(id: String) -> void:
 	%InviteButton.disabled = false
 	PetalState.invite_friend(id)
 	_refresh_friend()
-	Feedback.pop(self, "🐾 %s is here!" % PetalState.FRIENDS[id]["name"], %InviteButton.global_position)
+	Feedback.pop(self, "%s %s is here!" % [PetalState.friend_emoji(id), PetalState.FRIENDS[id]["name"]], %InviteButton.global_position)
 
 func _refresh_friend() -> void:
 	var visiting: String = PetalState.visiting_friend
-	%InviteButton.text = "👋 Say Bye" if visiting != "" else "🐾 Invite Over"
+	%InviteButton.text = "👋 Say Bye" if visiting != "" else "%s Invite Over" % PetalState.pet_emoji()
 	if visiting == "":
 		%Friend.visible = false
 		return
@@ -317,7 +319,7 @@ func _play_with_friend() -> void:
 		return
 	friend_busy = true
 	PetalState.pet_friend()
-	Feedback.pop(self, "🐾 playing together!", %Friend.global_position + Vector2(20, -20))
+	Feedback.pop(self, "%s playing together!" % PetalState.friend_emoji(PetalState.visiting_friend), %Friend.global_position + Vector2(20, -20))
 	await _hop(%Friend, 3, 24.0)
 	friend_busy = false
 

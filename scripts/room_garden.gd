@@ -103,7 +103,7 @@ func _refresh_stroll_button() -> void:
 	if is_raining:
 		stroll_button.disabled = true
 		stroll_button.text = "🌧️ Stay Inside"
-		Feedback.pop(self, "🌧️ doesn't want wet paws!", %Petal.global_position + Vector2(20, -20))
+		Feedback.pop(self, "🌧️ doesn't want wet %s!" % ("wings" if PetalState.PETS[PetalState.active_pet]["species"] == "bird" else "paws"), %Petal.global_position + Vector2(20, -20))
 	else:
 		stroll_button.disabled = false
 		stroll_button.text = "🌷 Stroll"

@@ -59,6 +59,7 @@ const PETS := {
 		"jump": {"path": "res://Sprites/noodles_happy/frame_%02d.png", "count": 9},
 		"dance": {"path": "res://Sprites/noodles_happy/frame_%02d.png", "count": 9},
 		"play": {"path": "res://Sprites/noodles_wave/frame_%02d.png", "count": 9},
+		"inline_play": true,
 		"accessories": {
 			"crown_gold": {"icon": "res://Sprites/crown_gold.png", "anchor": {"l": 0.33, "t": 0.06, "r": 0.63, "b": 0.22}},
 			"crown_silver": {"icon": "res://Sprites/crown_silver.png", "anchor": {"l": 0.33, "t": 0.06, "r": 0.63, "b": 0.22}},
@@ -67,6 +68,30 @@ const PETS := {
 		},
 		# One crown at a time.
 		"exclusive_groups": [["crown_gold", "crown_silver", "crown_tiara", "crown_flower"]],
+		"rooms": {
+			"bedroom": "res://Sprites/backgrounds/noodles_bedroom.jpg",
+		},
+	},
+	"stardust": {
+		"name": "Stardust",
+		"species": "cat",
+		# A Bengal drawn by Gemini - one picture per pose rather than frame
+		# sets, so most animations are single stills (see PetCameo).
+		"cutout": "res://Sprites/bengal_cutout.png",
+		"walk": {"path": "res://Sprites/stardust_walk/frame_%02d.png", "count": 1},
+		"eat": {"path": "res://Sprites/stardust_eat/frame_%02d.png", "count": 3},
+		"jump_still": "res://Sprites/bengal_poses/jump_forward.png",
+		"sleep_still": "res://Sprites/bengal_poses/sleep.png",
+		"dance_still": "res://Sprites/bengal_poses/dance.png",
+		"play_still": "res://Sprites/bengal_poses/play.png",
+		# Unicorn horns to wear in the Dress-Up room, one at a time.
+		"accessories": {
+			"horn_gold": {"icon": "res://Sprites/stardust_horns/gold.png", "anchor": {"l": 0.52, "t": -0.10, "r": 0.63, "b": 0.16}},
+			"horn_rainbow": {"icon": "res://Sprites/stardust_horns/rainbow.png", "anchor": {"l": 0.52, "t": -0.10, "r": 0.63, "b": 0.16}},
+			"horn_pink": {"icon": "res://Sprites/stardust_horns/pink.png", "anchor": {"l": 0.52, "t": -0.10, "r": 0.63, "b": 0.16}},
+			"horn_crystal": {"icon": "res://Sprites/stardust_horns/crystal.png", "anchor": {"l": 0.52, "t": -0.10, "r": 0.63, "b": 0.16}},
+		},
+		"exclusive_groups": [["horn_gold", "horn_rainbow", "horn_pink", "horn_crystal"]],
 	},
 	"pompom": {
 		"name": "Pompom",
@@ -184,6 +209,7 @@ const PETS := {
 		"bath_comic": {"path": "res://Sprites/gerbil_bath_comic/frame_%02d.png", "count": 3},
 		"accessories": {},
 		"exclusive_groups": [],
+		"friends": ["pebble"],
 		"rooms": {
 			"bedroom": "res://Sprites/backgrounds/gerbil_bedroom.jpg",
 			"dressup": "res://Sprites/backgrounds/gerbil_dressup.jpg",
@@ -272,8 +298,8 @@ func friend_anim_frames(id: String, kind: String) -> Array[Texture2D]:
 
 # Petting reactions, by species - dogs shouldn't purr and meow like a cat.
 const SPECIES_REACTIONS := {
-	"cat": ["🥰 purr~", "💕", "😻"],
-	"dog": ["🐾 yip!", "💕", "🐶 woof!"],
+	"cat": ["😻 purr~", "💕", "🐱 mew!"],
+	"dog": ["🐕 yip!", "💕", "🐶 woof!"],
 	"bird": ["🐦 tweet!", "💕", "🎶 chirp!"],
 	"gerbil": ["🐹 squeak!", "💕", "🥜 nibble nibble"],
 }
@@ -286,17 +312,62 @@ func friend_reactions(id: String) -> Array:
 	var species := String(FRIENDS[id].get("species", "cat"))
 	return SPECIES_REACTIONS.get(species, SPECIES_REACTIONS["cat"])
 
-const SPECIES_IDLE_BLINK := {
-	"cat": "😽 blink",
-	"dog": "🐶 blink",
-	"bird": "🐦 blink",
-	"gerbil": "🐹 blink",
+# One emoji per species, so labels and popups always show the right animal.
+const SPECIES_EMOJI := {
+	"cat": "🐱",
+	"dog": "🐶",
+	"bird": "🐦",
+	"gerbil": "🐹",
 }
+
+func species_emoji(species: String) -> String:
+	return SPECIES_EMOJI.get(species, SPECIES_EMOJI["cat"])
+
+# What each kind of pet actually eats - used for the Hunger label, the Feed
+# button and the treat-catch game, so a cat never gets a bone.
+const SPECIES_FOOD := {
+	"cat": "🐟",
+	"dog": "🦴",
+	"bird": "🌻",
+	"gerbil": "🥜",
+}
+const SPECIES_TREATS := {
+	"cat": ["🐟", "🐠", "🍤", "🥛", "🐟"],
+	"dog": ["🦴", "🍖", "🥩", "🍗", "🦴"],
+	"bird": ["🌻", "🌾", "🍇", "🍎", "🫐"],
+	"gerbil": ["🥜", "🌰", "🌻", "🥕", "🌽"],
+}
+
+# Favourite toy per species, for the Play buttons.
+const SPECIES_TOY := {
+	"cat": "🧶",
+	"dog": "🎾",
+	"bird": "🔔",
+	"gerbil": "🥎",
+}
+
+func toy_emoji() -> String:
+	var species := String(PETS[active_pet].get("species", "cat"))
+	return SPECIES_TOY.get(species, SPECIES_TOY["cat"])
+
+func pet_emoji() -> String:
+	return species_emoji(String(PETS[active_pet].get("species", "cat")))
+
+func food_emoji() -> String:
+	var species := String(PETS[active_pet].get("species", "cat"))
+	return SPECIES_FOOD.get(species, SPECIES_FOOD["cat"])
+
+func treat_emojis() -> Array:
+	var species := String(PETS[active_pet].get("species", "cat"))
+	return SPECIES_TREATS.get(species, SPECIES_TREATS["cat"])
+
+func friend_emoji(id: String) -> String:
+	return species_emoji(String(FRIENDS[id].get("species", "cat")))
 
 func idle_reactions() -> Array:
 	var species := String(PETS[active_pet].get("species", "cat"))
-	var blink: String = SPECIES_IDLE_BLINK.get(species, SPECIES_IDLE_BLINK["cat"])
-	return [blink, "🐾 stretch~", "💤 yawn~", "😊 happy sigh"]
+	var animal := species_emoji(species)
+	return ["%s blink" % animal, "%s stretch~" % animal, "💤 yawn~", "😊 happy sigh"]
 
 func static_pose(key: String) -> String:
 	return String(PETS[active_pet].get(key, PETS[active_pet]["cutout"]))
@@ -336,6 +407,7 @@ const FRIENDS := {
 	"biscuit": {"name": "Biscuit", "species": "dog", "cutout": "res://Sprites/friend_biscuit.png"},
 	"coco": {"name": "Coco", "species": "dog", "cutout": "res://Sprites/friend_coco.png"},
 	"raspberry": {"name": "Raspberry", "species": "bird", "cutout": "res://Sprites/friend_raspberry.png"},
+	"pebble": {"name": "Pebble", "species": "gerbil", "cutout": "res://Sprites/friend_gerbil.png"},
 	"seafoam": {
 		"name": "Seafoam",
 		"species": "bird",
@@ -382,7 +454,7 @@ var accessories: Dictionary:
 # Sticker Book: id -> {emoji, label}. Earned the first time you do the
 # matching activity; "earned" tracks which ids have been unlocked.
 const STICKERS := {
-	"feed": {"emoji": "🍓", "label": "Snack Time"},
+	"feed": {"emoji": "🍽️", "label": "Snack Time"},
 	"play": {"emoji": "🧶", "label": "Playtime"},
 	"pet": {"emoji": "🥰", "label": "Best Friends"},
 	"cuddle": {"emoji": "💞", "label": "Cozy Cuddles"},

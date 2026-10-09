@@ -1,8 +1,10 @@
 extends Control
 
-# Princess Petal runs a little obstacle course: walk, jump a hurdle,
-# walk, jump, walk, jump, then celebrate at the finish flag. Reuses her
-# existing walk and jump sprite sheets - no new art needed.
+# The active pet runs a little obstacle course: walk, hurdle, walk, hurdle,
+# walk, hurdle, then celebrate at the finish flag. She stops in front of each
+# hurdle and waits for the player to tap to help her jump it (no timing, no
+# way to fail - she just waits as long as it takes). Reuses her existing walk
+# and jump sprite sheets - no new art needed.
 
 const Feedback = preload("res://scripts/room_feedback.gd")
 
@@ -17,6 +19,10 @@ const JUMP_HEIGHT := 45.0
 var walk_frames: Array[Texture2D] = []
 var jump_frames: Array[Texture2D] = []
 var is_running := false
+var waiting_for_jump := false
+var jump_prompt: Label = null
+
+signal jump_requested
 
 func _ready() -> void:
 	walk_frames = PetalState.anim_frames("walk")
@@ -25,14 +31,35 @@ func _ready() -> void:
 	PetalState.apply_tint(runner)
 	go_button.pressed.connect(_on_go)
 
+# Any tap or click while she's waiting at a hurdle makes her jump; the Go
+# button doubles as a big "Jump!" button for the same moment.
+func _input(event: InputEvent) -> void:
+	if not waiting_for_jump:
+		return
+	var is_click: bool = event is InputEventMouseButton and event.pressed
+	var is_touch: bool = event is InputEventScreenTouch and event.pressed
+	if is_click or is_touch:
+		_request_jump()
+
+func _request_jump() -> void:
+	if waiting_for_jump:
+		waiting_for_jump = false
+		jump_requested.emit()
+
 func _on_go() -> void:
 	if is_running:
+		_request_jump()
 		return
 	is_running = true
 	go_button.disabled = true
 
 	for i in range(JUMP_SEGMENTS.size()):
 		await _run_walk(WALK_SEGMENTS[i][0], WALK_SEGMENTS[i][1])
+		if not is_instance_valid(self):
+			return
+		await _wait_for_jump()
+		if not is_instance_valid(self):
+			return
 		await _run_jump(JUMP_SEGMENTS[i][0], JUMP_SEGMENTS[i][1])
 	await _run_walk(WALK_SEGMENTS[3][0], WALK_SEGMENTS[3][1])
 
@@ -45,8 +72,35 @@ func _on_go() -> void:
 	if not is_instance_valid(self):
 		return
 	runner.position = Vector2(WALK_SEGMENTS[0][0], BASE_Y)
+	go_button.text = "🏁 Go!"
 	go_button.disabled = false
 	is_running = false
+
+# She stops in front of the hurdle, bouncing in place, until the player taps.
+func _wait_for_jump() -> void:
+	runner.texture = load(PetalState.cutout_path())
+	jump_prompt = Label.new()
+	jump_prompt.text = "👆 Tap to jump!"
+	jump_prompt.add_theme_font_size_override("font_size", 30)
+	jump_prompt.position = runner.position + Vector2(-10.0, -50.0)
+	jump_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(jump_prompt)
+	go_button.text = "⬆️ Jump!"
+	go_button.disabled = false
+
+	var bounce := create_tween().set_loops()
+	bounce.tween_property(runner, "position:y", BASE_Y - 12.0, 0.25)
+	bounce.tween_property(runner, "position:y", BASE_Y, 0.25)
+
+	waiting_for_jump = true
+	await jump_requested
+
+	bounce.kill()
+	runner.position.y = BASE_Y
+	go_button.disabled = true
+	if is_instance_valid(jump_prompt):
+		jump_prompt.queue_free()
+	jump_prompt = null
 
 func _run_walk(from_x: float, to_x: float) -> void:
 	var steps := 10

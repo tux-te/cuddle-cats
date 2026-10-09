@@ -109,7 +109,7 @@ func _build_habitat_action_buttons() -> void:
 	container.move_child(rest_btn, feed_btn.get_index() + 1)
 
 	var play_btn := Button.new()
-	play_btn.text = "🔔 Play" if not PetalState.perch_items().is_empty() else "🥎 Play"
+	play_btn.text = "%s Play" % PetalState.toy_emoji()
 	play_btn.custom_minimum_size = Vector2(160, 90)
 	play_btn.add_theme_font_size_override("font_size", 22)
 	play_btn.pressed.connect(_on_habitat_play)

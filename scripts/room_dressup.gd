@@ -2,6 +2,7 @@ extends Control
 
 const Feedback = preload("res://scripts/room_feedback.gd")
 const PetCameo = preload("res://scripts/pet_cameo.gd")
+const CrownFx = preload("res://scripts/crown_fx.gd")
 
 @onready var background: TextureRect = %Background
 
@@ -73,6 +74,7 @@ func _on_toggle(id: String) -> void:
 		buttons[id].set_pressed_no_signal(PetalState.accessories[id])
 	var text := "✨ pretty!" if PetalState.accessories[id] else "took it off"
 	Feedback.pop(self, text, buttons[id].global_position)
+	_crown_reaction(id)
 
 # Spends Treat Coins to unlock a locked accessory, then equips it right
 # away so buying feels rewarding instead of taking a second click.
@@ -86,6 +88,13 @@ func _try_purchase(id: String) -> void:
 	if buttons[id] is Button:
 		buttons[id].set_pressed_no_signal(PetalState.accessories[id])
 	Feedback.pop(self, "🔓 unlocked! ✨", buttons[id].global_position)
+	_crown_reaction(id)
+
+# Crowns get their own little celebration over her head when put on.
+func _crown_reaction(id: String) -> void:
+	if id.begins_with("crown_") and PetalState.accessories.get(id, false):
+		var petal: Control = %Petal
+		CrownFx.play(self, petal.global_position + Vector2(petal.size.x * 0.48, petal.size.y * 0.14), id)
 
 # Darkens locked buttons and labels them with their coin price so kids can
 # see at a glance what's still to earn.

@@ -53,6 +53,7 @@ var seconds_since_interaction := 0.0
 
 func _ready() -> void:
 	name_label.text = PetalState.pet_name
+	_refresh_food_labels()
 
 	PetalState.stats_changed.connect(_refresh_stats)
 	PetalState.accessories_changed.connect(_refresh_accessories)
@@ -127,6 +128,11 @@ func _show_room(id: String) -> void:
 	room_slot.add_child(current_room)
 	_wire_room_pet()
 
+# Labels and buttons that show the active pet's own animal and food.
+func _refresh_food_labels() -> void:
+	%HungerLabel.text = "%s Hunger" % PetalState.food_emoji()
+	pets_button.text = "%s Pets" % PetalState.pet_emoji()
+
 func _open_pet_picker() -> void:
 	for child in pet_list.get_children():
 		child.queue_free()
@@ -136,7 +142,7 @@ func _open_pet_picker() -> void:
 		PetalState.apply_tint(btn, id)
 		btn.ignore_texture_size = true
 		btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-		btn.custom_minimum_size = Vector2(160, 220)
+		btn.custom_minimum_size = Vector2(150, 210)
 		btn.pressed.connect(_on_pet_picked.bind(id))
 		pet_list.add_child(btn)
 	pet_picker.visible = true
@@ -150,6 +156,7 @@ func _on_pet_picked(id: String) -> void:
 
 func _on_pet_changed() -> void:
 	name_label.text = PetalState.pet_name
+	_refresh_food_labels()
 	_refresh_bedroom_button()
 	if current_room_id == "bedroom":
 		_enter_bedroom()
@@ -316,6 +323,21 @@ func _play_named_animation(anim_key: String, still_key: String) -> void:
 	is_playing = true
 	for id in accessory_nodes:
 		accessory_nodes[id].visible = false
+
+	# Pets whose play frames are just the pet herself (no toy scene drawn
+	# around her) stay in her corner box instead of filling the screen.
+	if PetalState.has_anim(anim_key) and PetalState.PETS[PetalState.active_pet].get("inline_play", false):
+		for frame in PetalState.anim_frames(anim_key):
+			if not is_instance_valid(room_petal):
+				is_playing = false
+				return
+			room_petal.texture = frame
+			await get_tree().create_timer(0.15).timeout
+		is_playing = false
+		if is_instance_valid(room_petal):
+			room_petal.texture = load(PetalState.cutout_path())
+			_refresh_accessories()
+		return
 
 	if PetalState.has_anim(anim_key):
 		# room_petal normally sits in a small corner box (see e.g.
