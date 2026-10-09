@@ -40,7 +40,7 @@ const LUCY_OWNER_PETS := ["pompom", "sheila", "kiwi", "gerbil"]
 @onready var clean_bar: ProgressBar = %CleanBar
 @onready var pets_button: Button = %PetsButton
 @onready var pet_picker: Control = %PetPicker
-@onready var pet_list: HBoxContainer = %PetList
+@onready var pet_list: VBoxContainer = %PetList
 @onready var coins_label: Label = %CoinsLabel
 
 var current_room: Control = null
@@ -133,10 +133,41 @@ func _refresh_food_labels() -> void:
 	%HungerLabel.text = "%s Hunger" % PetalState.food_emoji()
 	pets_button.text = "%s Pets" % PetalState.pet_emoji()
 
+# Pets are listed under tappable headers - Cats, Dogs, Other Pets - that
+# open and close like drawers, one at a time. The active pet's drawer starts open.
+const PET_GROUPS := [
+	{"title": "🐱 Cats", "species": ["cat"]},
+	{"title": "🐶 Dogs", "species": ["dog"]},
+	{"title": "🐾 Other Pets", "species": []},
+]
+
+func _pet_group_index(species: String) -> int:
+	for i in range(PET_GROUPS.size()):
+		if species in PET_GROUPS[i]["species"]:
+			return i
+	return PET_GROUPS.size() - 1
+
 func _open_pet_picker() -> void:
 	for child in pet_list.get_children():
 		child.queue_free()
+	var rows: Array[HBoxContainer] = []
+	var headers: Array[Button] = []
+	for g in PET_GROUPS:
+		var header := Button.new()
+		header.custom_minimum_size = Vector2(0, 52)
+		header.add_theme_font_size_override("font_size", 24)
+		headers.append(header)
+		pet_list.add_child(header)
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 20)
+		row.visible = false
+		rows.append(row)
+		pet_list.add_child(row)
+	var counts := [0, 0, 0]
 	for id in PetalState.PETS:
+		var gi := _pet_group_index(String(PetalState.PETS[id].get("species", "cat")))
+		counts[gi] += 1
 		var btn := TextureButton.new()
 		btn.texture_normal = load(String(PetalState.PETS[id]["cutout"]))
 		PetalState.apply_tint(btn, id)
@@ -144,8 +175,23 @@ func _open_pet_picker() -> void:
 		btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 		btn.custom_minimum_size = Vector2(150, 210)
 		btn.pressed.connect(_on_pet_picked.bind(id))
-		pet_list.add_child(btn)
+		rows[gi].add_child(btn)
+	var open_group := _pet_group_index(String(PetalState.PETS[PetalState.active_pet].get("species", "cat")))
+	for i in range(PET_GROUPS.size()):
+		headers[i].visible = counts[i] > 0
+		headers[i].pressed.connect(_toggle_pet_group.bind(i, rows, headers))
+		rows[i].visible = i == open_group
+		_update_pet_header(headers[i], i, rows[i].visible, counts[i])
 	pet_picker.visible = true
+
+func _toggle_pet_group(index: int, rows: Array[HBoxContainer], headers: Array[Button]) -> void:
+	var opening := not rows[index].visible
+	for i in range(rows.size()):
+		rows[i].visible = opening and i == index
+		_update_pet_header(headers[i], i, rows[i].visible, rows[i].get_child_count())
+
+func _update_pet_header(header: Button, index: int, is_open: bool, count: int) -> void:
+	header.text = "%s %s (%d)" % ["▼" if is_open else "▶", PET_GROUPS[index]["title"], count]
 
 func _close_pet_picker() -> void:
 	pet_picker.visible = false

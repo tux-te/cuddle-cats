@@ -267,7 +267,7 @@ theme_override_font_sizes/font_size = 28
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "🐾 Choose Your Pet"
 
-[node name="PetList" type="HBoxContainer" parent="PetPicker/Panel/VBox"]
+[node name="PetList" type="VBoxContainer" parent="PetPicker/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 alignment = 1
