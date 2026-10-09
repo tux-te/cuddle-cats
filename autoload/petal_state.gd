@@ -78,20 +78,32 @@ const PETS := {
 		# A Bengal drawn by Gemini - one picture per pose rather than frame
 		# sets, so most animations are single stills (see PetCameo).
 		"cutout": "res://Sprites/bengal_cutout.png",
-		"walk": {"path": "res://Sprites/stardust_walk/frame_%02d.png", "count": 1},
+		"walk": {"path": "res://Sprites/stardust_walk_gem/frame_%02d.png", "count": 8},
+		"jump": {"path": "res://Sprites/stardust_jump_gem/frame_%02d.png", "count": 8},
 		"eat": {"path": "res://Sprites/stardust_eat/frame_%02d.png", "count": 3},
+		"cuddle": {"path": "res://Sprites/pj_carry_stardust/frame_%02d.png", "count": 8},
+		"sleep": {"path": "res://Sprites/stardust_sleep_gem/frame_%02d.png", "count": 8},
+		"dance": {"path": "res://Sprites/stardust_dance_gem/frame_%02d.png", "count": 8},
+		"swim": {"path": "res://Sprites/stardust_swim_gem/frame_%02d.png", "count": 8},
+		"brush": {"path": "res://Sprites/pj_brush_stardust/frame_%02d.png", "count": 8},
+		"bath_comic": {"path": "res://Sprites/stardust_bath_comic/frame_%02d.png", "count": 8},
+		"play": {"path": "res://Sprites/pj_mouse_stardust/frame_%02d.png", "count": 8},
 		"jump_still": "res://Sprites/bengal_poses/jump_forward.png",
 		"sleep_still": "res://Sprites/bengal_poses/sleep.png",
 		"dance_still": "res://Sprites/bengal_poses/dance.png",
 		"play_still": "res://Sprites/bengal_poses/play.png",
 		# Unicorn horns to wear in the Dress-Up room, one at a time.
 		"accessories": {
+			"bow": {"icon": "res://Sprites/bow.png", "anchor": {"l": 0.17, "t": 0.04, "r": 0.39, "b": 0.22}},
 			"horn_gold": {"icon": "res://Sprites/stardust_horns/gold.png", "anchor": {"l": 0.52, "t": -0.10, "r": 0.63, "b": 0.16}},
 			"horn_rainbow": {"icon": "res://Sprites/stardust_horns/rainbow.png", "anchor": {"l": 0.52, "t": -0.10, "r": 0.63, "b": 0.16}},
 			"horn_pink": {"icon": "res://Sprites/stardust_horns/pink.png", "anchor": {"l": 0.52, "t": -0.10, "r": 0.63, "b": 0.16}},
 			"horn_crystal": {"icon": "res://Sprites/stardust_horns/crystal.png", "anchor": {"l": 0.52, "t": -0.10, "r": 0.63, "b": 0.16}},
 		},
 		"exclusive_groups": [["horn_gold", "horn_rainbow", "horn_pink", "horn_crystal"]],
+		"rooms": {
+			"bedroom": "res://Sprites/backgrounds/noodles_bedroom.jpg",
+		},
 	},
 	"pompom": {
 		"name": "Pompom",

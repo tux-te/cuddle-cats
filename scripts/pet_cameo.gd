@@ -49,6 +49,14 @@ static func jump_for_joy(node: TextureRect) -> void:
 	if is_instance_valid(node):
 		node.texture = load(PetalState.cutout_path())
 
+# Cuddle beat: pets with a drawn cuddle sequence (e.g. Stardust being carried
+# by PJ) play it, everyone else just hops for joy.
+static func cuddle(node: TextureRect) -> void:
+	if PetalState.has_anim("cuddle"):
+		await _play_frames_once(node, "cuddle", 0.2)
+		return
+	await jump_for_joy(node)
+
 static func _bounce_tween(node: TextureRect) -> void:
 	var pose_key := "jump_still" if PetalState.has_anim("jump_still") else "wave"
 	if PetalState.has_anim(pose_key):

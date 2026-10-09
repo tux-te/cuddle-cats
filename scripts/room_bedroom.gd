@@ -239,7 +239,7 @@ func _bounce_friend() -> void:
 
 func _on_cuddle() -> void:
 	PetalState.cuddle()
-	PetCameo.jump_for_joy(%Petal)
+	PetCameo.cuddle(%Petal)
 	Feedback.pop(self, "🥰 +hugs", %CuddleButton.global_position)
 
 func _on_nap() -> void:
