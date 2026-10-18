@@ -54,6 +54,10 @@ var seconds_since_interaction := 0.0
 
 func _ready() -> void:
 	name_label.text = PetalState.pet_name
+	# Tap the pet's name to give her a nickname (emoji welcome).
+	name_label.mouse_filter = Control.MOUSE_FILTER_STOP
+	name_label.gui_input.connect(_on_name_label_input)
+	PetalState.names_changed.connect(_refresh_names)
 	_refresh_food_labels()
 
 	PetalState.stats_changed.connect(_refresh_stats)
@@ -139,6 +143,7 @@ func _refresh_food_labels() -> void:
 const PET_GROUPS := [
 	{"title": "🐱 Cats", "species": ["cat"]},
 	{"title": "🐶 Dogs", "species": ["dog"]},
+	{"title": "🐰 Bunnies", "species": ["bunny"]},
 	{"title": "🐾 Other Pets", "species": []},
 ]
 
@@ -165,8 +170,10 @@ func _open_pet_picker() -> void:
 		row.visible = false
 		rows.append(row)
 		pet_list.add_child(row)
-	var counts := [0, 0, 0]
-	for id in PetalState.PETS:
+	var counts := []
+	counts.resize(PET_GROUPS.size())
+	counts.fill(0)
+	for id in PetalState.available_pet_ids():
 		var gi := _pet_group_index(String(PetalState.PETS[id].get("species", "cat")))
 		counts[gi] += 1
 		var btn := TextureButton.new()
@@ -200,6 +207,19 @@ func _close_pet_picker() -> void:
 func _on_pet_picked(id: String) -> void:
 	PetalState.switch_pet(id)
 	_close_pet_picker()
+
+func _refresh_names() -> void:
+	name_label.text = PetalState.pet_name
+	_refresh_stats()
+
+func _on_name_label_input(event: InputEvent) -> void:
+	var pressed: bool = (event is InputEventMouseButton and event.pressed) or (event is InputEventScreenTouch and event.pressed)
+	if not pressed or is_instance_valid(get_node_or_null("NameEditor")):
+		return
+	var id := PetalState.active_pet
+	var editor := NameEditor.open(self, "Nickname for %s ✏️" % String(PetalState.PETS[id]["name"]), String(PetalState.nicknames.get(id, "")), "Cancel")
+	editor.name = "NameEditor"
+	editor.submitted.connect(func(text: String) -> void: PetalState.set_nickname(id, text))
 
 func _on_pet_changed() -> void:
 	name_label.text = PetalState.pet_name

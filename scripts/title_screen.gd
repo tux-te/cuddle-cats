@@ -11,6 +11,7 @@ const SLEEP_START_INDEX := 7 # frames 7-10 are the falling-asleep part
 
 var frames: Array[Texture2D] = []
 var frame_index := 0
+var overlay: Control = null
 
 func _ready() -> void:
 	for i in range(FRAME_COUNT):
@@ -41,10 +42,32 @@ func _show_prompt() -> void:
 	tween.tween_property(prompt, "modulate:a", 1.0, 0.6)
 
 func _input(event: InputEvent) -> void:
+	if is_instance_valid(overlay):
+		return
 	var is_click: bool = event is InputEventMouseButton and event.pressed
 	var is_touch: bool = event is InputEventScreenTouch and event.pressed
 	if is_click or is_touch:
+		_on_tapped()
+
+# Tapping opens the save-slot picker; a brand-new slot then asks the
+# player's name (with the emoji picker) before the game starts.
+func _on_tapped() -> void:
+	var picker := SlotPicker.open(self)
+	overlay = picker
+	picker.slot_chosen.connect(_on_slot_chosen.bind(picker))
+
+func _on_slot_chosen(slot: int, picker: SlotPicker) -> void:
+	PetalState.start_slot(slot)
+	picker.queue_free()
+	if PetalState.player_name != "":
 		_start_game()
+		return
+	var editor := NameEditor.open(self, "What's your name? 🌈", "")
+	overlay = editor
+	editor.submitted.connect(func(text: String) -> void:
+		PetalState.set_player_name(text)
+		_start_game())
+	editor.cancelled.connect(_start_game)
 
 func _start_game() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")

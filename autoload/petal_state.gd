@@ -37,6 +37,7 @@ const PETS := {
 		"sleep": {"path": "res://Sprites/petal_sleep/frame_%02d.png", "count": 11},
 		"dance": {"path": "res://Sprites/petal_dance/frame_%02d.png", "count": 10},
 		"play": {"path": "res://Sprites/petal_play/frame_%02d.png", "count": 10},
+		"inline_play": true,
 		"blowdried": "res://Sprites/petal_blowdried.png",
 		"accessories": {
 			"bow": {"icon": "res://Sprites/bow.png", "anchor": {"l": 0.327, "t": 0.025, "r": 0.427, "b": 0.196}, "cost": 0},
@@ -229,11 +230,138 @@ const PETS := {
 			"party": "res://Sprites/backgrounds/gerbil_party.jpg",
 		},
 	},
+	# Pets added from separately supplied art. Each shows up in the picker only
+	# once its cutout exists in Sprites/ (see available_pet_ids).
+	"marshmallow": {
+		"name": "Marshmallow",
+		"species": "bunny",
+		"cutout": "res://Sprites/marshmallow_cutout.png",
+		"walk": {"path": "res://Sprites/marshmallow_walk/frame_%02d.png", "count": 2},
+		"eat": {"path": "res://Sprites/marshmallow_eat/frame_%02d.png", "count": 2},
+		"sleep_still": "res://Sprites/marshmallow_sleep_pose.png",
+		"accessories": {
+			# Ears-and-face anchors are first guesses - nudge them once the final art is in.
+			"bow": {"icon": "res://Sprites/bow.png", "anchor": {"l": 0.36, "t": 0.02, "r": 0.50, "b": 0.16}, "cost": 0},
+			"flower": {"icon": "res://Sprites/flower.png", "anchor": {"l": 0.52, "t": 0.02, "r": 0.66, "b": 0.16}, "cost": 0},
+			"sunglasses": {"icon": "res://Sprites/sunglasses.png", "anchor": {"l": 0.30, "t": 0.28, "r": 0.70, "b": 0.44}, "cost": 15},
+			"scarf": {"icon": "res://Sprites/scarf.png", "anchor": {"l": 0.30, "t": 0.52, "r": 0.70, "b": 0.72}, "cost": 15},
+		},
+		"exclusive_groups": [],
+		"friends": ["fluff_friend", "bunbun_friend"],
+	},
+	"fluff": {
+		"name": "Fluff",
+		"species": "bunny",
+		"cutout": "res://Sprites/fluff_cutout.png",
+		"jump": {"path": "res://Sprites/fluff_jump/frame_%02d.png", "count": 4},
+		"eat": {"path": "res://Sprites/fluff_eat/frame_%02d.png", "count": 4},
+		"sleep": {"path": "res://Sprites/fluff_sleep/frame_%02d.png", "count": 4},
+		"accessories": {
+			# Ears-and-face anchors are first guesses - nudge them once the final art is in.
+			"bow": {"icon": "res://Sprites/bow.png", "anchor": {"l": 0.36, "t": 0.02, "r": 0.50, "b": 0.16}, "cost": 0},
+			"flower": {"icon": "res://Sprites/flower.png", "anchor": {"l": 0.52, "t": 0.02, "r": 0.66, "b": 0.16}, "cost": 0},
+			"sunglasses": {"icon": "res://Sprites/sunglasses.png", "anchor": {"l": 0.30, "t": 0.28, "r": 0.70, "b": 0.44}, "cost": 15},
+			"scarf": {"icon": "res://Sprites/scarf.png", "anchor": {"l": 0.30, "t": 0.52, "r": 0.70, "b": 0.72}, "cost": 15},
+		},
+		"exclusive_groups": [],
+		"friends": ["marshmallow_friend", "bunbun_friend"],
+	},
+	"cotton": {
+		"name": "Bunbun",
+		"species": "bunny",
+		"cutout": "res://Sprites/cotton_cutout.png",
+		"play": {"path": "res://Sprites/cotton_play/frame_%02d.png", "count": 9},
+		"inline_play": true,
+		"accessories": {
+			# Ears-and-face anchors are first guesses - nudge them once the final art is in.
+			"bow": {"icon": "res://Sprites/bow.png", "anchor": {"l": 0.36, "t": 0.02, "r": 0.50, "b": 0.16}, "cost": 0},
+			"flower": {"icon": "res://Sprites/flower.png", "anchor": {"l": 0.52, "t": 0.02, "r": 0.66, "b": 0.16}, "cost": 0},
+			"sunglasses": {"icon": "res://Sprites/sunglasses.png", "anchor": {"l": 0.30, "t": 0.28, "r": 0.70, "b": 0.44}, "cost": 15},
+			"scarf": {"icon": "res://Sprites/scarf.png", "anchor": {"l": 0.30, "t": 0.52, "r": 0.70, "b": 0.72}, "cost": 15},
+		},
+		"exclusive_groups": [],
+		"friends": ["marshmallow_friend", "fluff_friend"],
+	},
+	"puppy": {
+		"name": "Puppy",
+		"species": "dog",
+		"cutout": "res://Sprites/puppy_cutout.png",
+		"walk": {"path": "res://Sprites/puppy_idle/frame_%02d.png", "count": 9},
+		"jump": {"path": "res://Sprites/puppy_happy/frame_%02d.png", "count": 9},
+		"dance": {"path": "res://Sprites/puppy_cheer/frame_%02d.png", "count": 9},
+		"eat": {"path": "res://Sprites/puppy_eat/frame_%02d.png", "count": 9},
+		"play": {"path": "res://Sprites/puppy_happy/frame_%02d.png", "count": 9},
+		"inline_play": true,
+		"accessories": {
+			"collar_pink": {"icon": "res://Sprites/pompom_collars/pink.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 0},
+			"collar_lavender": {"icon": "res://Sprites/pompom_collars/lavender.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
+			"collar_blue": {"icon": "res://Sprites/pompom_collars/blue.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
+			"collar_green": {"icon": "res://Sprites/pompom_collars/green.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
+		},
+		"exclusive_groups": [["collar_pink", "collar_lavender", "collar_blue", "collar_green"]],
+		"rooms": {
+			"bedroom": "res://Sprites/backgrounds/pompom_bedroom.jpg",
+		},
+		"friends": ["coco", "biscuit"],
+	},
+	"brownie": {
+		"name": "Brownie",
+		"species": "dog",
+		"cutout": "res://Sprites/brownie_cutout.png",
+		"walk": {"path": "res://Sprites/brownie_happy/frame_%02d.png", "count": 4},
+		"jump": {"path": "res://Sprites/brownie_cheer/frame_%02d.png", "count": 4},
+		"dance": {"path": "res://Sprites/brownie_cheer/frame_%02d.png", "count": 4},
+		"eat": {"path": "res://Sprites/brownie_eat/frame_%02d.png", "count": 4},
+		"sleep": {"path": "res://Sprites/brownie_sleep/frame_%02d.png", "count": 4},
+		"swim": {"path": "res://Sprites/brownie_swim/frame_%02d.png", "count": 4},
+		"play": {"path": "res://Sprites/brownie_happy/frame_%02d.png", "count": 4},
+		"inline_play": true,
+		"accessories": {
+			"collar_pink": {"icon": "res://Sprites/pompom_collars/pink.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 0},
+			"collar_lavender": {"icon": "res://Sprites/pompom_collars/lavender.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
+			"collar_blue": {"icon": "res://Sprites/pompom_collars/blue.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
+			"collar_green": {"icon": "res://Sprites/pompom_collars/green.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
+		},
+		"exclusive_groups": [["collar_pink", "collar_lavender", "collar_blue", "collar_green"]],
+		"rooms": {
+			"bedroom": "res://Sprites/backgrounds/pompom_bedroom.jpg",
+		},
+		"friends": ["coco", "biscuit"],
+	},
+	"pomeranian": {
+		"name": "Honey",
+		"species": "dog",
+		"cutout": "res://Sprites/pomeranian_cutout.png",
+		"walk": {"path": "res://Sprites/pomeranian_idle/frame_%02d.png", "count": 4},
+		"jump": {"path": "res://Sprites/pomeranian_happy/frame_%02d.png", "count": 4},
+		"dance": {"path": "res://Sprites/pomeranian_happy/frame_%02d.png", "count": 4},
+		"play": {"path": "res://Sprites/pomeranian_happy/frame_%02d.png", "count": 4},
+		"inline_play": true,
+		"accessories": {
+			"collar_pink": {"icon": "res://Sprites/pompom_collars/pink.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 0},
+			"collar_lavender": {"icon": "res://Sprites/pompom_collars/lavender.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
+			"collar_blue": {"icon": "res://Sprites/pompom_collars/blue.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
+			"collar_green": {"icon": "res://Sprites/pompom_collars/green.png", "anchor": {"l": 0.15, "t": 0.56, "r": 0.85, "b": 0.82}, "cost": 20},
+		},
+		"exclusive_groups": [["collar_pink", "collar_lavender", "collar_blue", "collar_green"]],
+		"rooms": {
+			"bedroom": "res://Sprites/backgrounds/pompom_bedroom.jpg",
+		},
+		"friends": ["coco", "biscuit"],
+	},
 }
 
 var active_pet := "petal"
 
 var pet_records := {}
+
+# Pets that can be picked: every PETS entry whose cutout art is in the project.
+func available_pet_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for id in PETS:
+		if ResourceLoader.exists(String(PETS[id]["cutout"])):
+			ids.append(id)
+	return ids
 
 func _init_pet_records() -> void:
 	for id in PETS:
@@ -255,8 +383,139 @@ func _init_pet_records() -> void:
 			"perch_decor": perch,
 		}
 
+# Names kids type in (with emoji from the NameEditor picker) live in the
+# active save slot along with the rest of their progress - see "Save slots".
+signal names_changed
+
+var player_name := ""
+var nicknames := {}
+
 var pet_name: String:
-	get: return PETS[active_pet]["name"]
+	get: return pet_display_name(active_pet)
+
+func pet_display_name(id: String) -> String:
+	var nick := String(nicknames.get(id, ""))
+	return nick if nick != "" else String(PETS[id]["name"])
+
+func set_player_name(value: String) -> void:
+	player_name = value.strip_edges()
+	save_game()
+	names_changed.emit()
+
+# An empty nickname puts the pet's default name back.
+func set_nickname(id: String, value: String) -> void:
+	value = value.strip_edges()
+	if value == "":
+		nicknames.erase(id)
+	else:
+		nicknames[id] = value
+	save_game()
+	names_changed.emit()
+
+# --- Save slots -------------------------------------------------------------
+# Each kid gets their own file (user://save_1.cfg ...). It keeps the player
+# name, nicknames, active pet, every pet's stats / accessories / unlocks,
+# coins and earned stickers. Photo Book photos are textures held in memory
+# and are not saved yet.
+const SLOT_COUNT := 3
+const AUTOSAVE_SECONDS := 20.0
+var current_slot := 0 # 0 = no slot chosen yet, so nothing is written
+
+func slot_path(slot: int) -> String:
+	return "user://save_%d.cfg" % slot
+
+func slot_exists(slot: int) -> bool:
+	return FileAccess.file_exists(slot_path(slot))
+
+# What the slot picker shows on each card; empty slots give {"exists": false}.
+func slot_summary(slot: int) -> Dictionary:
+	var cfg := ConfigFile.new()
+	if cfg.load(slot_path(slot)) != OK:
+		return {"exists": false}
+	var pet_id := String(cfg.get_value("game", "active_pet", "petal"))
+	if not PETS.has(pet_id):
+		pet_id = "petal"
+	var nicks = cfg.get_value("names", "pets", {})
+	var nick := String(nicks.get(pet_id, "")) if nicks is Dictionary else ""
+	return {
+		"exists": true,
+		"player": String(cfg.get_value("names", "player", "")),
+		"pet": nick if nick != "" else String(PETS[pet_id]["name"]),
+		"coins": int(cfg.get_value("game", "coins", 0)),
+	}
+
+# Makes `slot` the active save, loading it if it exists or starting fresh.
+func start_slot(slot: int) -> void:
+	_reset_progress()
+	current_slot = slot
+	if slot_exists(slot):
+		_load_slot(slot)
+	else:
+		save_game()
+	names_changed.emit()
+
+func delete_slot(slot: int) -> void:
+	if slot_exists(slot):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(slot_path(slot)))
+	if current_slot == slot:
+		current_slot = 0
+
+func _reset_progress() -> void:
+	active_pet = "petal"
+	player_name = ""
+	nicknames = {}
+	coins = 0
+	earned_stickers = {}
+	visiting_friend = ""
+	photos.clear()
+	_init_pet_records()
+
+func save_game() -> void:
+	if current_slot == 0:
+		return
+	var cfg := ConfigFile.new()
+	cfg.set_value("names", "player", player_name)
+	cfg.set_value("names", "pets", nicknames)
+	cfg.set_value("game", "active_pet", active_pet)
+	cfg.set_value("game", "coins", coins)
+	cfg.set_value("game", "stickers", earned_stickers)
+	cfg.set_value("game", "pet_records", pet_records)
+	cfg.save(slot_path(current_slot))
+
+func _load_slot(slot: int) -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(slot_path(slot)) != OK:
+		return
+	player_name = String(cfg.get_value("names", "player", ""))
+	var saved_nicks = cfg.get_value("names", "pets", {})
+	if saved_nicks is Dictionary:
+		for id in saved_nicks:
+			if PETS.has(id):
+				nicknames[id] = String(saved_nicks[id])
+	coins = int(cfg.get_value("game", "coins", 0))
+	var saved_stickers = cfg.get_value("game", "stickers", {})
+	if saved_stickers is Dictionary:
+		for id in saved_stickers:
+			if STICKERS.has(id):
+				earned_stickers[id] = bool(saved_stickers[id])
+	# Merge key by key onto the defaults so pets or accessories added after
+	# the save was made still start with sensible values.
+	var saved_records = cfg.get_value("game", "pet_records", {})
+	if saved_records is Dictionary:
+		for id in saved_records:
+			if not pet_records.has(id) or not (saved_records[id] is Dictionary):
+				continue
+			for key in saved_records[id]:
+				var value = saved_records[id][key]
+				if value is Dictionary and pet_records[id].get(key) is Dictionary:
+					for sub in value:
+						if pet_records[id][key].has(sub):
+							pet_records[id][key][sub] = value[sub]
+				elif pet_records[id].has(key):
+					pet_records[id][key] = value
+	var pet_id := String(cfg.get_value("game", "active_pet", "petal"))
+	if PETS.has(pet_id) and available_pet_ids().has(pet_id):
+		active_pet = pet_id
 
 func switch_pet(id: String) -> void:
 	if not PETS.has(id) or id == active_pet:
@@ -315,6 +574,7 @@ const SPECIES_REACTIONS := {
 	"dog": ["🐕 yip!", "💕", "🐶 woof!"],
 	"bird": ["🐦 tweet!", "💕", "🎶 chirp!"],
 	"gerbil": ["🐹 squeak!", "💕", "🥜 nibble nibble"],
+	"bunny": ["🐰 *nose wiggle*", "💕", "🥕 nom nom"],
 }
 
 func pet_reactions() -> Array:
@@ -331,6 +591,7 @@ const SPECIES_EMOJI := {
 	"dog": "🐶",
 	"bird": "🐦",
 	"gerbil": "🐹",
+	"bunny": "🐰",
 }
 
 func species_emoji(species: String) -> String:
@@ -343,12 +604,14 @@ const SPECIES_FOOD := {
 	"dog": "🦴",
 	"bird": "🌻",
 	"gerbil": "🥜",
+	"bunny": "🥕",
 }
 const SPECIES_TREATS := {
 	"cat": ["🐟", "🐠", "🍤", "🥛", "🐟"],
 	"dog": ["🦴", "🍖", "🥩", "🍗", "🦴"],
 	"bird": ["🌻", "🌾", "🍇", "🍎", "🫐"],
 	"gerbil": ["🥜", "🌰", "🌻", "🥕", "🌽"],
+	"bunny": ["🥕", "🥬", "🍎", "🍓", "🥦"],
 }
 
 # Favourite toy per species, for the Play buttons.
@@ -357,6 +620,7 @@ const SPECIES_TOY := {
 	"dog": "🎾",
 	"bird": "🔔",
 	"gerbil": "🥎",
+	"bunny": "🧸",
 }
 
 func toy_emoji() -> String:
@@ -421,6 +685,10 @@ const FRIENDS := {
 	"coco": {"name": "Coco", "species": "dog", "cutout": "res://Sprites/friend_coco.png"},
 	"raspberry": {"name": "Raspberry", "species": "bird", "cutout": "res://Sprites/friend_raspberry.png"},
 	"pebble": {"name": "Pebble", "species": "gerbil", "cutout": "res://Sprites/friend_gerbil.png"},
+	# The playable bunnies also drop by as each other's friends.
+	"marshmallow_friend": {"name": "Marshmallow", "species": "bunny", "cutout": "res://Sprites/marshmallow_cutout.png"},
+	"fluff_friend": {"name": "Fluff", "species": "bunny", "cutout": "res://Sprites/fluff_cutout.png"},
+	"bunbun_friend": {"name": "Bunbun", "species": "bunny", "cutout": "res://Sprites/cotton_cutout.png"},
 	"seafoam": {
 		"name": "Seafoam",
 		"species": "bird",
@@ -527,8 +795,25 @@ func add_coins(amount: int) -> void:
 	if coins / MILESTONE_STEP > before / MILESTONE_STEP:
 		milestone_reached.emit(coins)
 
+# Saves whenever something worth keeping changes, plus on a timer for the
+# slowly-drifting stats, and when the window closes.
+func _start_autosave() -> void:
+	for sig in [coins_changed, accessories_changed, perch_decor_changed, pet_changed]:
+		sig.connect(save_game)
+	sticker_earned.connect(save_game.unbind(1))
+	var timer := Timer.new()
+	timer.wait_time = AUTOSAVE_SECONDS
+	timer.timeout.connect(save_game)
+	add_child(timer)
+	timer.start()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		save_game()
+
 func _ready() -> void:
 	_init_pet_records()
+	_start_autosave()
 
 	var timer := Timer.new()
 	timer.wait_time = 1.0
@@ -661,6 +946,12 @@ func catch_treat() -> void:
 	stats_changed.emit()
 	award_sticker("catch")
 	add_coins(2)
+
+# A treat that falls on the pet instead of being tapped: a small snack.
+func pet_eats_fallen_treat() -> void:
+	hunger = minf(MAX_STAT, hunger + 8.0)
+	happiness = minf(MAX_STAT, happiness + 2.0)
+	stats_changed.emit()
 
 func has_bell_toy() -> bool:
 	return PETS[active_pet].has("toy_bell")

@@ -75,6 +75,9 @@ func _process(delta: float) -> void:
 			active_treats.erase(treat)
 			continue
 		treat.position.y += TREAT_FALL_SPEED * delta
+		if _pet_catches(treat):
+			_pet_eats_treat(treat)
+			continue
 		if treat.position.y > size.y:
 			active_treats.erase(treat)
 			treat.queue_free()
@@ -121,6 +124,25 @@ func _spawn_treat() -> void:
 	treat.gui_input.connect(_on_treat_input.bind(treat))
 	treat_overlay.add_child(treat)
 	active_treats.append(treat)
+
+# A treat that lands on the pet is hers: the pet's box is trimmed at the
+# sides and top because her art doesn't fill the whole rectangle.
+func _pet_catches(treat: Label) -> bool:
+	var rect: Rect2 = %Petal.get_global_rect()
+	rect = rect.grow_individual(-rect.size.x * 0.2, -rect.size.y * 0.2, -rect.size.x * 0.2, 0.0)
+	return rect.has_point(treat.global_position + treat.size / 2.0)
+
+func _pet_eats_treat(treat: Label) -> void:
+	active_treats.erase(treat)
+	PetalState.pet_eats_fallen_treat()
+	Sfx.pop(self)
+	Feedback.pop(self, "😋 nom!", treat.position)
+	treat.queue_free()
+	if feed_busy:
+		return
+	feed_busy = true
+	await PetCameo.eat(%Petal)
+	feed_busy = false
 
 func _on_treat_input(event: InputEvent, treat: Label) -> void:
 	var is_click: bool = event is InputEventMouseButton and event.pressed
