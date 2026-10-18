@@ -230,6 +230,26 @@ const PETS := {
 			"party": "res://Sprites/backgrounds/gerbil_party.jpg",
 		},
 	},
+	"ginger": {
+		"name": "Ginger",
+		"species": "cat",
+		"cutout": "res://Sprites/ginger_cutout.png",
+		"walk": {"path": "res://Sprites/ginger_run/frame_%02d.png", "count": 4},
+		"jump": {"path": "res://Sprites/ginger_run/frame_%02d.png", "count": 4},
+		"sleep": {"path": "res://Sprites/ginger_sleep/frame_%02d.png", "count": 5},
+		"eat": {"path": "res://Sprites/ginger_eat/frame_%02d.png", "count": 4},
+		"play": {"path": "res://Sprites/ginger_play/frame_%02d.png", "count": 4},
+		"inline_play": true,
+		"brush": {"path": "res://Sprites/ginger_brush/frame_%02d.png", "count": 2},
+		"bath_comic": {"path": "res://Sprites/ginger_bath/frame_%02d.png", "count": 2},
+		"accessories": {
+			"bow": {"icon": "res://Sprites/bow.png", "anchor": {"l": 0.327, "t": 0.025, "r": 0.427, "b": 0.196}, "cost": 0},
+			"flower": {"icon": "res://Sprites/flower.png", "anchor": {"l": 0.573, "t": 0.025, "r": 0.673, "b": 0.196}, "cost": 0},
+			"sunglasses": {"icon": "res://Sprites/sunglasses.png", "anchor": {"l": 0.373, "t": 0.294, "r": 0.633, "b": 0.491}, "cost": 15},
+			"scarf": {"icon": "res://Sprites/scarf.png", "anchor": {"l": 0.333, "t": 0.515, "r": 0.667, "b": 0.699}, "cost": 15},
+		},
+		"exclusive_groups": [],
+	},
 	# Pets added from separately supplied art. Each shows up in the picker only
 	# once its cutout exists in Sprites/ (see available_pet_ids).
 	"marshmallow": {
