@@ -231,7 +231,7 @@ const PETS := {
 		},
 	},
 	"ginger": {
-		"name": "Ginger",
+		"name": "Honeybun 🍯",
 		"species": "cat",
 		"cutout": "res://Sprites/ginger_cutout.png",
 		"walk": {"path": "res://Sprites/ginger_run/frame_%02d.png", "count": 4},
