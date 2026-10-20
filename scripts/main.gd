@@ -79,6 +79,7 @@ func _ready() -> void:
 	%LivingButton.pressed.connect(_show_room.bind("living"))
 	%DressUpButton.pressed.connect(_show_room.bind("dressup"))
 	%GroomingButton.pressed.connect(_show_room.bind("grooming"))
+	%SpaButton.pressed.connect(_show_room.bind("spa"))
 	%ObstacleButton.pressed.connect(_show_room.bind("obstacle"))
 	%GardenButton.pressed.connect(_show_room.bind("garden"))
 	%PhotoButton.pressed.connect(_show_room.bind("photo"))

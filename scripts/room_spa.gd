@@ -10,9 +10,10 @@ const Confetti = preload("res://scripts/confetti.gd")
 
 const BRUSH_TAPS := 4
 const BUBBLE_SECONDS := 3.0
-const MASK_SECONDS := 3.0
+const MASK_SECONDS := 60
 const SLEEP_SECONDS := 4.0
 const TRAY_POS := Vector2(1010, 330)
+const HINT := "👆 Tap her to brush   🥒 Drag the cucumbers to her eyes"
 const TREATMENTS := ["brush", "bubbles", "mask", "sleep"]
 
 @onready var background: TextureRect = %Background
@@ -38,7 +39,6 @@ func _ready() -> void:
 	PetCameo.spawn(pet)
 	pet.mouse_filter = Control.MOUSE_FILTER_STOP
 	pet.gui_input.connect(_on_pet_input)
-	%BackButton.pressed.connect(func() -> void: PetalState.navigate_to_room.emit("grooming"))
 	bubble_button.pressed.connect(_toggle_bubbles)
 	sleep_button.pressed.connect(_sleep)
 
@@ -56,7 +56,7 @@ func _ready() -> void:
 	bubble_timer.timeout.connect(_bubble_tick)
 	add_child(bubble_timer)
 
-	hint.text = "👆 Tap her to brush   🥒 Drag the cucumbers to her eyes"
+	hint.text = HINT
 	_refresh_progress()
 
 func _refresh_progress() -> void:
@@ -149,9 +149,12 @@ func _drop_cucumbers() -> void:
 		cucumbers.z_index = 5
 		for i in range(3):
 			_drift("✨", 90.0)
-		await get_tree().create_timer(MASK_SECONDS).timeout
-		if not is_instance_valid(self):
-			return
+		for left in range(MASK_SECONDS, 0, -1):
+			hint.text = "🥒 Relaxing... %d" % left
+			await get_tree().create_timer(1.0).timeout
+			if not is_instance_valid(self):
+				return
+		hint.text = HINT
 		_finish("mask", "🥒 so fresh!")
 		cucumbers.z_index = 0
 		mask_on = false
@@ -160,7 +163,7 @@ func _drop_cucumbers() -> void:
 # --- Sleep ------------------------------------------------------------------
 
 func _sleep() -> void:
-	if sleeping or mask_on:
+	if sleeping:
 		return
 	sleeping = true
 	sleep_button.disabled = true
