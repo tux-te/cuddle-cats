@@ -3,6 +3,7 @@ extends Control
 const Feedback = preload("res://scripts/room_feedback.gd")
 const PetCameo = preload("res://scripts/pet_cameo.gd")
 const PartyFilm = preload("res://scripts/party_film.gd")
+const PartyVideo = preload("res://scripts/party_video.gd")
 
 @onready var celebrate_button: Button = %CelebrateButton
 @onready var dance_button: Button = %DanceButton
@@ -50,6 +51,7 @@ const BAD_WORDS := ["damn", "hell", "crap", "shit", "fuck", "fucking", "bitch", 
 
 var karaoke_panel: PanelContainer
 var film_studio: PanelContainer
+var video_studio: PanelContainer
 var karaoke_label: Label
 var karaoke_stop: Button
 var mic_player: AudioStreamPlayer
@@ -63,7 +65,6 @@ var level_bar: ProgressBar
 var name_heard := false
 var bad_heard := false
 var speech_supported := false
-var heard_poll := 0.0
 
 func _setup_karaoke() -> void:
 	karaoke_panel = PanelContainer.new()
@@ -103,16 +104,36 @@ func _setup_karaoke() -> void:
 	film_studio.closed.connect(_on_film_closed)
 	%FilmButton.pressed.connect(_on_film)
 
+	video_studio = PartyVideo.new()
+	add_child(video_studio)
+	video_studio.setup(self, %Petal)
+	video_studio.closed.connect(_on_video_closed)
+	%VideoButton.pressed.connect(_on_video)
+
+func _on_video() -> void:
+	if karaoke_busy:
+		return
+	_set_extras_disabled(true)
+	video_studio.open_studio()
+
+func _on_video_closed() -> void:
+	_set_extras_disabled(false)
+
+# Karaoke, Film and Video each take over the top of the screen, so only one
+# can be open at a time.
+func _set_extras_disabled(disabled: bool) -> void:
+	%KaraokeButton.disabled = disabled
+	%FilmButton.disabled = disabled
+	%VideoButton.disabled = disabled
+
 func _on_film() -> void:
 	if karaoke_busy:
 		return
-	%FilmButton.disabled = true
-	%KaraokeButton.disabled = true
+	_set_extras_disabled(true)
 	film_studio.open_studio()
 
 func _on_film_closed() -> void:
-	%FilmButton.disabled = false
-	%KaraokeButton.disabled = false
+	_set_extras_disabled(false)
 
 func _ensure_karaoke_buses() -> void:
 	if AudioServer.get_bus_index(MUTE_BUS) == -1:
@@ -134,8 +155,7 @@ func _on_karaoke() -> void:
 	if karaoke_busy:
 		return
 	karaoke_busy = true
-	%KaraokeButton.disabled = true
-	%FilmButton.disabled = true
+	_set_extras_disabled(true)
 	karaoke_panel.visible = true
 	karaoke_stop.visible = false
 	OS.request_permission("RECORD_AUDIO")
@@ -157,7 +177,6 @@ func _on_karaoke() -> void:
 	strong_time = 0.0
 	name_heard = false
 	bad_heard = false
-	heard_poll = 0.0
 	speech_supported = _start_speech()
 	level_bar.visible = true
 	karaoke_label.text = "🎤 Sing a song about %s!" % PetalState.pet_name
@@ -183,18 +202,6 @@ func _process(delta: float) -> void:
 		loud_time += delta
 	if db > -20.0:
 		strong_time += delta
-	heard_poll += delta
-	if speech_supported and heard_poll >= 0.5:
-		heard_poll = 0.0
-		_name_check()
-	if bad_heard:
-		karaoke_label.text = "🙉 Oops! %s doesn't like those words!" % PetalState.pet_name
-	elif name_heard:
-		karaoke_label.text = "👂 %s heard their name!" % PetalState.pet_name
-	elif sing_time > 3.0 and strong_time < 0.5:
-		karaoke_label.text = "🔊 Louder! %s wants to hear you!" % PetalState.pet_name
-	elif strong_time >= 1.5:
-		karaoke_label.text = "🌟 Wow, what a voice!"
 	if sing_time >= MAX_SING_SECONDS:
 		_stop_karaoke()
 
@@ -202,7 +209,6 @@ func _stop_karaoke() -> void:
 	if not singing:
 		return
 	singing = false
-	_name_check()
 	_stop_speech()
 	karaoke_stop.visible = false
 	level_bar.visible = false
@@ -220,6 +226,13 @@ func _stop_karaoke() -> void:
 		await playback_player.finished
 		if not is_instance_valid(self):
 			return
+	# Feedback only comes after the song: give the speech recogniser a
+	# moment to finish, then the pet says what they heard.
+	karaoke_label.text = "🤔 %s is thinking about your song..." % PetalState.pet_name
+	await get_tree().create_timer(1.5).timeout
+	if not is_instance_valid(self):
+		return
+	_name_check()
 	_rate_song()
 
 func _rate_song() -> void:
@@ -264,8 +277,7 @@ func _end_karaoke() -> void:
 	if not is_instance_valid(self):
 		return
 	karaoke_panel.visible = false
-	%KaraokeButton.disabled = false
-	%FilmButton.disabled = false
+	_set_extras_disabled(false)
 	karaoke_busy = false
 
 func _exit_tree() -> void:

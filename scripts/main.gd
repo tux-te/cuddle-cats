@@ -21,6 +21,8 @@ const ROOMS := {
 	"photo": preload("res://scenes/rooms/photo_booth.tscn"),
 	"photobook": preload("res://scenes/rooms/photo_book.tscn"),
 	"party": preload("res://scenes/rooms/party.tscn"),
+	"cathouse": preload("res://scenes/rooms/cat_house.tscn"),
+	"week": preload("res://scenes/rooms/schedule.tscn"),
 	"stickers": preload("res://scenes/rooms/sticker_book.tscn"),
 }
 
@@ -83,6 +85,7 @@ func _ready() -> void:
 	%GardenButton.pressed.connect(_show_room.bind("garden"))
 	%PhotoButton.pressed.connect(_show_room.bind("photo"))
 	%PartyButton.pressed.connect(_show_room.bind("party"))
+	%WeekButton.pressed.connect(_show_room.bind("week"))
 	%StickersButton.pressed.connect(_show_room.bind("stickers"))
 
 	pets_button.pressed.connect(_open_pet_picker)

@@ -1,5 +1,7 @@
 extends Node
 
+const VisitorExport = preload("res://scripts/visitor_check.gd")
+
 # Care stats for Princess Petal. All stats are 0-100; 100 is best.
 # Decay is slow and mood language stays gentle - this is a game for a
 # 5-year-old, so nothing here should ever feel like "failing".
@@ -486,6 +488,11 @@ func _reset_progress() -> void:
 	nicknames = {}
 	coins = 0
 	earned_stickers = {}
+	schedule = {}
+	chat_log = []
+	house_wants = {}
+	house_design = {}
+	house_known = {}
 	visiting_friend = ""
 	photos.clear()
 	_init_pet_records()
@@ -499,8 +506,11 @@ func save_game() -> void:
 	cfg.set_value("game", "active_pet", active_pet)
 	cfg.set_value("game", "coins", coins)
 	cfg.set_value("game", "stickers", earned_stickers)
+	cfg.set_value("game", "schedule", schedule)
+	cfg.set_value("game", "house", _save_house())
 	cfg.set_value("game", "pet_records", pet_records)
 	cfg.save(slot_path(current_slot))
+	VisitorExport.export_if_allowed(current_slot, chat_log, schedule)
 
 func _load_slot(slot: int) -> void:
 	var cfg := ConfigFile.new()
@@ -518,6 +528,17 @@ func _load_slot(slot: int) -> void:
 		for id in saved_stickers:
 			if STICKERS.has(id):
 				earned_stickers[id] = bool(saved_stickers[id])
+	_load_house(cfg.get_value("game", "house", {}))
+	var saved_schedule = cfg.get_value("game", "schedule", {})
+	if saved_schedule is Dictionary:
+		for date in saved_schedule:
+			var entries: Array = []
+			if saved_schedule[date] is Array:
+				for entry in saved_schedule[date]:
+					if entry is Dictionary and entry.has("name"):
+						entries.append({"name": String(entry["name"]), "start": int(entry.get("start", -1)), "end": int(entry.get("end", -1)), "place": String(entry.get("place", ""))})
+			if not entries.is_empty():
+				schedule[String(date)] = entries
 	# Merge key by key onto the defaults so pets or accessories added after
 	# the save was made still start with sensible values.
 	var saved_records = cfg.get_value("game", "pet_records", {})
@@ -773,8 +794,16 @@ const STICKERS := {
 	"bell": {"emoji": "🔔", "label": "Jingle Bells"},
 	"swim": {"emoji": "🏊", "label": "Splash Time"},
 	"spa": {"emoji": "💆", "label": "Spa Day"},
+	"week": {"emoji": "📅", "label": "Whole Week"},
+	"cathouse": {"emoji": "🏡", "label": "Dream House"},
 }
 var earned_stickers := {}
+
+# The princess calendar (room_schedule.gd): "YYYY-MM-DD" -> events in time
+# order, each {"name", "start" and "end" in minutes (-1 = all day), "place"}.
+var schedule := {}
+# Texts with the pet, newest last: {"from": "pet" or "you", "text": String}.
+var chat_log: Array = []
 
 # Photo Book: snapshots taken in the Photo Booth, newest last. Capped so
 # the game doesn't hoard an unbounded number of full-screen textures. Each
@@ -998,6 +1027,80 @@ func spa_day_complete() -> void:
 	stats_changed.emit()
 	award_sticker("spa")
 	add_coins(6)
+
+# The Cat House (room_cathouse.gd). Every pet secretly wants one choice in each
+# category; the survey uncovers them and the design is judged against them.
+const HOUSE_CHOICES := {
+	"color": ["pink", "blue", "purple", "yellow", "green"],
+	"pattern": ["hearts", "stars", "flowers", "stripes"],
+	"height": ["tall", "short"],
+	"post": ["rope", "carpet", "tree"],
+}
+var house_wants := {}  # pet id -> {category: choice}
+var house_design := {} # pet id -> {category: choice}
+var house_known := {}  # pet id -> {category: true} once the survey found it
+
+func house_wants_for_pet() -> Dictionary:
+	# Existing wishes never change; only categories added later get a first pick.
+	if not house_wants.has(active_pet):
+		house_wants[active_pet] = {}
+	for category in HOUSE_CHOICES:
+		if not house_wants[active_pet].has(category):
+			house_wants[active_pet][category] = HOUSE_CHOICES[category].pick_random()
+	return house_wants[active_pet]
+
+func house_design_for_pet() -> Dictionary:
+	if not house_design.has(active_pet):
+		house_design[active_pet] = {}
+	for category in HOUSE_CHOICES:
+		if not house_design[active_pet].has(category):
+			house_design[active_pet][category] = HOUSE_CHOICES[category][0]
+	return house_design[active_pet]
+
+func house_known_for_pet() -> Dictionary:
+	if not house_known.has(active_pet):
+		house_known[active_pet] = {}
+	return house_known[active_pet]
+
+# Each match pleases her; getting all four earns the Dream House sticker.
+func house_judged(matches: int) -> void:
+	happiness = minf(MAX_STAT, happiness + 5.0 * matches)
+	stats_changed.emit()
+	add_coins(matches)
+	if matches == HOUSE_CHOICES.size():
+		award_sticker("cathouse")
+		add_coins(6)
+
+func _save_house() -> Dictionary:
+	return {"wants": house_wants, "design": house_design, "known": house_known}
+
+func _load_house(saved) -> void:
+	if not (saved is Dictionary):
+		return
+	for key in ["wants", "design", "known"]:
+		var by_pet = saved.get(key, {})
+		if not (by_pet is Dictionary):
+			continue
+		var target: Dictionary = {"wants": house_wants, "design": house_design, "known": house_known}[key]
+		for id in by_pet:
+			if not PETS.has(id) or not (by_pet[id] is Dictionary):
+				continue
+			var entry := {}
+			for category in HOUSE_CHOICES:
+				var value = by_pet[id].get(category)
+				if key == "known":
+					if value == true:
+						entry[category] = true
+				elif HOUSE_CHOICES[category].has(value):
+					entry[category] = value
+			target[id] = entry
+
+# Finishing a whole week of the planner (see room_schedule.gd).
+func week_complete() -> void:
+	happiness = minf(MAX_STAT, happiness + 15.0)
+	stats_changed.emit()
+	award_sticker("week")
+	add_coins(5)
 
 func ring_bell_locally() -> void:
 	happiness = minf(MAX_STAT, happiness + 15.0)

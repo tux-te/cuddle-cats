@@ -59,13 +59,13 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -395.0
+offset_left = -445.0
 offset_top = -110.0
-offset_right = -205.0
+offset_right = -275.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "🎉 Celebrate!"
 
 [node name="DanceButton" type="Button" parent="."]
@@ -76,13 +76,13 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -195.0
+offset_left = -265.0
 offset_top = -110.0
-offset_right = -5.0
+offset_right = -95.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "💃 Dance"
 
 [node name="KaraokeButton" type="Button" parent="."]
@@ -93,13 +93,13 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = 5.0
+offset_left = -85.0
 offset_top = -110.0
-offset_right = 195.0
+offset_right = 85.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "🎤 Karaoke"
 
 [node name="FilmButton" type="Button" parent="."]
@@ -110,11 +110,28 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = 205.0
+offset_left = 95.0
 offset_top = -110.0
-offset_right = 395.0
+offset_right = 265.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "🎬 Film"
+
+[node name="VideoButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 275.0
+offset_top = -110.0
+offset_right = 445.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 20
+text = "📹 Video"

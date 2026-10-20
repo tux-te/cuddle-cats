@@ -29,6 +29,12 @@ func _ready() -> void:
 	%PlayButton.text = "%s Play" % PetalState.toy_emoji()
 	%TreatCatchButton.text = "%s Treat Catch" % PetalState.food_emoji()
 	%PlayButton.pressed.connect(_on_play)
+	var house_button := Button.new()
+	house_button.text = "🏡 Cat House"
+	house_button.custom_minimum_size = %PlayButton.custom_minimum_size
+	house_button.add_theme_font_size_override("font_size", 20)
+	house_button.pressed.connect(func() -> void: PetalState.navigate_to_room.emit("cathouse"))
+	%PlayButton.get_parent().add_child(house_button)
 	%PlayButton.icon = load("res://Sprites/toy_wand.png")
 	%PlayButton.expand_icon = true
 	%PlayButton.add_theme_constant_override("icon_max_width", 36)

@@ -14,12 +14,12 @@ const PetCameo = preload("res://scripts/pet_cameo.gd")
 const Sfx = preload("res://scripts/sfx.gd")
 
 const MAX_MOVIES := 5
-const MAX_STEPS := 20
-const MAX_SECONDS := 60.0
 
-# action id -> button label. "speak" is the pet's own noise (see _speak_word).
+# action id -> button label. "speak" / "sound2" are the pet's own noises
+# (see SOUNDS - their button labels are refreshed for the active pet).
 const ACTIONS := {
 	"speak": "💬 Speak",
+	"sound2": "💬 Purr",
 	"sleep": "😴 Sleep",
 	"dance": "💃 Dance",
 	"jump": "🤸 Jump",
@@ -29,10 +29,27 @@ const ACTIONS := {
 	"sing": "🎵 Sing",
 }
 
+# What each kind of pet says: [main noise, second noise].
+const SOUNDS := {
+	"cat": ["Meow!", "Purr..."],
+	"dog": ["Woof!", "Arf arf!"],
+	"bird": ["Tweet!", "Chirp!"],
+	"gerbil": ["Squeak!", "Eek!"],
+	"bunny": ["Squeak!", "Eek!"],
+}
+
+# The kid-safe emoji the pet is allowed to "say", and the word that says each.
+const APPROVED_EMOJIS := ["😀", "😍", "🥰", "😂", "😴", "🎉", "💖", "⭐", "🌈", "🌸", "🎵", "🐾"]
+const EMOJI_WORDS := {
+	"smile": "😀", "happy": "😀", "love": "😍", "heart": "💖", "kiss": "🥰", "laugh": "😂", "funny": "😂",
+	"tired": "😴", "party": "🎉", "star": "⭐", "rainbow": "🌈", "flower": "🌸", "music": "🎵", "paw": "🐾",
+}
+
 # Spoken word -> action.
 const VOICE := {
 	"meow": "speak", "woof": "speak", "bark": "speak", "tweet": "speak", "squeak": "speak",
 	"speak": "speak", "talk": "speak",
+	"purr": "sound2", "arf": "sound2", "chirp": "sound2", "eek": "sound2",
 	"sleep": "sleep", "nap": "sleep", "night": "sleep", "bed": "sleep",
 	"dance": "dance", "boogie": "dance",
 	"jump": "jump", "hop": "jump",
@@ -61,6 +78,7 @@ var poll := 0.0
 
 var status_label: Label
 var action_box: HFlowContainer
+var action_buttons := {}
 var record_button: Button
 var movie_box: HFlowContainer
 
@@ -69,7 +87,11 @@ func setup(host_node: Control, pet_node: TextureRect) -> void:
 	pet = pet_node
 	visible = false
 	set_anchors_preset(Control.PRESET_CENTER_TOP)
-	position = Vector2(-330, 70)
+	# Offsets, not position: setup runs after this panel is in the tree, where
+	# `position` would be taken as absolute and land off-screen.
+	offset_left = -330.0
+	offset_right = 330.0
+	offset_top = 70.0
 	custom_minimum_size = Vector2(660, 0)
 	grow_horizontal = Control.GROW_DIRECTION_BOTH
 
@@ -90,6 +112,13 @@ func setup(host_node: Control, pet_node: TextureRect) -> void:
 		b.add_theme_font_size_override("font_size", 20)
 		b.pressed.connect(_request.bind(id))
 		action_box.add_child(b)
+		action_buttons[id] = b
+	for emoji in APPROVED_EMOJIS:
+		var e := Button.new()
+		e.text = emoji
+		e.add_theme_font_size_override("font_size", 24)
+		e.pressed.connect(_request.bind("emoji:" + emoji))
+		action_box.add_child(e)
 
 	record_button = Button.new()
 	record_button.add_theme_font_size_override("font_size", 22)
@@ -108,6 +137,9 @@ func setup(host_node: Control, pet_node: TextureRect) -> void:
 
 func open_studio() -> void:
 	visible = true
+	var sounds := _sounds()
+	action_buttons["speak"].text = "💬 " + String(sounds[0]).trim_suffix("!")
+	action_buttons["sound2"].text = "💬 " + String(sounds[1]).trim_suffix("!").trim_suffix("...")
 	_show_idle()
 
 func close_studio() -> void:
@@ -179,11 +211,9 @@ func _process(delta: float) -> void:
 		if poll >= 0.3:
 			poll = 0.0
 			_heard(_take_heard_words())
-	if clock >= MAX_SECONDS:
-		_cut()
 
 func _request(action: String) -> void:
-	if mode != Mode.RECORDING or steps.size() + queue.size() >= MAX_STEPS:
+	if mode != Mode.RECORDING:
 		return
 	queue.append(action)
 	if not running:
@@ -251,19 +281,20 @@ func _play_movie(index: int) -> void:
 
 # --- The tricks ---------------------------------------------------------------
 
-func _speak_word() -> String:
-	match String(PetalState.PETS[PetalState.active_pet].get("species", "cat")):
-		"dog": return "Woof!"
-		"bird": return "Tweet!"
-		"gerbil", "bunny": return "Squeak!"
-	return "Meow!"
+func _sounds() -> Array:
+	var species := String(PetalState.PETS[PetalState.active_pet].get("species", "cat"))
+	return SOUNDS.get(species, SOUNDS["cat"])
 
 func _perform(action: String) -> void:
 	var at := pet.global_position + Vector2(pet.size.x * 0.6, -10)
 	match action:
 		"speak":
 			Sfx.pop(host)
-			Feedback.pop(host, _speak_word(), at)
+			Feedback.pop(host, _sounds()[0], at)
+			await PetCameo.jump_for_joy(pet)
+		"sound2":
+			Sfx.chime(host)
+			Feedback.pop(host, _sounds()[1], at)
 			await PetCameo.jump_for_joy(pet)
 		"sleep":
 			Feedback.pop(host, "💤 zzz...", at)
@@ -282,7 +313,20 @@ func _perform(action: String) -> void:
 				Feedback.pop(host, "🎵 la la la", at)
 				await PetCameo.dance(pet, 1)
 		_:
-			await PetCameo.perform_trick(pet, action)
+			if action.begins_with("emoji:"):
+				await _say_emoji(action.trim_prefix("emoji:"), at)
+			else:
+				await PetCameo.perform_trick(pet, action)
+
+# The pet "says" an approved emoji with a happy hop. Anything not on the
+# approved list (e.g. from an old or edited movie) is ignored.
+func _say_emoji(emoji: String, at: Vector2) -> void:
+	if not APPROVED_EMOJIS.has(emoji):
+		return
+	Sfx.pop(host)
+	for offset in [Vector2(0, -50), Vector2(-45, -20), Vector2(45, -20)]:
+		Feedback.pop(host, emoji, at + offset)
+	await PetCameo.jump_for_joy(pet)
 
 # --- Voice commands -----------------------------------------------------------
 # Web build only, via the browser's speech recognition (Chrome sends the
@@ -327,3 +371,5 @@ func _heard(text: String) -> void:
 				word += ch
 		if VOICE.has(word):
 			_request(VOICE[word])
+		elif EMOJI_WORDS.has(word):
+			_request("emoji:" + EMOJI_WORDS[word])

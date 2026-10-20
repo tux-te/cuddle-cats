@@ -1,0 +1,1161 @@
+extends Control
+
+# The princess calendar. Pick a date and type an event like
+# "school 8:00-3:00 at Watkins" (name, times, place), then watch your pet copy
+# the week. School is a classroom where she wears glasses and reads books. You
+# and your pet can also text each other, and she texts you what she is up to.
+
+const Feedback = preload("res://scripts/room_feedback.gd")
+const PetCameo = preload("res://scripts/pet_cameo.gd")
+const Confetti = preload("res://scripts/confetti.gd")
+
+const DAYS := ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+const MONTHS := ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+const STEP_SECONDS := 5
+const TYPING_SECONDS := 5.0
+const PET_SIZE := Vector2(280, 260)
+
+# bg: [room id for PetalState.room_bg, default picture]; school draws its own.
+const ACTIVITIES := {
+	"school": {"emoji": "🏫", "label": "School", "text": "I'm at school! 📚 I'm wearing my glasses 👓"},
+	"sports": {"emoji": "⚽", "label": "Sports", "text": "Sports day! ⚽ I'm kicking the ball!", "bg": ["garden", "res://Sprites/backgrounds/garden_sunny.jpg"]},
+	"home": {"emoji": "🏠", "label": "Home", "text": "Home time! 🍓 Snacks then a nap 😴", "bg": ["living", "res://Sprites/backgrounds/living_room.jpg"]},
+	"music": {"emoji": "🎵", "label": "Music", "text": "Music class! 🎵 La la la!", "bg": ["party", "res://Sprites/backgrounds/party_room.jpg"]},
+	"swim": {"emoji": "🏊", "label": "Swimming", "text": "Swimming! 💦 Splash splash!", "bg": ["swim", "res://Sprites/backgrounds/swim_pool.jpg"]},
+	"playdate": {"emoji": "🧸", "label": "Playdate", "text": "Playdate with friends! 🎈", "bg": ["garden", "res://Sprites/backgrounds/garden_sunny.jpg"]},
+	"other": {"emoji": "📌", "label": "Event", "text": "Look, an event! 🎀", "bg": ["living", "res://Sprites/backgrounds/living_room.jpg"]},
+}
+
+# Words that mean each activity, for typed plans and typed texts.
+const WORDS := {
+	"school": ["school", "class", "teacher", "lesson", "read", "book", "homework", "library"],
+	"sports": ["sport", "sports", "football", "soccer", "ball", "run", "gym", "game"],
+	"home": ["home", "house", "nap", "rest", "tea", "dinner", "lunch"],
+	"music": ["music", "sing", "song", "dance", "piano"],
+	"swim": ["swim", "swimming", "pool"],
+	"playdate": ["playdate", "friend", "friends", "play"],
+}
+
+# Misspellings she has learned.
+const ALIASES := {
+	"shcool": "school", "actividys": "activities", "activitys": "activities", "activity": "activities",
+	"animl": "animal", "emojes": "emojis", "emoji": "emojis", "pumkin": "pumpkin", "chrismas": "christmas",
+	"valentanes": "valentines", "valentines": "valentines", "alo": "all", "meave": "meow", "meaw": "meow",
+	"setings": "settings", "settings": "settings", "resevie": "", "sitter": "babysitter", "baby": "baby",
+	"vent": "vent", "mabe": "maybe", "mabye": "maybe", "yup": "yes", "yep": "yes", "nope": "no", "ew": "eel", "eww": "eel", "vacatoin": "vacation", "vacations": "vacation", "richmand": "richmond", "virgin": "virginia", "wisconson": "wisconsin", "candoa": "canada", "cars": "car", "trips": "trip", "presant": "present", "presants": "present", "coustume": "costume", "costumes": "costume", "gifts": "gift", "books": "book", "ruthie": "ruthie", "norakate": "norakate", "nora": "norakate", "kate": "norakate",
+}
+
+# Words she knows, and what she says about them.
+const REPLIES := {
+	"name": "I'm %NAME%! 🐱", "activities": "I love activities! 📅 School, sports, music...",
+	"school": "School is fun! 📚👓", "sports": "Sports! ⚽ Kick kick!", "happy": "I'm so happy! 😸✨",
+	"dance": "Let's dance! 💃🎵", "video": "Ooh, a video! 🎬", "times": "Check the planner for times! ⏰",
+	"dog": "Woof woof! 🐶 Dogs are my friends.", "pet": "Pets are the best! 🐾", "bird": "Tweet tweet! 🐦",
+	"emojis": "I love emojis! 😻🎉🌈", "cute": "You're cuter! 🥰", "animal": "I love animals! 🐾🦁🐶🐦",
+	"no": "Oh no! 😿", "thank": "You're welcome! 😸", "you": "Me? 😺", "whatever": "Hehe, whatever! 😹",
+	"sure": "Okay! 👍", "yes": "Yay! 😸", "mouse": "A mouse?! 🐭 Where?!", "amazing": "Amazing! 🌟",
+	"here": "I'm here! 🐾", "me": "You and me! 💕", "pj": "PJ is my pal! 🧸", "meow": "Meow meow! 😻",
+	"ruthie": "Ruthie! 💖 Hi Ruthie!", "norakate": "Hi Norakate! 🎀", "lion": "Roar! 🦁 A big cat, like me!",
+	"net": "Ooh, a net! 🥅", "sleep": "Night night! 😴💤", "crate": "My crate is cosy! 📦", "cat": "Meow! I'm a cat! 🐱",
+	"toy": "I love my toys! 🧶🎾", "ball": "Ball! ⚽ Throw it!", "line": "Line up! 🐾🐾🐾",
+	"well": "Well well well! 😸", "pumpkin": "Pumpkin! 🎃", "christmas": "Christmas! 🎄🎁", "halloween": "Halloween! 🎃👻",
+	"valentines": "Happy Valentine's! 💝", "day": "Today: %TODAY%", "pillow": "Soft pillow! 🛏️", "bed": "Bedtime! 😴",
+	"box": "A box! 📦 I'm going in!", "food": "Yum! 🍓😋", "muffin": "Muffin! 🧁😋", "claw": "I scratch with my claws! 🐾",
+	"flower": "Pretty flowers! 🌷", "garden": "I love the garden! 🌷🦋", "groomer": "The groomer makes me fluffy! ✨",
+	"room": "Which room? 🏠", "groom": "Brush brush! ✨", "bath": "Splash! 🛁🫧", "soup": "Soup! 🍲 Slurp!",
+	"soap": "Bubbly soap! 🧼", "tub": "Bath tub time! 🛁", "water": "Water! 💦", "long": "So long! 📏",
+	"short": "Short and cute! 😸", "love": "Love you more! 💕💕", "baby": "Aww, a baby! 🍼", "babysitter": "My babysitter is nice! 💕",
+	"kid": "Hi kid! 👋", "kitten": "A kitten! 😻", "settings": "Settings? I like mine fluffy! ⚙️",
+	"annoying": "Oh no, annoying! 😾 Tell me more.", "problems": "Oh no, a problem? 😿 I'm here for you.",
+	"vent": "You can vent to me. 💕 I'm listening.", "tree": "I climb trees! 🌳", "chicken": "Cluck cluck! 🐔",
+	"rap": "Yo yo yo! 🎤😼", "learn": "I love to learn! 🧠📚", "travel": "Let's travel! ✈️🌍", "cart": "Vroom, a cart! 🛒", "car": "Vroom vroom! 🚗",
+	"trip": "A trip! 🧳 Where are we going?", "vacation": "Vacation! 🏖️😎", "richmond": "Richmond! 🏙️ Let's go!",
+	"virginia": "Virginia! 🌳 Pretty!", "wisconsin": "Wisconsin! 🧀 Cheese!", "canada": "Canada! 🍁 Oh Canada!",
+	"hate": "Oh no, that's a big feeling! 😿 Want to vent?", "purr": "Purrrrr... 😻💤", "house": "Home sweet home! 🏠", "gift": "A gift?! 🎁 For me?", "present": "A present! 🎁✨",
+	"costume": "Ooh, a costume! 🎭👑", "harry": "Harry Potter! ⚡🧙", "potter": "Harry Potter! ⚡🧙", "book": "I love books! 📖👓", "tv": "TV time! 📺🍿", "rat": "A rat?! 🐀 Eek!", "hi": "Meow! 🐾 Hi %YOU%!",
+	"fu": "Fun! 🎉", "fun": "Fun! 🎉😸", "funny": "Hehe, funny! 😹", "maybe": "Maybe... 🤔", "crush": "Ooh, a crush?! 😳💕 Who is it?",
+	"lucy": "Lucy! 💖 Hi Lucy!", "eloise": "Eloise! 💖 Hi Eloise!", "fish": "Fishy! 🐟😋", "eel": "Eww, an eel! 🤢 Gross! 😿 Sad... bleh!!!",
+	"grow": "I'm growing! 🌱📈", "plant": "A plant! 🪴 Grow, grow!", "ant": "An ant! 🐜 Tiny!", "bug": "A bug! 🐛 Ooh!",
+	"cool": "Cool! 😎", "can": "I can! 😸", "now": "Right now! ⏰", "tell": "Tell me! 👂", "answer": "The answer? 🤔",
+	"question": "A question? ❓ Ask me!", "riddle": "Ooh, a riddle! 🧩", "joke": "Ooh, a joke! 😹",
+}
+# Little words she knows but has nothing special to say about.
+const FILLER := ["a", "i", "but", "as", "it", "them", "she", "him", "all", "on", "to", "of", "is", "the", "and", "an", "my", "we", "do", "can", "so", "in", "its", "im"]
+
+# Tell her you like one of these and she gets excited about it.
+const LIKE_WORDS := ["like", "love", "luv", "heart", "enjoy", "favorite", "favourite"]
+const THINGS := ["book", "tv", "video", "toy", "ball", "gift", "present", "costume", "harry", "potter", "flower", "garden", "muffin", "food", "soup", "pumpkin", "christmas", "halloween", "valentines", "cat", "dog", "bird", "mouse", "lion", "kitten", "chicken", "tree", "pillow", "bed", "box", "rap", "dance", "sports", "school", "bath", "emojis", "animal", "learn", "travel", "cart", "car", "trip", "vacation", "richmond", "virginia", "wisconsin", "canada", "house"]
+
+# Animal names she knows: name -> emoji.
+const ANIMALS := {
+	"horse": "🐴", "cow": "🐮", "pig": "🐷", "sheep": "🐑", "duck": "🦆", "fish": "🐟", "frog": "🐸", "bear": "🐻",
+	"fox": "🦊", "wolf": "🐺", "rabbit": "🐰", "bunny": "🐰", "hamster": "🐹", "gerbil": "🐹", "turtle": "🐢",
+	"snake": "🐍", "monkey": "🐵", "elephant": "🐘", "giraffe": "🦒", "zebra": "🦓", "tiger": "🐯", "panda": "🐼",
+	"penguin": "🐧", "owl": "🦉", "bee": "🐝", "butterfly": "🦋", "spider": "🕷️", "dolphin": "🐬", "whale": "🐳",
+	"shark": "🦈", "octopus": "🐙", "crab": "🦀", "deer": "🦌", "squirrel": "🐿️", "koala": "🐨", "kangaroo": "🦘",
+	"parrot": "🦜", "kiwi": "🥝", "unicorn": "🦄", "dinosaur": "🦖", "dragon": "🐉", "puppy": "🐶", "goat": "🐐",
+	"llama": "🦙", "hedgehog": "🦔", "bat": "🦇", "ant": "🐜", "ladybug": "🐞", "swan": "🦢", "flamingo": "🦩",
+	"peacock": "🦚", "seal": "🦭", "otter": "🦦", "camel": "🐫", "gorilla": "🦍", "raccoon": "🦝", "skunk": "🦨",
+}
+
+const JOKES := [
+	"Why did the cat sit on the computer? To keep an eye on the mouse! 🐭😹",
+	"What do cats eat for breakfast? Mice Krispies! 🥣😹",
+	"What do you call a pile of kittens? A meowtain! ⛰️😹",
+	"Why are cats bad storytellers? They only have one tail! 😹",
+	"What's a cat's favourite colour? Purrple! 💜😹",
+	"What do you get if you cross a cat with a lemon? A sour puss! 🍋😹",
+]
+# [riddle, words that are the answer, the answer to tell her]
+const RIDDLES := [
+	["I have keys but no locks and a space but no room. What am I? ⌨️", ["keyboard"], "a keyboard"],
+	["What has hands but can't clap? ⏰", ["clock", "watch"], "a clock"],
+	["What gets wetter the more it dries? 🚿", ["towel"], "a towel"],
+	["I'm tall when I'm young and short when I'm old. What am I? 🕯️", ["candle"], "a candle"],
+	["What has four legs, whiskers and says meow? 🐾", ["cat", "me", "you", "kitten"], "a cat, silly!"],
+	["What can you catch but never throw? 🤧", ["cold"], "a cold"],
+]
+
+const QUICK := {
+	"hi": "👋 Hi!",
+	"love": "❤️ Love you",
+	"doing": "❓ What's today?",
+	"hungry": "🍓 Hungry?",
+}
+
+var view_year := 2026
+var view_month := 1
+var selected := "" # date key of the highlighted day, "YYYY-MM-DD"
+var month_label: Label = null
+var grid: GridContainer = null
+var day_title: Label = null
+var day_list: VBoxContainer = null
+var what_input: LineEdit = null
+var where_input: LineEdit = null
+var go_input: LineEdit = null
+var leave_input: LineEdit = null
+var riddle_answer: Array = []
+var riddle_reveal := ""
+var chat_input: LineEdit = null
+var run_id := 0
+var planner: Control = null
+var stage: Control = null
+var back_layer: Control = null
+var front_layer: Control = null
+var pet: TextureRect = null
+var glasses: Label = null
+var banner: Label = null
+var phone: PanelContainer = null
+var who_label: Label = null
+var chat_box: VBoxContainer = null
+var chat_scroll: ScrollContainer = null
+var book: Label = null
+var ball: Label = null
+
+func _ready() -> void:
+	var paper := ColorRect.new()
+	paper.color = Color(1.0, 0.9, 0.95)
+	paper.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(paper)
+	_build_planner()
+	_build_stage()
+	_build_phone()
+	var now := Time.get_date_dict_from_system()
+	view_year = now["year"]
+	view_month = now["month"]
+	selected = _key(now["year"], now["month"], now["day"])
+	_refresh_calendar()
+
+func _key(year: int, month: int, day: int) -> String:
+	return "%04d-%02d-%02d" % [year, month, day]
+
+func _today_key() -> String:
+	var now := Time.get_date_dict_from_system()
+	return _key(now["year"], now["month"], now["day"])
+
+func _days_in_month(year: int, month: int) -> int:
+	if month == 2:
+		return 29 if (year % 4 == 0 and year % 100 != 0) or year % 400 == 0 else 28
+	return 30 if [4, 6, 9, 11].has(month) else 31
+
+# 0 = Sunday ... 6 = Saturday
+func _weekday_of(year: int, month: int, day: int) -> int:
+	var stamp := Time.get_unix_time_from_datetime_dict({"year": year, "month": month, "day": day, "hour": 12, "minute": 0, "second": 0})
+	return int(Time.get_datetime_dict_from_unix_time(int(stamp))["weekday"])
+
+# A day number that may spill past either end of the month -> [year, month, day].
+func _normalize(year: int, month: int, day: int) -> Array:
+	while day < 1:
+		month -= 1
+		if month < 1:
+			month = 12
+			year -= 1
+		day += _days_in_month(year, month)
+	while day > _days_in_month(year, month):
+		day -= _days_in_month(year, month)
+		month += 1
+		if month > 12:
+			month = 1
+			year += 1
+	return [year, month, day]
+
+# The 7 date keys (Sunday first) of the week holding `key`.
+func _week_of(key: String) -> Array:
+	var parts := key.split("-")
+	var year := int(parts[0])
+	var month := int(parts[1])
+	var day := int(parts[2]) - _weekday_of(year, month, int(parts[2]))
+	var keys: Array = []
+	for i in range(7):
+		var d := day + i
+		var m := month
+		var y := year
+		if d < 1:
+			m -= 1
+			if m < 1:
+				m = 12
+				y -= 1
+			d += _days_in_month(y, m)
+		elif d > _days_in_month(y, m):
+			d -= _days_in_month(y, m)
+			m += 1
+			if m > 12:
+				m = 1
+				y += 1
+		keys.append(_key(y, m, d))
+	return keys
+
+func _info(id: String) -> Dictionary:
+	return ACTIVITIES.get(id, ACTIVITIES["other"])
+
+func _events_on(key: String) -> Array:
+	return PetalState.schedule.get(key, [])
+
+func _minutes_text(minutes: int) -> String:
+	return "%d:%02d %s" % [(minutes / 60 + 11) % 12 + 1, minutes % 60, "AM" if minutes < 720 else "PM"]
+
+func _entry_text(entry: Dictionary) -> String:
+	var info := _info(_find_activity(entry["name"]))
+	var text := "%s %s" % [info["emoji"], entry["name"]]
+	if entry["start"] >= 0:
+		text += "  %s-%s" % [_minutes_text(entry["start"]), _minutes_text(entry["end"])]
+	if entry["place"] != "":
+		text += "  📍" + entry["place"]
+	return text
+
+func _summary_for(key: String) -> String:
+	var parts: Array[String] = []
+	for entry in _events_on(key):
+		parts.append(_entry_text(entry))
+	return ", ".join(parts) if not parts.is_empty() else "nothing planned 🎈"
+
+func _nice_date(key: String) -> String:
+	var parts := key.split("-")
+	var year := int(parts[0])
+	var month := int(parts[1])
+	var day := int(parts[2])
+	return "%s, %s %d" % [DAYS[_weekday_of(year, month, day)], MONTHS[month - 1], day]
+
+# Adds an event to a date, keeping the day in time order.
+func _add_event(key: String, entry: Dictionary) -> void:
+	var entries: Array = _events_on(key).duplicate()
+	entries.append(entry)
+	entries.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return x["start"] < y["start"])
+	PetalState.schedule[key] = entries
+	PetalState.save_game()
+
+# One time like "8", "8:30", "800" or "1030" with an optional am/pm -> minutes
+# since midnight, or -1 if it is not a time.
+func _time_minutes(token: String, suffix: String) -> int:
+	var hour := 0
+	var minute := 0
+	if token.contains(":"):
+		var bits := token.split(":")
+		if bits.size() != 2 or not bits[0].is_valid_int() or not bits[1].is_valid_int():
+			return -1
+		hour = int(bits[0])
+		minute = int(bits[1])
+	elif token.is_valid_int():
+		if token.length() >= 3:
+			hour = int(token.substr(0, token.length() - 2))
+			minute = int(token.substr(token.length() - 2))
+		else:
+			hour = int(token)
+	else:
+		return -1
+	if hour > 23 or minute > 59:
+		return -1
+	if suffix == "pm" and hour < 12:
+		hour += 12
+	elif suffix == "am" and hour == 12:
+		hour = 0
+	return hour * 60 + minute
+
+# "school 8:00-3:00 at watkins" -> {name, start, end, place}; {} if there is no name.
+func _parse_event(text: String) -> Dictionary:
+	var place := ""
+	var head := text.strip_edges()
+	var lower := head.to_lower()
+	for marker in [" at ", " @ "]:
+		var at := lower.find(marker)
+		if at >= 0:
+			place = head.substr(at + marker.length()).strip_edges().capitalize()
+			head = head.substr(0, at)
+			lower = lower.substr(0, at)
+			break
+	var start := -1
+	var end := -1
+	var range_re := RegEx.create_from_string("([\\d:]{1,5})\\s*(am|pm)?\\s*(?:-|–|to|until)\\s*([\\d:]{1,5})\\s*(am|pm)?")
+	var found := range_re.search(lower)
+	if found:
+		start = _time_minutes(found.get_string(1), found.get_string(2))
+		end = _time_minutes(found.get_string(3), found.get_string(4))
+		if start < 0 or end < 0:
+			return {}
+		if found.get_string(2) == "" and start < 7 * 60:
+			start += 12 * 60 if start >= 60 else 0
+		if found.get_string(4) == "" and end <= start and end < 12 * 60:
+			end += 12 * 60
+		head = (head.substr(0, found.get_start()) + " " + head.substr(found.get_end())).strip_edges()
+	else:
+		var single_re := RegEx.create_from_string("([\\d:]{1,5})\\s*(am|pm)")
+		var one := single_re.search(lower)
+		if one:
+			start = _time_minutes(one.get_string(1), one.get_string(2))
+			if start < 0:
+				return {}
+			end = mini(start + 60, 24 * 60 - 1)
+			head = (head.substr(0, one.get_start()) + " " + head.substr(one.get_end())).strip_edges()
+	var name := head.strip_edges()
+	if name == "":
+		return {}
+	name = name.substr(0, 1).to_upper() + name.substr(1)
+	return {"name": name, "start": start, "end": end, "place": place}
+
+# The activity named in some typed words, or "" if none rings a bell.
+func _find_activity(text: String) -> String:
+	var words := _words(text)
+	for id in WORDS:
+		for w in WORDS[id]:
+			if words.has(w):
+				return id
+	return ""
+
+func _words(text: String) -> PackedStringArray:
+	var clean := ""
+	for ch in text.to_lower():
+		clean += ch if (ch >= "a" and ch <= "z") or (ch >= "0" and ch <= "9") or ch == ":" else " "
+	var out := PackedStringArray()
+	for w in clean.split(" ", false):
+		out.append(_canon(w))
+	return out
+
+# Fixes a misspelling she recognises: a known alias, or one letter off a word she knows.
+func _canon(w: String) -> String:
+	# "purrrr" -> "purr" (or "pur" -> if that is the word she knows).
+	for keep in [2, 1]:
+		var squeezed := ""
+		for ch in w:
+			if squeezed.length() >= keep and squeezed[-1] == ch and squeezed.substr(squeezed.length() - keep) == ch.repeat(keep):
+				continue
+			squeezed += ch
+		if squeezed != w and (REPLIES.has(squeezed) or ALIASES.has(squeezed) or ANIMALS.has(squeezed)):
+			w = squeezed
+			break
+	if ALIASES.has(w):
+		return ALIASES[w] if ALIASES[w] != "" else w
+	if w.ends_with("s") and (ANIMALS.has(w.trim_suffix("s")) or REPLIES.has(w.trim_suffix("s"))) and not REPLIES.has(w):
+		return w.trim_suffix("s")
+	if REPLIES.has(w) or ANIMALS.has(w) or FILLER.has(w) or w.length() < 5 or not (w[0] >= "a" and w[0] <= "z"):
+		return w
+	for known in ANIMALS:
+		if absi(known.length() - w.length()) <= 1 and _edit_distance(w, known) <= 1:
+			return known
+	for known in REPLIES:
+		if absi(known.length() - w.length()) <= 1 and known.length() >= 5 and _edit_distance(w, known) <= 1:
+			return known
+	return w
+
+func _edit_distance(a: String, b: String) -> int:
+	var prev: Array[int] = []
+	for j in range(b.length() + 1):
+		prev.append(j)
+	for i in range(1, a.length() + 1):
+		var row: Array[int] = [i]
+		for j in range(1, b.length() + 1):
+			var cost := 0 if a[i - 1] == b[j - 1] else 1
+			row.append(mini(mini(prev[j] + 1, row[j - 1] + 1), prev[j - 1] + cost))
+		prev = row
+	return prev[b.length()]
+
+func _style_label(label: Label, size: int, colour: Color = Color(0.45, 0.25, 0.55)) -> void:
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_color", colour)
+	label.add_theme_color_override("font_outline_color", Color.WHITE)
+	label.add_theme_constant_override("outline_size", 5)
+
+func _button(text: String, size: int, min_size: Vector2, action: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = min_size
+	button.add_theme_font_size_override("font_size", size)
+	button.pressed.connect(action)
+	return button
+
+# --- Planner ----------------------------------------------------------------
+
+func _cell_style(fill: Color, border: Color, width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = border
+	style.set_border_width_all(width)
+	style.set_corner_radius_all(10)
+	style.set_content_margin_all(4)
+	return style
+
+func _build_planner() -> void:
+	planner = MarginContainer.new()
+	planner.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for side in ["left", "right", "top", "bottom"]:
+		planner.add_theme_constant_override("margin_" + side, 14)
+	add_child(planner)
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", 14)
+	planner.add_child(columns)
+
+	# Left: the month.
+	var left := VBoxContainer.new()
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.size_flags_stretch_ratio = 1.7
+	left.add_theme_constant_override("separation", 6)
+	columns.add_child(left)
+	var head := HBoxContainer.new()
+	left.add_child(head)
+	head.add_child(_button("◀", 22, Vector2(56, 44), _change_month.bind(-1)))
+	month_label = Label.new()
+	month_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	month_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_style_label(month_label, 30, Color(0.78, 0.25, 0.55))
+	head.add_child(month_label)
+	head.add_child(_button("▶", 22, Vector2(56, 44), _change_month.bind(1)))
+	grid = GridContainer.new()
+	grid.columns = 7
+	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 4)
+	left.add_child(grid)
+
+	# Right: the chosen day, and the box to type a new event.
+	var right := VBoxContainer.new()
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right.add_theme_constant_override("separation", 8)
+	columns.add_child(right)
+	day_title = Label.new()
+	_style_label(day_title, 24, Color(0.78, 0.25, 0.55))
+	right.add_child(day_title)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right.add_child(scroll)
+	day_list = VBoxContainer.new()
+	day_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	day_list.add_theme_constant_override("separation", 4)
+	scroll.add_child(day_list)
+	what_input = _field(right, "What is it? (school, swimming...)")
+	where_input = _field(right, "📍 Where are you going?")
+	var times := HBoxContainer.new()
+	times.add_theme_constant_override("separation", 6)
+	right.add_child(times)
+	go_input = _field(times, "⏰ Time you go")
+	leave_input = _field(times, "🏠 Time you leave")
+	right.add_child(_button("➕ Add to my calendar", 20, Vector2(0, 46), _type_event))
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 8)
+	right.add_child(actions)
+	var play := _button("▶ Play the week", 18, Vector2(0, 52), func() -> void: _play(_week_of(selected), true))
+	play.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	actions.add_child(play)
+	var show := _button("👀 This day", 18, Vector2(0, 52), func() -> void: _play([selected], false))
+	show.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	actions.add_child(show)
+	var chat := _button("💬 Text her", 18, Vector2(0, 52), _open_phone)
+	chat.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	actions.add_child(chat)
+
+func _field(parent: Control, hint: String) -> LineEdit:
+	var field := LineEdit.new()
+	field.placeholder_text = hint
+	field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	field.custom_minimum_size = Vector2(0, 42)
+	field.add_theme_font_size_override("font_size", 18)
+	field.text_submitted.connect(func(_t: String) -> void: _type_event())
+	parent.add_child(field)
+	return field
+
+func _change_month(delta: int) -> void:
+	view_month += delta
+	if view_month < 1:
+		view_month = 12
+		view_year -= 1
+	elif view_month > 12:
+		view_month = 1
+		view_year += 1
+	_refresh_calendar()
+
+func _refresh_calendar() -> void:
+	month_label.text = "👑 %s %d 👑" % [MONTHS[view_month - 1], view_year]
+	for child in grid.get_children():
+		grid.remove_child(child)
+		child.queue_free()
+	for name in DAYS:
+		var label := Label.new()
+		label.text = name
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 16)
+		label.add_theme_color_override("font_color", Color(0.78, 0.25, 0.55))
+		grid.add_child(label)
+	var blanks := _weekday_of(view_year, view_month, 1)
+	var rows := ceili(float(blanks + _days_in_month(view_year, view_month)) / 7.0)
+	var today := _today_key()
+	# Days of the neighbouring months fill the gaps, so no box is ever empty.
+	for i in range(rows * 7):
+		var date := _normalize(view_year, view_month, i - blanks + 1)
+		var key := _key(date[0], date[1], date[2])
+		var in_month: bool = date[1] == view_month
+		var events := _events_on(key)
+		var text := str(date[2])
+		if key == today:
+			text += " ⭐"
+		for e in range(mini(events.size(), 2)):
+			text += "\n" + _info(_find_activity(events[e]["name"]))["emoji"] + " " + events[e]["name"]
+		if events.size() > 2:
+			text += "\n+%d more" % (events.size() - 2)
+		var cell := Button.new()
+		cell.text = text
+		cell.clip_text = true
+		cell.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		cell.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		cell.custom_minimum_size = Vector2(0, 50)
+		cell.add_theme_font_size_override("font_size", 14)
+		cell.add_theme_color_override("font_color", Color(0.3, 0.15, 0.35) if in_month else Color(0.6, 0.5, 0.65))
+		var fill := Color(1, 0.97, 0.88) if key == selected else (Color(0.93, 0.88, 1.0) if key == today else (Color.WHITE if in_month else Color(0.98, 0.93, 0.96)))
+		var border := Color(0.95, 0.72, 0.15) if key == selected else Color(0.95, 0.65, 0.8)
+		var style := _cell_style(fill, border, 4 if key == selected else 2)
+		for state in ["normal", "hover", "pressed", "focus"]:
+			cell.add_theme_stylebox_override(state, style)
+		cell.pressed.connect(_select_date.bind(key))
+		grid.add_child(cell)
+	_refresh_day()
+
+func _select_date(key: String) -> void:
+	selected = key
+	var parts := key.split("-")
+	view_year = int(parts[0])
+	view_month = int(parts[1])
+	_refresh_calendar()
+
+func _refresh_day() -> void:
+	day_title.text = "🎀 " + _nice_date(selected)
+	for child in day_list.get_children():
+		day_list.remove_child(child)
+		child.queue_free()
+	var events := _events_on(selected)
+	if events.is_empty():
+		var empty := Label.new()
+		empty.text = "Nothing yet. Add something below! ✨"
+		empty.add_theme_font_size_override("font_size", 18)
+		day_list.add_child(empty)
+	for i in range(events.size()):
+		var row := HBoxContainer.new()
+		day_list.add_child(row)
+		var label := Label.new()
+		label.text = _entry_text(events[i])
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.add_theme_font_size_override("font_size", 18)
+		row.add_child(label)
+		row.add_child(_button("✖", 16, Vector2(40, 40), _remove_event.bind(i)))
+
+func _remove_event(index: int) -> void:
+	var events: Array = _events_on(selected).duplicate()
+	events.remove_at(index)
+	if events.is_empty():
+		PetalState.schedule.erase(selected)
+	else:
+		PetalState.schedule[selected] = events
+	PetalState.save_game()
+	_refresh_calendar()
+
+# A time typed any way: "8", "8am", "8:30", "800", "3 pm" -> minutes, -1 if blank,
+# -2 if it is not a time. With no am/pm, 1-6 means the afternoon.
+func _loose_time(text: String) -> int:
+	var lower := text.strip_edges().to_lower().replace(".", "")
+	if lower == "":
+		return -1
+	var suffix := ""
+	for tail in ["am", "pm"]:
+		if lower.ends_with(tail):
+			suffix = tail
+			lower = lower.trim_suffix(tail).strip_edges()
+	var minutes := _time_minutes(lower, suffix)
+	if minutes < 0:
+		return -2
+	if suffix == "" and minutes < 7 * 60 and minutes >= 60:
+		minutes += 12 * 60
+	return minutes
+
+# The four plain boxes -> an event on the highlighted day.
+func _type_event() -> void:
+	var what := what_input.text.strip_edges()
+	var where := where_input.text.strip_edges()
+	var go := _loose_time(go_input.text)
+	var leave := _loose_time(leave_input.text)
+	var entry := {}
+	if where == "" and go == -1 and leave == -1 and what != "":
+		entry = _parse_event(what) # still understands "school 8-3 at Watkins"
+	if entry.is_empty():
+		if what == "" and where == "":
+			Feedback.pop(self, "😹 Where are you going?", what_input.global_position + Vector2(0, -50))
+			return
+		if go == -2 or leave == -2:
+			Feedback.pop(self, "😹 I don't get that time. Try 8 or 3:30", go_input.global_position + Vector2(0, -50))
+			return
+		if go >= 0 and leave >= 0 and leave <= go and leave < 12 * 60:
+			leave += 12 * 60
+		if go >= 0 and leave == -1:
+			leave = mini(go + 60, 24 * 60 - 1)
+		var name := what if what != "" else "Going out"
+		entry = {"name": name.substr(0, 1).to_upper() + name.substr(1), "start": go, "end": leave if go >= 0 else -1, "place": where.capitalize()}
+	_add_event(selected, entry)
+	for field in [what_input, where_input, go_input, leave_input]:
+		field.text = ""
+	_refresh_calendar()
+
+# --- Stage: the week acted out ---------------------------------------------
+
+func _build_stage() -> void:
+	stage = Control.new()
+	stage.set_anchors_preset(Control.PRESET_FULL_RECT)
+	stage.visible = false
+	add_child(stage)
+	back_layer = Control.new()
+	back_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	back_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage.add_child(back_layer)
+
+	pet = TextureRect.new()
+	pet.size = PET_SIZE
+	pet.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pet.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pet.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage.add_child(pet)
+
+	# Glasses sit where her sunglasses would, so they fit each pet's face.
+	glasses = Label.new()
+	glasses.text = "👓"
+	glasses.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glasses.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	glasses.add_theme_font_size_override("font_size", 56)
+	glasses.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	glasses.visible = false
+	pet.add_child(glasses)
+
+	front_layer = Control.new()
+	front_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	front_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage.add_child(front_layer)
+
+	banner = Label.new()
+	banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	banner.position = Vector2(size.x / 2.0 - 250.0, 12.0)
+	banner.custom_minimum_size = Vector2(500, 0)
+	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_style_label(banner, 32)
+	stage.add_child(banner)
+
+	var stop := _button("⬅ Back", 18, Vector2(130, 46), _stop)
+	stop.position = Vector2(16, 12)
+	stage.add_child(stop)
+	var text_button := _button("💬 Text", 18, Vector2(130, 46), _open_phone)
+	text_button.position = Vector2(16, 66)
+	stage.add_child(text_button)
+
+func _stop() -> void:
+	run_id += 1
+	stage.visible = false
+	planner.visible = true
+	_close_phone()
+
+func _clear_layer(layer: Control) -> void:
+	for child in layer.get_children():
+		child.queue_free()
+
+func _play(days: Array, whole_week: bool) -> void:
+	var steps: Array = []
+	for key in days:
+		var events := _events_on(key)
+		if events.is_empty() and not whole_week:
+			events = [{"name": "Free time", "start": -1, "end": -1, "place": ""}]
+		for entry in events:
+			steps.append([key, entry])
+	if steps.is_empty():
+		Feedback.pop(self, "📅 Add something to this week first!", Vector2(size.x / 2.0 - 160.0, size.y / 2.0))
+		return
+	run_id += 1
+	var mine := run_id
+	planner.visible = false
+	stage.visible = true
+	_close_phone()
+	for step in steps:
+		if mine != run_id or not is_instance_valid(self):
+			return
+		await _run_step(step[0], step[1], mine)
+	if mine != run_id or not is_instance_valid(self):
+		return
+	if whole_week:
+		PetalState.week_complete()
+		Confetti.burst(self, size / 2.0, 40)
+		Feedback.pop(self, "📅 What a week!", Vector2(size.x / 2.0 - 90.0, size.y / 2.0 - 60.0))
+		await get_tree().create_timer(2.0).timeout
+	if mine == run_id and is_instance_valid(self):
+		_stop()
+
+func _run_step(key: String, entry: Dictionary, mine: int) -> void:
+	var id := _find_activity(entry["name"])
+	if entry["name"] == "Free time":
+		id = "home"
+	elif id == "":
+		id = "other"
+	var info := _info(id)
+	var parts := key.split("-")
+	var day_name: String = DAYS[_weekday_of(int(parts[0]), int(parts[1]), int(parts[2]))]
+	var when := ""
+	if entry["start"] >= 0:
+		when = " " + _minutes_text(entry["start"])
+	var where: String = ("  📍" + entry["place"]) if entry["place"] != "" else ""
+	banner.text = "%s%s  %s %s%s" % [day_name, when, info["emoji"], entry["name"], where]
+	_clear_layer(back_layer)
+	_clear_layer(front_layer)
+	book = null
+	ball = null
+	glasses.visible = id == "school"
+	if id == "school":
+		_build_classroom()
+		pet.position = Vector2(size.x / 2.0 - PET_SIZE.x / 2.0, size.y - 360.0)
+	else:
+		var bg: Array = info["bg"]
+		var texture := TextureRect.new()
+		texture.texture = load(PetalState.room_bg(bg[0], bg[1]))
+		texture.set_anchors_preset(Control.PRESET_FULL_RECT)
+		texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		back_layer.add_child(texture)
+		pet.position = Vector2(size.x / 2.0 - PET_SIZE.x / 2.0, size.y - 340.0)
+	_place_glasses()
+	var line: String = info["text"] if id != "other" else "%s! 🎀" % entry["name"]
+	if entry["place"] != "":
+		line += " (at %s)" % entry["place"]
+	_text_from_pet("%s%s: %s" % [day_name, when, line])
+	if id == "sports":
+		_build_ball()
+
+	await PetCameo.spawn(pet)
+	for t in range(STEP_SECONDS):
+		if mine != run_id or not is_instance_valid(self):
+			return
+		_act(id, t)
+		await get_tree().create_timer(1.0).timeout
+
+func _place_glasses() -> void:
+	var anchor := {"l": 0.30, "t": 0.28, "r": 0.70, "b": 0.44}
+	var accessories: Dictionary = PetalState.PETS[PetalState.active_pet]["accessories"]
+	if accessories.has("sunglasses"):
+		anchor = accessories["sunglasses"]["anchor"]
+	glasses.anchor_left = anchor["l"]
+	glasses.anchor_top = anchor["t"]
+	glasses.anchor_right = anchor["r"]
+	glasses.anchor_bottom = anchor["b"]
+	glasses.offset_left = 0
+	glasses.offset_top = 0
+	glasses.offset_right = 0
+	glasses.offset_bottom = 0
+
+# One beat of the day (called once a second).
+func _act(id: String, t: int) -> void:
+	match id:
+		"school":
+			if book:
+				book.text = "📕" if t % 2 else "📖"
+			_drift(["🔤", "✏️", "💡", "⭐"][t % 4], 120.0)
+		"sports":
+			if t % 2 == 0:
+				PetCameo.jump_for_joy(pet)
+			_kick_ball()
+		"home":
+			if t == 0:
+				PetCameo.eat(pet)
+				_drift("🍓", 60.0)
+			elif t == 3:
+				PetCameo.sleep(pet)
+			elif t > 3:
+				_drift("💤", 60.0)
+		"music":
+			if t % 3 == 0:
+				PetCameo.dance(pet, 1)
+			_drift("🎵", 140.0)
+		"swim":
+			if t % 2 == 0:
+				PetCameo.jump_for_joy(pet)
+			_drift("💦", 140.0)
+		"playdate":
+			if t % 2 == 1:
+				PetCameo.jump_for_joy(pet)
+			_drift(["🎈", "🧸", "💕"][t % 3], 140.0)
+
+func _drift(emoji: String, spread: float) -> void:
+	var label := Label.new()
+	label.text = emoji
+	label.add_theme_font_size_override("font_size", 40)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.position = pet.position + PET_SIZE / 2.0 + Vector2(randf_range(-spread, spread), randf_range(-40.0, 40.0))
+	front_layer.add_child(label)
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 140.0, 1.4)
+	tween.tween_property(label, "modulate:a", 0.0, 1.4)
+	tween.chain().tween_callback(label.queue_free)
+
+func _build_ball() -> void:
+	ball = Label.new()
+	ball.text = "⚽"
+	ball.add_theme_font_size_override("font_size", 56)
+	ball.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ball.position = pet.position + Vector2(PET_SIZE.x + 20.0, PET_SIZE.y - 70.0)
+	front_layer.add_child(ball)
+
+func _kick_ball() -> void:
+	if ball == null:
+		return
+	var home := pet.position + Vector2(PET_SIZE.x + 20.0, PET_SIZE.y - 70.0)
+	var tween := create_tween()
+	tween.tween_property(ball, "position", home + Vector2(160, -140), 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(ball, "position", home, 0.45).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+
+# --- Classroom --------------------------------------------------------------
+
+# A box placed by fractions of the room, so it fits any window size.
+func _box(parent: Control, colour: Color, l: float, t: float, r: float, b: float) -> ColorRect:
+	var rect := ColorRect.new()
+	rect.color = colour
+	rect.anchor_left = l
+	rect.anchor_top = t
+	rect.anchor_right = r
+	rect.anchor_bottom = b
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(rect)
+	return rect
+
+func _stamp(parent: Control, text: String, font_size: int, x: float, y: float) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", font_size)
+	label.anchor_left = x
+	label.anchor_right = x
+	label.anchor_top = y
+	label.anchor_bottom = y
+	label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	label.grow_vertical = Control.GROW_DIRECTION_BOTH
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(label)
+	return label
+
+func _build_classroom() -> void:
+	_box(back_layer, Color(0.99, 0.92, 0.76), 0, 0, 1, 1)
+	_box(back_layer, Color(0.74, 0.55, 0.38), 0, 0.72, 1, 1)
+	_box(back_layer, Color(0.62, 0.45, 0.30), 0, 0.72, 1, 0.74)
+	# Chalkboard
+	_box(back_layer, Color(0.55, 0.38, 0.22), 0.24, 0.10, 0.76, 0.52)
+	_box(back_layer, Color(0.14, 0.33, 0.26), 0.25, 0.12, 0.75, 0.50)
+	var chalk := _stamp(back_layer, "A B C   1 2 3\n⭐ 2 + 2 = 4 ⭐", 34, 0.5, 0.31)
+	chalk.add_theme_color_override("font_color", Color(0.97, 0.97, 0.9))
+	# Windows
+	for x in [0.04, 0.84]:
+		_box(back_layer, Color(0.55, 0.38, 0.22), x, 0.12, x + 0.12, 0.50)
+		_box(back_layer, Color(0.62, 0.84, 1.0), x + 0.008, 0.14, x + 0.112, 0.48)
+	_stamp(back_layer, "☀️", 56, 0.10, 0.25)
+	_stamp(back_layer, "☁️", 56, 0.90, 0.25)
+	_stamp(back_layer, "🕐", 44, 0.5, 0.06)
+	# Bookshelf
+	_box(back_layer, Color(0.62, 0.45, 0.30), 0.82, 0.62, 0.97, 0.645)
+	_stamp(back_layer, "📚📗📘", 44, 0.895, 0.57)
+	_stamp(back_layer, "🌎", 44, 0.07, 0.62)
+
+	# Her desk sits in front of her, with a book on top.
+	_box(front_layer, Color(0.70, 0.50, 0.30), 0.33, 0.78, 0.67, 0.84)
+	_box(front_layer, Color(0.58, 0.40, 0.24), 0.35, 0.84, 0.37, 1.0)
+	_box(front_layer, Color(0.58, 0.40, 0.24), 0.63, 0.84, 0.65, 1.0)
+	book = _stamp(front_layer, "📖", 72, 0.5, 0.74)
+
+# --- Texting ----------------------------------------------------------------
+
+func _build_phone() -> void:
+	phone = PanelContainer.new()
+	phone.visible = false
+	phone.z_index = 30
+	phone.set_anchors_preset(Control.PRESET_CENTER)
+	phone.custom_minimum_size = Vector2(430, 440)
+	phone.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	phone.grow_vertical = Control.GROW_DIRECTION_BOTH
+	var frame := StyleBoxFlat.new()
+	frame.bg_color = Color(0.2, 0.18, 0.28)
+	frame.set_corner_radius_all(28)
+	frame.set_content_margin_all(14)
+	phone.add_theme_stylebox_override("panel", frame)
+	add_child(phone)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 8)
+	phone.add_child(column)
+
+	var header := HBoxContainer.new()
+	column.add_child(header)
+	who_label = Label.new()
+	who_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	who_label.add_theme_font_size_override("font_size", 22)
+	header.add_child(who_label)
+	header.add_child(_button("✖", 18, Vector2(44, 40), _close_phone))
+
+	chat_scroll = ScrollContainer.new()
+	chat_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	chat_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	column.add_child(chat_scroll)
+	chat_box = VBoxContainer.new()
+	chat_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chat_box.add_theme_constant_override("separation", 6)
+	chat_scroll.add_child(chat_box)
+
+	var typing := HBoxContainer.new()
+	column.add_child(typing)
+	chat_input = LineEdit.new()
+	chat_input.placeholder_text = "Type a text..."
+	chat_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chat_input.custom_minimum_size = Vector2(0, 46)
+	chat_input.add_theme_font_size_override("font_size", 20)
+	chat_input.text_submitted.connect(func(_t: String) -> void: _send_typed())
+	typing.add_child(chat_input)
+	typing.add_child(_button("📤", 20, Vector2(56, 46), _send_typed))
+
+	var replies := GridContainer.new()
+	replies.columns = 2
+	column.add_child(replies)
+	for key in QUICK:
+		var button := _button(QUICK[key], 17, Vector2(190, 48), _send.bind(QUICK[key]))
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		replies.add_child(button)
+
+func _open_phone() -> void:
+	who_label.text = "📱 %s" % PetalState.pet_name
+	phone.visible = true
+	if chat_box.get_child_count() == 0:
+		_text_from_pet("Hi %s! 🐾 Today: %s" % [_you(), _summary_for(_today_key())])
+
+func _close_phone() -> void:
+	phone.visible = false
+
+func _you() -> String:
+	return PetalState.player_name if PetalState.player_name != "" else "friend"
+
+func _bubble(from_pet: bool, text: String) -> void:
+	PetalState.chat_log.append({"from": "pet" if from_pet else "you", "text": text})
+	if PetalState.chat_log.size() > 200:
+		PetalState.chat_log.pop_front()
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN if from_pet else BoxContainer.ALIGNMENT_END
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(1.0, 0.8, 0.88) if from_pet else Color(0.7, 0.88, 1.0)
+	style.set_corner_radius_all(16)
+	style.set_content_margin_all(10)
+	panel.add_theme_stylebox_override("panel", style)
+	var label := Label.new()
+	label.text = text
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size = Vector2(250, 0)
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color(0.2, 0.15, 0.25))
+	panel.add_child(label)
+	row.add_child(panel)
+	chat_box.add_child(row)
+	await get_tree().process_frame
+	if is_instance_valid(chat_scroll):
+		chat_scroll.scroll_vertical = int(chat_scroll.get_v_scroll_bar().max_value)
+
+# The pet texts you; while the week plays it also pops up as a quick toast.
+func _text_from_pet(text: String) -> void:
+	_bubble(true, text)
+	if stage.visible and not phone.visible:
+		Feedback.pop(stage, "📱 " + text, Vector2(size.x / 2.0 - 220.0, 70.0))
+
+func _send_typed() -> void:
+	var text := chat_input.text.strip_edges()
+	if text == "":
+		return
+	chat_input.text = ""
+	_send(text)
+
+# Three bouncing dots, like a real chat, while she "types" her answer.
+func _typing_bubble() -> Control:
+	var row := HBoxContainer.new()
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(1.0, 0.8, 0.88)
+	style.set_corner_radius_all(16)
+	style.set_content_margin_all(10)
+	panel.add_theme_stylebox_override("panel", style)
+	var dots := Control.new()
+	dots.custom_minimum_size = Vector2(74, 34)
+	panel.add_child(dots)
+	row.add_child(panel)
+	for i in range(3):
+		var dot := Label.new()
+		dot.text = "●"
+		dot.add_theme_font_size_override("font_size", 22)
+		dot.add_theme_color_override("font_color", Color(0.7, 0.4, 0.55))
+		dot.position = Vector2(6 + i * 24, 8)
+		dots.add_child(dot)
+		var bounce := dot.create_tween().set_loops()
+		bounce.tween_interval(i * 0.15)
+		bounce.tween_property(dot, "position:y", 0.0, 0.25).set_trans(Tween.TRANS_SINE)
+		bounce.tween_property(dot, "position:y", 8.0, 0.25).set_trans(Tween.TRANS_SINE)
+		bounce.tween_interval(0.45 - i * 0.15)
+	chat_box.add_child(row)
+	_scroll_down()
+	return row
+
+func _scroll_down() -> void:
+	await get_tree().process_frame
+	if is_instance_valid(chat_scroll):
+		chat_scroll.scroll_vertical = int(chat_scroll.get_v_scroll_bar().max_value)
+
+func _send(text: String) -> void:
+	_bubble(false, text)
+	var reply := _reply_to(text)
+	var typing := _typing_bubble()
+	await get_tree().create_timer(TYPING_SECONDS).timeout
+	if not is_instance_valid(self):
+		return
+	typing.queue_free()
+	_bubble(true, reply)
+	PetalState.happiness = minf(PetalState.MAX_STAT, PetalState.happiness + 1.0)
+	PetalState.stats_changed.emit()
+
+func _is_thing(w: String) -> bool:
+	return THINGS.has(w) or ANIMALS.has(w)
+
+# Her answer to whatever was typed. Anything she has no word for is "nonsense".
+func _reply_to(text: String) -> String:
+	var words := _words(text)
+	var has := func(list: Array) -> bool:
+		for w in list:
+			if words.has(w):
+				return true
+		return false
+	if riddle_reveal != "" and has.call(["answer"]) or (riddle_reveal != "" and has.call(["tell"]) and has.call(["me"])):
+		var told := riddle_reveal
+		riddle_reveal = ""
+		riddle_answer = []
+		return "The answer is %s! 😸" % told
+	if riddle_reveal != "":
+		var answer := riddle_reveal
+		var solved: bool = words.size() > 0 and riddle_answer.any(func(a: String) -> bool: return words.has(a))
+		riddle_reveal = ""
+		riddle_answer = []
+		if not has.call(["joke", "riddle", "bored", "boring"]):
+			return ("Yes!! You got it! 🎉😻 It's %s!" % answer) if solved else ("Nope! 😹 It's %s!" % answer)
+	var mine := PetalState.player_name.to_lower()
+	if has.call(["name", "who"]) and has.call(["my", "me", "i", "user", "your"]) and not has.call(["pet", "her"]):
+		if mine == "":
+			return "I don't know your name yet! 🥺 Tell me on the title screen."
+		return "Your name is %s! 💖 I know you!" % PetalState.player_name
+	if mine != "" and words.has(mine):
+		return "%s! 💖 That's you! Hi %s! 🐾" % [PetalState.player_name, PetalState.player_name]
+	if has.call(["bored", "boring", "joke", "jokes", "riddle", "riddles", "funny"]):
+		if has.call(["riddle", "riddles"]) or randi() % 2 == 0:
+			var riddle: Array = RIDDLES.pick_random()
+			riddle_answer = riddle[1]
+			riddle_reveal = riddle[2]
+			return "Riddle time! 🧩 %s" % riddle[0]
+		return "Let's cheer up! 😸 " + String(JOKES.pick_random())
+	if has.call(["want", "wants", "wish", "dream", "survey"]):
+		var found: Array[String] = []
+		var known := PetalState.house_known_for_pet()
+		var wants := PetalState.house_wants_for_pet()
+		for category in PetalState.HOUSE_CHOICES:
+			if known.get(category, false):
+				found.append(String(wants[category]))
+		if found.is_empty():
+			return "Ask me in the Cat House (Living room)! 📋🏡"
+		return "I want a house that's %s! 🏡💕" % ", ".join(found)
+	if has.call(["hate", "hates"]):
+		for w in words:
+			if _is_thing(w):
+				return "Oh no! 😿 Why do you hate that %s?" % w
+	if has.call(LIKE_WORDS):
+		var liked := ""
+		for w in words:
+			if _is_thing(w):
+				liked = w
+		if liked != "":
+			if liked == "potter":
+				liked = "harry potter"
+			elif liked == "harry":
+				liked = "harry potter"
+			elif liked == "tv" or liked == "video":
+				liked = liked.to_upper() if liked == "tv" else liked
+			return "Ooohhhhh I 😻💖✨ %s!" % ("that " + liked if liked != "harry potter" else "Harry Potter")
+	var id := _find_activity(text)
+	if id != "" and has.call(["when", "time", "what"]) and not has.call(["doing", "today"]):
+		var times: Array[String] = []
+		var keys: Array = PetalState.schedule.keys()
+		keys.sort()
+		for key in keys:
+			for entry in PetalState.schedule[key]:
+				if _find_activity(entry["name"]) == id and entry["start"] >= 0 and times.size() < 4:
+					times.append("%s %s" % [_nice_date(key), _minutes_text(entry["start"])])
+		if times.is_empty():
+			return "%s isn't on our calendar yet! 📅 Add it in the planner." % _info(id)["label"]
+		return "%s is %s ⏰" % [_info(id)["label"], ", ".join(times)]
+	if has.call(["doing", "today", "plan", "plans", "schedule", "week"]):
+		return "Today: %s" % _summary_for(_today_key())
+	if has.call(["hi", "hello", "hey", "hiya", "yo"]):
+		return "Meow! 🐾 Hi %s!" % _you()
+	if has.call(["love", "luv", "like", "heart", "cute"]) or text.contains("❤") or text.contains("💕"):
+		return "Love you more! 💕💕"
+	if has.call(["hungry", "eat", "food", "snack", "treat", "tea", "dinner", "lunch"]):
+		return "Yes please! 🍓😋"
+	if has.call(["sleep", "sleepy", "tired", "bed", "night", "goodnight"]):
+		return "Night night! 😴💤"
+	if has.call(["bye", "goodbye", "later", "cya"]):
+		return "Bye bye! 👋🐾"
+	if has.call(["thanks", "thank", "please"]):
+		return "You're welcome! 😸"
+	if has.call(["name", "who"]):
+		return "I'm %s! 🐱" % PetalState.pet_name
+	if has.call(["how", "ok", "good", "fine", "happy"]):
+		return "I feel great! ✨"
+	if id != "":
+		return _info(id)["text"]
+	for w in words:
+		if REPLIES.has(w):
+			return String(REPLIES[w]).replace("%NAME%", PetalState.pet_name).replace("%YOU%", _you()).replace("%TODAY%", _summary_for(_today_key()))
+	for w in words:
+		if ANIMALS.has(w):
+			return "%s%s! I love %ss!" % [w.capitalize(), ANIMALS[w], w]
+	for w in words:
+		if FILLER.has(w):
+			return "Mm-hm! 😸 Tell me more!"
+	if text.contains("?"):
+		return "Good question! ❓😸 Let me think... Maybe!"
+	var shown := text.left(18)
+	return "Meow? 🤔 \"%s\" is nonsense to me! 😹 Say it another way?" % shown
