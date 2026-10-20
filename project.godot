@@ -19,6 +19,10 @@ config/icon="res://icon.svg"
 
 PetalState="*res://autoload/petal_state.gd"
 
+[audio]
+
+driver/enable_input=true
+
 [display]
 
 window/size/viewport_width=1280
