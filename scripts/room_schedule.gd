@@ -116,6 +116,16 @@ const RIDDLES := [
 	["What can you catch but never throw? 🤧", ["cold"], "a cold"],
 ]
 
+# Things she texts on her own every so often: food wishes, feelings, emojis.
+const FEELING_TEXTS := [
+	"I feel so happy! 😻", "I feel sleepy... 😴", "I feel silly! 🤪", "I feel super excited!! 🤩",
+	"Feeling cozy 🥰", "I feel a little shy 🙈", "I feel brave today! 😼", "I feel a bit sad 😿 Cuddle?",
+	"So much love for you 💖", "I feel sparkly ✨",
+]
+const EMOJI_TEXTS := ["😻", "🥰💕", "😴💤", "🤩✨", "😹😹😹", "🌈💖", "🐾🐾🐾", "😸🎶", "🥺👉👈", "💃🎉"]
+const RANDOM_MIN_SECONDS := 20.0
+const RANDOM_MAX_SECONDS := 45.0
+
 const QUICK := {
 	"hi": "👋 Hi!",
 	"love": "❤️ Love you",
@@ -125,6 +135,9 @@ const QUICK := {
 
 var view_year := 2026
 var view_month := 1
+var unread := 0
+var chat_button: Button = null
+var chat_timer: Timer = null
 var selected := "" # date key of the highlighted day, "YYYY-MM-DD"
 var month_label: Label = null
 var grid: GridContainer = null
@@ -165,6 +178,11 @@ func _ready() -> void:
 	view_month = now["month"]
 	selected = _key(now["year"], now["month"], now["day"])
 	_refresh_calendar()
+	chat_timer = Timer.new()
+	chat_timer.one_shot = true
+	chat_timer.timeout.connect(_random_text)
+	add_child(chat_timer)
+	chat_timer.start(randf_range(RANDOM_MIN_SECONDS, RANDOM_MAX_SECONDS))
 
 func _key(year: int, month: int, day: int) -> String:
 	return "%04d-%02d-%02d" % [year, month, day]
@@ -478,9 +496,9 @@ func _build_planner() -> void:
 	var show := _button("👀 This day", 18, Vector2(0, 52), func() -> void: _play([selected], false))
 	show.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_child(show)
-	var chat := _button("💬 Text her", 18, Vector2(0, 52), _open_phone)
-	chat.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	actions.add_child(chat)
+	chat_button = _button("💬 Text her", 18, Vector2(0, 52), _open_phone)
+	chat_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	actions.add_child(chat_button)
 
 func _field(parent: Control, hint: String) -> LineEdit:
 	var field := LineEdit.new()
@@ -954,7 +972,37 @@ func _build_phone() -> void:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		replies.add_child(button)
 
+# Every so often she texts by herself: a food wish, a feeling, or just emojis.
+func _random_text() -> void:
+	chat_timer.start(randf_range(RANDOM_MIN_SECONDS, RANDOM_MAX_SECONDS))
+	if stage.visible:
+		return
+	var text: String
+	match randi() % 3:
+		0:
+			var treats: Array = PetalState.treat_emojis()
+			text = ["I'm hungry! Can I have a %s? 🥺", "Yum, I'm thinking about %s 😋", "Snack time? %s please!"].pick_random() % treats.pick_random()
+		1:
+			text = FEELING_TEXTS.pick_random()
+		_:
+			text = EMOJI_TEXTS.pick_random()
+	if phone.visible:
+		var typing := _typing_bubble()
+		await get_tree().create_timer(2.0).timeout
+		if not is_instance_valid(self):
+			return
+		typing.queue_free()
+		_bubble(true, text)
+		return
+	_bubble(true, text)
+	unread += 1
+	chat_button.text = "💬 Text her (%d)" % unread
+	Feedback.pop(self, "📱 " + text, Vector2(size.x * 0.55, size.y - 120.0))
+
 func _open_phone() -> void:
+	unread = 0
+	if chat_button:
+		chat_button.text = "💬 Text her"
 	who_label.text = "📱 %s" % PetalState.pet_name
 	phone.visible = true
 	if chat_box.get_child_count() == 0:
