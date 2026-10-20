@@ -16,6 +16,7 @@ const ROOMS := {
 	"obstacle": preload("res://scenes/rooms/obstacle_course.tscn"),
 	"garden": preload("res://scenes/rooms/garden.tscn"),
 	"fishing": preload("res://scenes/rooms/fishing_pond.tscn"),
+	"spa": preload("res://scenes/rooms/spa.tscn"),
 	"swimpool": preload("res://scenes/rooms/swim_pool.tscn"),
 	"photo": preload("res://scenes/rooms/photo_booth.tscn"),
 	"photobook": preload("res://scenes/rooms/photo_book.tscn"),

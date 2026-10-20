@@ -14,6 +14,7 @@ func _ready() -> void:
 	PetCameo.spawn(%Petal)
 	%BrushButton.pressed.connect(_on_brush)
 	%BatheButton.pressed.connect(_on_bathe)
+	%SpaButton.pressed.connect(func() -> void: PetalState.navigate_to_room.emit("spa"))
 
 func _on_brush() -> void:
 	PetalState.brush()

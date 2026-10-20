@@ -772,6 +772,7 @@ const STICKERS := {
 	"catch": {"emoji": "🍬", "label": "Treat Catcher"},
 	"bell": {"emoji": "🔔", "label": "Jingle Bells"},
 	"swim": {"emoji": "🏊", "label": "Splash Time"},
+	"spa": {"emoji": "💆", "label": "Spa Day"},
 }
 var earned_stickers := {}
 
@@ -982,6 +983,21 @@ func go_swimming() -> void:
 	stats_changed.emit()
 	award_sticker("swim")
 	add_coins(5)
+
+# One treatment at the Spa. Every treatment helps a little; finishing all of
+# them in a visit (see room_spa.gd) calls spa_day_complete for the big prize.
+func spa_treatment() -> void:
+	happiness = minf(MAX_STAT, happiness + 8.0)
+	energy = minf(MAX_STAT, energy + 8.0)
+	cleanliness = minf(MAX_STAT, cleanliness + 5.0)
+	stats_changed.emit()
+	add_coins(1)
+
+func spa_day_complete() -> void:
+	happiness = minf(MAX_STAT, happiness + 20.0)
+	stats_changed.emit()
+	award_sticker("spa")
+	add_coins(6)
 
 func ring_bell_locally() -> void:
 	happiness = minf(MAX_STAT, happiness + 15.0)
