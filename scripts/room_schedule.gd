@@ -1047,8 +1047,29 @@ func _send(text: String) -> void:
 		return
 	typing.queue_free()
 	_bubble(true, reply)
+	if reply.begins_with("OMG!!!"):
+		Confetti.burst(self, size / 2.0, 40)
+		PetalState.favorite_treat_shown()
 	PetalState.happiness = minf(PetalState.MAX_STAT, PetalState.happiness + 1.0)
 	PetalState.stats_changed.emit()
+
+# The treat emoji she was shown, by picture or by name; "" if none.
+func _treat_shown(text: String, words: PackedStringArray) -> String:
+	var treats: Dictionary = PetalState.TREAT_WORDS
+	var found := ""
+	for emoji in treats:
+		if text.contains(emoji):
+			found = emoji
+			if emoji == PetalState.favorite_treat():
+				return emoji
+	for emoji in treats:
+		for name in treats[emoji]:
+			if words.has(name) or words.has(name + "s") or words.has(name.trim_suffix("s")):
+				if emoji == PetalState.favorite_treat():
+					return emoji
+				if found == "":
+					found = emoji
+	return found
 
 func _is_thing(w: String) -> bool:
 	return THINGS.has(w) or ANIMALS.has(w)
@@ -1114,6 +1135,17 @@ func _reply_to(text: String) -> String:
 			elif liked == "tv" or liked == "video":
 				liked = liked.to_upper() if liked == "tv" else liked
 			return "Ooohhhhh I 😻💖✨ %s!" % ("that " + liked if liked != "harry potter" else "Harry Potter")
+	if has.call(["favorite", "favourite", "fav"]) and has.call(["treat", "treats", "snack"]):
+		if PetalState.treats_found.get(PetalState.active_pet, false):
+			return "My favourite is %s! 😻" % PetalState.favorite_treat()
+		return "It's a secret! 🤫 Show me some treats and see which makes me happiest!"
+	var treat := _treat_shown(text, words)
+	if treat != "":
+		if treat == PetalState.favorite_treat():
+			return "OMG!!! 😻🎉 My FAVOURITE, %s!!! I'm SO happy!!! 💖💖💖" % treat
+		if PetalState.treat_emojis().has(treat):
+			return "Yum! %s😋 Nice, but it's not my very favourite!" % treat
+		return "Hmm, %s isn't a treat for me 😹" % treat
 	var id := _find_activity(text)
 	if id != "" and has.call(["when", "time", "what"]) and not has.call(["doing", "today"]):
 		var times: Array[String] = []

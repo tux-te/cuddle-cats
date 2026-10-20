@@ -490,6 +490,7 @@ func _reset_progress() -> void:
 	earned_stickers = {}
 	schedule = {}
 	chat_log = []
+	treats_found = {}
 	house_wants = {}
 	house_design = {}
 	house_known = {}
@@ -508,6 +509,7 @@ func save_game() -> void:
 	cfg.set_value("game", "stickers", earned_stickers)
 	cfg.set_value("game", "schedule", schedule)
 	cfg.set_value("game", "house", _save_house())
+	cfg.set_value("game", "treats_found", treats_found)
 	cfg.set_value("game", "pet_records", pet_records)
 	cfg.save(slot_path(current_slot))
 	VisitorExport.export_if_allowed(current_slot, chat_log, schedule)
@@ -529,6 +531,11 @@ func _load_slot(slot: int) -> void:
 			if STICKERS.has(id):
 				earned_stickers[id] = bool(saved_stickers[id])
 	_load_house(cfg.get_value("game", "house", {}))
+	var saved_treats = cfg.get_value("game", "treats_found", {})
+	if saved_treats is Dictionary:
+		for id in saved_treats:
+			if PETS.has(id) and saved_treats[id] == true:
+				treats_found[id] = true
 	var saved_schedule = cfg.get_value("game", "schedule", {})
 	if saved_schedule is Dictionary:
 		for date in saved_schedule:
@@ -654,6 +661,33 @@ const SPECIES_TREATS := {
 	"gerbil": ["🥜", "🌰", "🌻", "🥕", "🌽"],
 	"bunny": ["🥕", "🥬", "🍎", "🍓", "🥦"],
 }
+
+# Words for each treat emoji, so typing "bone" works like sending 🦴.
+const TREAT_WORDS := {
+	"🐟": ["fish", "tuna"], "🐠": ["tropical"], "🍤": ["shrimp", "prawn"], "🥛": ["milk"],
+	"🦴": ["bone"], "🍖": ["meat"], "🥩": ["steak"], "🍗": ["drumstick", "chicken leg"],
+	"🌻": ["sunflower", "seed"], "🌾": ["wheat"], "🍇": ["grape"], "🍎": ["apple"], "🫐": ["blueberry", "blueberries"],
+	"🥜": ["peanut"], "🌰": ["chestnut"], "🥕": ["carrot"], "🌽": ["corn"], "🥬": ["lettuce"],
+	"🍓": ["strawberry", "strawberries"], "🥦": ["broccoli"],
+}
+var treats_found := {} # pet id -> true once their favourite has been shown
+
+# Each pet secretly loves one of their species' treats most of all.
+func favorite_treat() -> String:
+	var options: Array = []
+	for treat in treat_emojis():
+		if not options.has(treat):
+			options.append(treat)
+	return options[absi(active_pet.hash()) % options.size()]
+
+# She is shown her favourite: very happy, and a reward the first time.
+func favorite_treat_shown() -> void:
+	happiness = minf(MAX_STAT, happiness + 25.0)
+	stats_changed.emit()
+	if not treats_found.get(active_pet, false):
+		treats_found[active_pet] = true
+		add_coins(5)
+		award_sticker("treat")
 
 # Favourite toy per species, for the Play buttons.
 const SPECIES_TOY := {
@@ -796,6 +830,7 @@ const STICKERS := {
 	"spa": {"emoji": "💆", "label": "Spa Day"},
 	"week": {"emoji": "📅", "label": "Whole Week"},
 	"cathouse": {"emoji": "🏡", "label": "Dream House"},
+	"treat": {"emoji": "💝", "label": "Favourite Treat"},
 }
 var earned_stickers := {}
 
