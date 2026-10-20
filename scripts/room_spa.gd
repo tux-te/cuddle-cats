@@ -35,10 +35,11 @@ var drag_offset := Vector2.ZERO
 var mask_on := false
 
 func _ready() -> void:
-	background.texture = load(PetalState.room_bg("spa", "res://Sprites/backgrounds/grooming_room.jpg"))
+	background.texture = load(PetalState.room_bg("spa", "res://Sprites/backgrounds/spa.jpg"))
 	PetCameo.spawn(pet)
 	pet.mouse_filter = Control.MOUSE_FILTER_STOP
 	pet.gui_input.connect(_on_pet_input)
+	%BackButton.pressed.connect(func() -> void: PetalState.navigate_to_room.emit("grooming"))
 	bubble_button.pressed.connect(_toggle_bubbles)
 	sleep_button.pressed.connect(_sleep)
 
