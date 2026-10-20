@@ -85,6 +85,8 @@ func _ready() -> void:
 	%StickersButton.pressed.connect(_show_room.bind("stickers"))
 
 	pets_button.pressed.connect(_open_pet_picker)
+	_add_header_button("❓ Help", func() -> void: HowToPlay.open(self))
+	_add_header_button("👤 Switch", _switch_player)
 	%ClosePetPickerButton.pressed.connect(_close_pet_picker)
 
 	_enter_bedroom()
@@ -94,6 +96,20 @@ func _ready() -> void:
 	idle_timer.autostart = true
 	idle_timer.timeout.connect(_on_idle_tick)
 	add_child(idle_timer)
+
+func _add_header_button(label: String, action: Callable) -> void:
+	var button := Button.new()
+	button.text = label
+	button.custom_minimum_size = Vector2(120, 50)
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.add_theme_font_size_override("font_size", 16)
+	button.pressed.connect(action)
+	pets_button.get_parent().add_child(button)
+
+# Back to the title screen, whose slot picker lets another kid take over.
+func _switch_player() -> void:
+	PetalState.save_game()
+	get_tree().change_scene_to_file("res://scenes/title_screen.tscn")
 
 func _refresh_coins() -> void:
 	coins_label.text = "🪙 %d Treat Coin%s" % [PetalState.coins, "" if PetalState.coins == 1 else "s"]

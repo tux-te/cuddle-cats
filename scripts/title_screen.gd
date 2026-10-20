@@ -66,8 +66,14 @@ func _on_slot_chosen(slot: int, picker: SlotPicker) -> void:
 	overlay = editor
 	editor.submitted.connect(func(text: String) -> void:
 		PetalState.set_player_name(text)
-		_start_game())
-	editor.cancelled.connect(_start_game)
+		_show_help_then_start())
+	editor.cancelled.connect(_show_help_then_start)
+
+# A brand-new player sees the how-to-play card once before their first game.
+func _show_help_then_start() -> void:
+	var help := HowToPlay.open(self)
+	overlay = help
+	help.closed.connect(_start_game)
 
 func _start_game() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
