@@ -13,6 +13,7 @@ const STAGE_SIZE := Vector2(700, 360)
 const SPOT_IDLE := Vector2(285, 140)
 const SPOT_BED := Vector2(110, 125)
 const SPOT_BOWL := Vector2(405, 150)
+const SPOT_TOY := Vector2(330, 175)
 
 const PATTERN_LABELS := {
 	"plain": "➖ Plain", "stripes": "🦓 Stripes", "dots": "⚪ Dots", "hearts": "💗 Hearts",
@@ -21,6 +22,7 @@ const PATTERN_LABELS := {
 const SHAPE_LABELS := {
 	"round": "⭕ Round", "square": "🟦 Square", "heart": "💗 Heart", "star": "⭐ Star",
 	"tall": "🥫 Tall", "wide": "🥣 Wide",
+	"ball": "🔴 Ball", "bone": "🦴 Bone", "fish": "🐟 Fish",
 }
 const INK := Color(0.4, 0.25, 0.3)
 
@@ -110,6 +112,7 @@ func _build() -> void:
 	set_actions = _action_row(left)
 	set_actions.add_child(_action_button("😴 Nap", _on_nap))
 	set_actions.add_child(_action_button("🍽️ Eat", _on_eat))
+	set_actions.add_child(_action_button("🧸 Play", _on_toy))
 	set_actions.add_child(_action_button("🎲 Surprise me!", _on_surprise))
 	set_actions.add_child(_action_button("✅ I love it!", _on_done))
 	play_actions = _action_row(left)
@@ -159,14 +162,14 @@ func _build() -> void:
 	tabs.add_theme_constant_override("separation", 8)
 	options.add_child(tabs)
 	var group := ButtonGroup.new()
-	for entry in [["bed", "🛏️ Bed"], ["bowl", "🥣 Bowl"]]:
+	for entry in [["bed", "🛏️ Bed"], ["bowl", "🥣 Bowl"], ["toy", "🧸 Toy"], ["pillow", "🛋️ Pillow"]]:
 		var tab := Button.new()
 		tab.text = entry[1]
 		tab.toggle_mode = true
 		tab.button_group = group
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tab.custom_minimum_size = Vector2(0, 46)
-		tab.add_theme_font_size_override("font_size", 22)
+		tab.add_theme_font_size_override("font_size", 17)
 		tab.pressed.connect(_on_kind.bind(String(entry[0])))
 		tabs.add_child(tab)
 		kind_buttons[entry[0]] = tab
@@ -284,8 +287,8 @@ func _refresh() -> void:
 	for id in stamp_buttons:
 		stamp_buttons[id].set_pressed_no_signal(id == piece["stamp"])
 	_rebuild_shapes()
-	var label := "bed" if kind == "bed" else "bowl"
-	name_button.text = "✏️ Name the %s: %s" % [label, canvas.bed_name.text if kind == "bed" else canvas.bowl_name.text]
+	name_button.visible = kind == "bed" or kind == "bowl"
+	name_button.text = "✏️ Name the %s: %s" % [kind, canvas.bed_name.text if kind == "bed" else canvas.bowl_name.text]
 
 func _price_text(id: String) -> String:
 	if PetalState.play_cost(id) == 0:
@@ -464,7 +467,8 @@ func _on_stamp(id: String) -> void:
 	_piece()["stamp"] = id
 	_changed()
 	if id != "":
-		Confetti.burst(self, canvas.bed_stamp.global_position + canvas.bed_stamp.size / 2.0 if kind == "bed" else canvas.bowl_stamp.global_position + canvas.bowl_stamp.size / 2.0, 8)
+		var stamp_label: Label = canvas.get(kind + "_stamp")
+		Confetti.burst(self, stamp_label.global_position + stamp_label.size / 2.0, 8)
 
 func _on_shape(id: String) -> void:
 	_piece()["shape"] = id
@@ -480,7 +484,7 @@ func _on_named(text: String) -> void:
 	_changed()
 
 func _on_surprise() -> void:
-	for which in ["bed", "bowl"]:
+	for which in PetalState.SET_KINDS:
 		var piece: Dictionary = design[which]
 		piece["color"] = randi() % PetalState.SET_COLORS.size()
 		piece["trim"] = (int(piece["color"]) + 3 + randi() % 6) % PetalState.SET_COLORS.size()
@@ -494,6 +498,12 @@ func _on_surprise() -> void:
 
 func _on_nap() -> void:
 	_walk_pet(SPOT_BED, "😴 so cozy!")
+
+func _on_toy() -> void:
+	await _walk_pet(SPOT_TOY, "🧸 wheee!")
+	for i in range(2):
+		if is_instance_valid(petal):
+			await PetCameo.jump_for_joy(petal)
 
 func _on_eat() -> void:
 	_walk_pet(SPOT_BOWL, "😋 yum yum!")

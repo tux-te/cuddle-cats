@@ -7,6 +7,8 @@ extends Control
 const BED_CENTER := Vector2(175, 238)
 const BOWL_CENTER := Vector2(560, 238)
 const NAME_Y := 324.0
+const TOY_CENTER := Vector2(395, 290)
+const PILLOW_CENTER := Vector2(120, 232)
 
 # bed shape -> half-width and half-height of the top face
 const BED_SIZES := {
@@ -33,10 +35,14 @@ var bed_stamp: Label
 var bowl_stamp: Label
 var bed_name: Label
 var bowl_name: Label
+var toy_stamp: Label
+var pillow_stamp: Label
 
 func _ready() -> void:
 	bed_stamp = _make_label(44, Vector2(90, 60))
 	bowl_stamp = _make_label(30, Vector2(70, 44))
+	toy_stamp = _make_label(22, Vector2(50, 36))
+	pillow_stamp = _make_label(24, Vector2(50, 36))
 	bed_name = _make_label(22, Vector2(330, 32))
 	bowl_name = _make_label(22, Vector2(330, 32))
 	bed_name.add_theme_color_override("font_color", Color(0.4, 0.25, 0.3))
@@ -74,6 +80,10 @@ func _update_labels() -> void:
 	var dims: Vector4 = BOWL_SIZES[bowl["shape"]]
 	_place(bowl_stamp, BOWL_CENTER + Vector2(0, 8 + dims.z * 0.1))
 	bed_name.text = String(bed["name"]) if String(bed["name"]) != "" else bed_name_default
+	toy_stamp.text = String(design["toy"]["stamp"])
+	_place(toy_stamp, TOY_CENTER)
+	pillow_stamp.text = String(design["pillow"]["stamp"])
+	_place(pillow_stamp, PILLOW_CENTER)
 	bowl_name.text = String(bowl["name"]) if String(bowl["name"]) != "" else bowl_name_default
 
 func _draw() -> void:
@@ -82,7 +92,9 @@ func _draw() -> void:
 	if design.is_empty():
 		return
 	_draw_bed(design["bed"])
+	_draw_pillow(design["pillow"])
 	_draw_bowl(design["bowl"])
+	_draw_toy(design["toy"])
 
 static func _box(color: Color, radius: int) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
@@ -112,6 +124,45 @@ func _draw_bed(piece: Dictionary) -> void:
 	draw_colored_polygon(cushion, main)
 	_draw_pattern(String(piece["pattern"]), cushion, trim, 1.0)
 	_outline_line(cushion, main.darkened(0.25))
+
+# --- Pillow and toy ----------------------------------------------------------
+
+func _draw_pillow(piece: Dictionary) -> void:
+	var main := _col(int(piece["color"]))
+	var trim := _col(int(piece["trim"]))
+	var shape := String(piece["shape"])
+	var half := Vector2(46, 26) if shape != "heart" else Vector2(44, 32)
+	var edge := _outline(shape, PILLOW_CENTER, half.x, half.y)
+	draw_colored_polygon(_scaled(edge, PILLOW_CENTER, 1.0, Vector2(0, 6)), trim.darkened(0.3))
+	draw_colored_polygon(edge, trim)
+	var face := _scaled(edge, PILLOW_CENTER, 0.84, Vector2.ZERO)
+	draw_colored_polygon(face, main)
+	_draw_pattern(String(piece["pattern"]), face, trim, 0.6)
+	_outline_line(face, main.darkened(0.25))
+
+func _draw_toy(piece: Dictionary) -> void:
+	var main := _col(int(piece["color"]))
+	var trim := _col(int(piece["trim"]))
+	var c := TOY_CENTER
+	var parts: Array[PackedVector2Array] = []
+	match String(piece["shape"]):
+		"bone":
+			parts.append(_rect(c + Vector2(-24, -8), Vector2(48, 16)))
+			for end in [Vector2(-26, -9), Vector2(-26, 9), Vector2(26, -9), Vector2(26, 9)]:
+				parts.append(_ellipse(c + end, 10, 10, 14))
+		"fish":
+			parts.append(_ellipse(c + Vector2(-6, 0), 30, 18))
+			parts.append(PackedVector2Array([c + Vector2(18, 0), c + Vector2(40, -16), c + Vector2(40, 16)]))
+		"heart":
+			parts.append(_outline("heart", c, 28, 28))
+		_:
+			parts.append(_ellipse(c, 26, 26))
+	draw_colored_polygon(_ellipse(c + Vector2(0, 26), 38, 8), Color(0, 0, 0, 0.12))
+	for part in parts:
+		draw_colored_polygon(_scaled(part, c, 1.12, Vector2.ZERO), trim)
+	for part in parts:
+		draw_colored_polygon(part, main)
+		_draw_pattern(String(piece["pattern"]), part, trim, 0.5)
 
 # --- Bowl --------------------------------------------------------------------
 

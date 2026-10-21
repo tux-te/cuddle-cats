@@ -947,7 +947,10 @@ const SET_STAMPS := ["", "🐾", "⭐", "💖", "🌸", "🦴", "🐟", "🦋", 
 const SET_SHAPES := {
 	"bed": ["round", "square", "heart", "star"],
 	"bowl": ["round", "tall", "wide"],
+	"toy": ["ball", "bone", "fish", "heart"],
+	"pillow": ["square", "round", "heart"],
 }
+const SET_KINDS := ["bed", "bowl", "toy", "pillow"]
 const SET_NAME_MAX := 14
 var pet_sets := {}
 
@@ -963,6 +966,8 @@ func default_pet_set(id: String) -> Dictionary:
 	return {
 		"bed": {"color": main, "trim": trim, "pattern": "hearts", "stamp": "🐾", "shape": "round", "name": ""},
 		"bowl": {"color": main, "trim": trim, "pattern": "dots", "stamp": "", "shape": "round", "name": ""},
+		"toy": {"color": trim, "trim": main, "pattern": "stripes", "stamp": "", "shape": "ball", "name": ""},
+		"pillow": {"color": trim, "trim": main, "pattern": "plain", "stamp": "💖", "shape": "heart", "name": ""},
 	}
 
 # The saved design for a pet, with anything missing filled from the default.
@@ -973,7 +978,7 @@ func pet_set(id: String) -> Dictionary:
 func pet_set_from_save(id: String, saved: Dictionary) -> Dictionary:
 	var base := default_pet_set(id)
 	var result := {}
-	for kind in ["bed", "bowl"]:
+	for kind in SET_KINDS:
 		var raw = saved.get(kind)
 		result[kind] = _clean_set_piece(kind, raw, base[kind]) if raw is Dictionary else base[kind]
 	return result
