@@ -161,10 +161,10 @@ func _choose(category: String, choice: String) -> void:
 	PetalState.save_game()
 	_refresh()
 	if PetalState.house_wants_for_pet()[category] == choice:
-		speech.text = "YES! 😻 I love %s!" % choice
+		speech.text = PetalState.in_voice("YES! 😻 I love %s!" % choice)
 		PetCameo.jump_for_joy(pet)
 	else:
-		speech.text = String(["Hmm, not really 😐", "Meh... 😾", "Nope! 🙅", "Ewww 😿"].pick_random())
+		speech.text = PetalState.in_voice(String(["Hmm, not really 😐", "Meh... 😾", "Nope! 🙅", "Ewww 😿"].pick_random()))
 
 func _show_her() -> void:
 	var wants := PetalState.house_wants_for_pet()
@@ -177,14 +177,14 @@ func _show_her() -> void:
 		report += "%s%s " % [CATEGORIES[category]["emoji"], "✅" if ok else "❌"]
 	PetalState.house_judged(matches)
 	if matches == CATEGORIES.size():
-		speech.text = "%s\nIt's my DREAM house!!! 😻🏡" % report
+		speech.text = PetalState.in_voice("%s\nIt's my DREAM house!!! 😻🏡" % report)
 		Confetti.burst(self, pet.global_position + pet.size / 2.0, 40)
 		PetCameo.jump_for_joy(pet)
 	elif matches >= 2:
-		speech.text = "%s\nIt's nice! 😸 Some parts aren't quite me." % report
+		speech.text = PetalState.in_voice("%s\nIt's nice! 😸 Some parts aren't quite me." % report)
 		PetCameo.jump_for_joy(pet)
 	else:
-		speech.text = "%s\nHmm... 😿 Try asking me what I like!" % report
+		speech.text = PetalState.in_voice("%s\nHmm... 😿 Try asking me what I like!" % report)
 
 # --- The house --------------------------------------------------------------
 

@@ -501,6 +501,49 @@ func _reset_progress() -> void:
 	photos.clear()
 	_init_pet_records()
 
+# ── Pet voice ────────────────────────────────────────────────────────────────
+# Replies are written in cat. For any other pet this swaps the noises and the cat
+# faces: a dog woofs and gets 😍 instead of 😻, a bird tweets, and so on.
+const VOICES := {
+	"dog": {"sound": "woof", "face": "🐶", "purr": "*tail wag*", "hiss": "Grrrr", "kitty": "puppy", "noun": "dog"},
+	"bird": {"sound": "tweet", "face": "🐦", "purr": "*chirp chirp*", "hiss": "Squawk", "kitty": "birdie", "noun": "bird"},
+	"gerbil": {"sound": "squeak", "face": "🐹", "purr": "*squeak*", "hiss": "Squeak", "kitty": "gerbil", "noun": "gerbil"},
+	"bunny": {"sound": "nibble", "face": "🐰", "purr": "*nuzzle*", "hiss": "*thump*", "kitty": "bunny", "noun": "bunny"},
+}
+const CAT_EMOJI_SWAP := {"😸": "😄", "😹": "😂", "😺": "😃", "😻": "😍", "😼": "😏", "😽": "😘", "😾": "😠", "😿": "😢", "🙀": "😱"}
+
+func pet_species() -> String:
+	return String(PETS.get(active_pet, {}).get("species", "cat"))
+
+func in_voice(text: String) -> String:
+	var species := pet_species()
+	if species == "cat" or not VOICES.has(species):
+		return text
+	var v: Dictionary = VOICES[species]
+	var out := text
+	for rule in [
+		["(?i)\\bmeow+\\b", v["sound"]],
+		["(?i)\\bpurr+\\b", v["purr"]],
+		["(?i)\\bhi+s{2,}\\b", v["hiss"]],
+		["(?i)\\bkitty\\b", v["kitty"]],
+	]:
+		var rx := RegEx.new()
+		rx.compile(rule[0])
+		var pieces := ""
+		var last := 0
+		for m in rx.search_all(out):
+			pieces += out.substr(last, m.get_start() - last)
+			var word := String(rule[1])
+			var first := m.get_string()[0]
+			pieces += word.capitalize() if first == first.to_upper() and not word.begins_with("*") else word
+			last = m.get_end()
+		out = pieces + out.substr(last)
+	out = out.replace("I'm a cat", "I'm a " + String(v["noun"])).replace("Cats don't mind", "Pets don't mind").replace("A big cat, like me!", "A big cat!")
+	out = out.replace("🐈\u200d⬛", v["face"]).replace("🐈", v["face"]).replace("🐱", v["face"])
+	for cat_face in CAT_EMOJI_SWAP:
+		out = out.replace(cat_face, CAT_EMOJI_SWAP[cat_face])
+	return out
+
 # A worrying message was typed in the pet chat. Only the time is kept.
 func remember_like(word: String) -> void:
 	if word == "" or remembered_likes.has(word):
