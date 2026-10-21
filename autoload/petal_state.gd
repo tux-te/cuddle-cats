@@ -938,6 +938,7 @@ const STICKERS := {
 	"designer": {"emoji": "🛏️", "label": "Pet Designer"},
 	"playspace": {"emoji": "🎪", "label": "Play Space Pro"},
 	"playroom": {"emoji": "🏠", "label": "Room Decorator"},
+	"homesweet": {"emoji": "🏡", "label": "Home Sweet Home"},
 }
 var earned_stickers := {}
 
@@ -957,8 +958,11 @@ const SET_SHAPES := {
 	"bowl": ["round", "tall", "wide"],
 	"toy": ["ball", "bone", "fish", "heart"],
 	"pillow": ["square", "round", "heart"],
+	"house": ["cottage", "tower", "tent"],
 }
-const SET_KINDS := ["bed", "bowl", "toy", "pillow"]
+const SET_KINDS := ["bed", "bowl", "toy", "pillow", "house"]
+# The house each kind of pet starts with (they can all change it).
+const SPECIES_HOUSE := {"cat": "cottage", "dog": "cottage", "bird": "tower", "gerbil": "tent", "bunny": "tent"}
 const SET_NAME_MAX := 14
 var pet_sets := {}
 
@@ -968,6 +972,7 @@ func favourite_color(id: String) -> int:
 	return absi(("fav" + id).hash()) % SET_COLORS.size()
 
 func default_pet_set(id: String) -> Dictionary:
+	var species := String(PETS[id].get("species", "cat"))
 	var h := absi(id.hash())
 	var main := h % SET_COLORS.size()
 	var trim := (main + 4 + h % 3) % SET_COLORS.size()
@@ -976,6 +981,7 @@ func default_pet_set(id: String) -> Dictionary:
 		"bowl": {"color": main, "trim": trim, "pattern": "dots", "stamp": "", "shape": "round", "name": ""},
 		"toy": {"color": trim, "trim": main, "pattern": "stripes", "stamp": "", "shape": "ball", "name": ""},
 		"pillow": {"color": trim, "trim": main, "pattern": "plain", "stamp": "💖", "shape": "heart", "name": ""},
+		"house": {"color": main, "trim": trim, "pattern": "plain", "stamp": species_emoji(species), "shape": String(SPECIES_HOUSE.get(species, "cottage")), "name": ""},
 	}
 
 # The saved design for a pet, with anything missing filled from the default.
@@ -1011,9 +1017,9 @@ func save_pet_set(id: String, design: Dictionary) -> void:
 	save_game()
 
 # Tapping "I love it!" in the studio: sticker + coins the first time only.
-func finish_pet_set(id: String, design: Dictionary) -> void:
+func finish_pet_set(id: String, design: Dictionary, sticker := "designer") -> void:
 	save_pet_set(id, design)
-	award_sticker("designer")
+	award_sticker(sticker)
 
 
 # Play Space (room_petset.gd): toys and scenery bought with Treat Coins, then
@@ -1082,6 +1088,40 @@ const ROOM_FLOORS := {
 	"grass": {"emoji": "🌱", "label": "Grass Rug", "cost": 12, "color": Color("8fd46b"), "pattern": "plain"},
 	"tile": {"emoji": "🟦", "label": "Blue Tiles", "cost": 15, "color": Color("8cc4f5"), "pattern": "tiles"},
 }
+# Toys each kind of pet loves most - the shops show the active pet's own.
+const PET_ITEMS := {
+	"fishtoy": {"emoji": "🐟", "label": "Fishy", "cost": 3},
+	"mousetoy": {"emoji": "🐭", "label": "Mousey", "cost": 4},
+	"scratch": {"emoji": "🌴", "label": "Scratch Post", "cost": 8},
+	"milk": {"emoji": "🥛", "label": "Milk", "cost": 3},
+	"bonetoy": {"emoji": "🦴", "label": "Bone", "cost": 3},
+	"frisbee": {"emoji": "🥏", "label": "Frisbee", "cost": 5},
+	"dogtreat": {"emoji": "🥩", "label": "Treat", "cost": 4},
+	"bigball": {"emoji": "🏐", "label": "Big Ball", "cost": 6},
+	"sunflower": {"emoji": "🌻", "label": "Sunflower", "cost": 3},
+	"cherry": {"emoji": "🍒", "label": "Cherries", "cost": 4},
+	"song": {"emoji": "🎶", "label": "Song", "cost": 4},
+	"egg": {"emoji": "🥚", "label": "Egg", "cost": 5},
+	"peanut": {"emoji": "🥜", "label": "Peanut", "cost": 3},
+	"cheese": {"emoji": "🧀", "label": "Cheese", "cost": 4},
+	"hole": {"emoji": "🕳️", "label": "Tunnel", "cost": 6},
+	"chestnut": {"emoji": "🌰", "label": "Chestnut", "cost": 3},
+	"carrot": {"emoji": "🥕", "label": "Carrot", "cost": 3},
+	"lettuce": {"emoji": "🥬", "label": "Lettuce", "cost": 3},
+	"mushroom": {"emoji": "🍄", "label": "Mushroom", "cost": 4},
+	"daisy": {"emoji": "🌼", "label": "Daisy", "cost": 3},
+}
+const SPECIES_ITEMS := {
+	"cat": ["fishtoy", "mousetoy", "scratch", "milk"],
+	"dog": ["bonetoy", "frisbee", "dogtreat", "bigball"],
+	"bird": ["sunflower", "cherry", "song", "egg"],
+	"gerbil": ["peanut", "cheese", "hole", "chestnut"],
+	"bunny": ["carrot", "lettuce", "mushroom", "daisy"],
+}
+
+func pet_favourites(id: String) -> Array:
+	return SPECIES_ITEMS.get(String(PETS[id].get("species", "cat")), [])
+
 const PLAY_MAX_ITEMS := 14
 var play_owned: Array = []        # ids of bought items and themes
 var play_spaces := {}             # pet id -> {"theme": id, "items": [{"id", "x", "y"}]}
@@ -1089,7 +1129,7 @@ var play_rooms := {}              # pet id -> {"wall": id, "floor": id, "items":
 
 # The catalog entry for any play item, theme, wall or floor ({} if unknown).
 func play_def(id: String) -> Dictionary:
-	for catalog in [PLAY_ITEMS, PLAY_THEMES, ROOM_ITEMS, ROOM_WALLS, ROOM_FLOORS]:
+	for catalog in [PLAY_ITEMS, PET_ITEMS, PLAY_THEMES, ROOM_ITEMS, ROOM_WALLS, ROOM_FLOORS]:
 		if catalog.has(id):
 			return catalog[id]
 	return {}
@@ -1121,7 +1161,7 @@ func play_space_from_save(saved: Dictionary) -> Dictionary:
 	var theme := String(saved.get("theme", "cosy"))
 	if not PLAY_THEMES.has(theme):
 		theme = "cosy"
-	return {"theme": theme, "items": _clean_play_items(saved.get("items", []), PLAY_ITEMS)}
+	return {"theme": theme, "items": _clean_play_items(saved.get("items", []), PLAY_ITEMS.merged(PET_ITEMS))}
 
 func play_room(id: String) -> Dictionary:
 	var saved = play_rooms.get(id, {})
@@ -1133,7 +1173,7 @@ func play_room_from_save(saved: Dictionary) -> Dictionary:
 	return {
 		"wall": wall if ROOM_WALLS.has(wall) else "pinkwall",
 		"floor": floor_id if ROOM_FLOORS.has(floor_id) else "wood",
-		"items": _clean_play_items(saved.get("items", []), ROOM_ITEMS),
+		"items": _clean_play_items(saved.get("items", []), ROOM_ITEMS.merged(PET_ITEMS)),
 	}
 
 func save_play_room(id: String, room: Dictionary) -> void:

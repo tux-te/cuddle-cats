@@ -9,6 +9,8 @@ const BOWL_CENTER := Vector2(560, 238)
 const NAME_Y := 324.0
 const TOY_CENTER := Vector2(395, 290)
 const PILLOW_CENTER := Vector2(120, 232)
+const DOOR_RECT := Rect2(318, 200, 64, 92)
+const DOOR_CENTER := Vector2(350, 250)
 
 # bed shape -> half-width and half-height of the top face
 const BED_SIZES := {
@@ -37,10 +39,21 @@ var bed_name: Label
 var bowl_name: Label
 var toy_stamp: Label
 var pillow_stamp: Label
+var house_stamp: Label
+var house_name: Label
+var house_deco: Label
+var house_name_default := "House"
+var view := "set"   # "set" = bed, bowl, toy and pillow; "house" = the house outside
 
 func _ready() -> void:
 	bed_stamp = _make_label(44, Vector2(90, 60))
 	bowl_stamp = _make_label(30, Vector2(70, 44))
+	house_stamp = _make_label(40, Vector2(80, 56))
+	house_name = _make_label(22, Vector2(330, 32))
+	house_name.add_theme_color_override("font_color", Color(0.4, 0.25, 0.3))
+	_place(house_name, Vector2(350, NAME_Y))
+	house_deco = _make_label(40, Vector2(140, 56))
+	_place(house_deco, Vector2(570, 262))
 	toy_stamp = _make_label(22, Vector2(50, 36))
 	pillow_stamp = _make_label(24, Vector2(50, 36))
 	bed_name = _make_label(22, Vector2(330, 32))
@@ -50,6 +63,12 @@ func _ready() -> void:
 	_place(bed_name, Vector2(BED_CENTER.x, NAME_Y))
 	_place(bowl_name, Vector2(BOWL_CENTER.x, NAME_Y))
 	if not design.is_empty():
+		_update_labels()
+
+func set_view(value: String) -> void:
+	view = value
+	queue_redraw()
+	if bed_stamp:
 		_update_labels()
 
 func set_design(value: Dictionary) -> void:
@@ -80,6 +99,16 @@ func _update_labels() -> void:
 	var dims: Vector4 = BOWL_SIZES[bowl["shape"]]
 	_place(bowl_stamp, BOWL_CENTER + Vector2(0, 8 + dims.z * 0.1))
 	bed_name.text = String(bed["name"]) if String(bed["name"]) != "" else bed_name_default
+	var in_house := view == "house"
+	for label in [bed_stamp, bowl_stamp, bed_name, bowl_name, toy_stamp, pillow_stamp]:
+		label.visible = not in_house
+	for label in [house_stamp, house_name, house_deco]:
+		label.visible = in_house
+	var house: Dictionary = design["house"]
+	house_stamp.text = String(house["stamp"])
+	var stamp_y := {"cottage": 125.0, "tower": 66.0, "tent": 175.0}
+	_place(house_stamp, Vector2(350, stamp_y.get(String(house["shape"]), 125.0)))
+	house_name.text = String(house["name"]) if String(house["name"]) != "" else house_name_default
 	toy_stamp.text = String(design["toy"]["stamp"])
 	_place(toy_stamp, TOY_CENTER)
 	pillow_stamp.text = String(design["pillow"]["stamp"])
@@ -90,6 +119,9 @@ func _draw() -> void:
 	draw_style_box(_box(Color(1.0, 0.95, 0.9), 22), Rect2(Vector2.ZERO, size))
 	draw_colored_polygon(_ellipse(Vector2(size.x / 2.0, 280), size.x * 0.48, 80), Color(0.96, 0.85, 0.72))
 	if design.is_empty():
+		return
+	if view == "house":
+		_draw_house(design["house"])
 		return
 	_draw_bed(design["bed"])
 	_draw_pillow(design["pillow"])
@@ -124,6 +156,56 @@ func _draw_bed(piece: Dictionary) -> void:
 	draw_colored_polygon(cushion, main)
 	_draw_pattern(String(piece["pattern"]), cushion, trim, 1.0)
 	_outline_line(cushion, main.darkened(0.25))
+
+# --- House -------------------------------------------------------------------
+
+func _draw_house(piece: Dictionary) -> void:
+	var main := _col(int(piece["color"]))
+	var trim := _col(int(piece["trim"]))
+	var shape := String(piece["shape"])
+	draw_rect(Rect2(0, 0, size.x, size.y), Color("a9dcff"))
+	draw_circle(Vector2(620, 60), 34, Color("ffe066"))
+	for offset in [Vector2(0, 0), Vector2(30, -12), Vector2(60, 0), Vector2(28, 8)]:
+		draw_circle(Vector2(110, 70) + offset, 24, Color(1, 1, 1, 0.9))
+	draw_rect(Rect2(0, 268, size.x, size.y), Color("8fd46b"))
+	draw_colored_polygon(_ellipse(Vector2(350, 292), 250, 24), Color(0, 0, 0, 0.12))
+	for i in range(9):
+		draw_circle(Vector2(30 + i * 80, 300 + (i % 3) * 18), 5, [Color("ff9ec4"), Color("ffe066"), Color("ffffff")][i % 3])
+
+	var body: PackedVector2Array
+	var roof := PackedVector2Array()
+	match shape:
+		"tower":
+			body = _rect(Vector2(262, 100), Vector2(176, 190))
+			roof = PackedVector2Array([Vector2(244, 110), Vector2(350, 10), Vector2(456, 110)])
+		"tent":
+			body = PackedVector2Array([Vector2(220, 292), Vector2(350, 70), Vector2(480, 292)])
+		_:
+			body = _rect(Vector2(220, 160), Vector2(260, 132))
+			roof = PackedVector2Array([Vector2(196, 168), Vector2(350, 58), Vector2(504, 168)])
+			draw_rect(Rect2(432, 70, 34, 70), trim.darkened(0.25))
+	# a path to the door
+	draw_colored_polygon(PackedVector2Array([Vector2(325, 292), Vector2(375, 292), Vector2(410, 345), Vector2(290, 345)]), Color("f6dfa4"))
+	draw_colored_polygon(body, main)
+	_draw_pattern(String(piece["pattern"]), body, trim, 1.0)
+	_outline_line(body, main.darkened(0.3))
+	if roof.is_empty():
+		# tent: a flag on top
+		draw_line(Vector2(350, 70), Vector2(350, 28), trim.darkened(0.3), 3.0)
+		draw_colored_polygon(PackedVector2Array([Vector2(350, 28), Vector2(384, 40), Vector2(350, 52)]), trim)
+	else:
+		draw_colored_polygon(roof, trim)
+		_outline_line(roof, trim.darkened(0.3))
+	var door_color := trim.darkened(0.3)
+	draw_rect(DOOR_RECT, door_color)
+	draw_circle(Vector2(350, 200), 32, door_color)
+	draw_circle(Vector2(368, 250), 4, Color("ffe066"))
+	if shape != "tent":
+		var panes := [Vector2(266, 200), Vector2(434, 200)] if shape == "cottage" else [Vector2(350, 150)]
+		for pane in panes:
+			draw_rect(Rect2(pane - Vector2(24, 24), Vector2(48, 48)), Color("d6f0ff"))
+			draw_rect(Rect2(pane - Vector2(24, 24), Vector2(48, 48)), Color.WHITE, false, 5.0)
+			draw_line(pane - Vector2(0, 24), pane + Vector2(0, 24), Color.WHITE, 3.0)
 
 # --- Pillow and toy ----------------------------------------------------------
 

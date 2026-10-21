@@ -14,6 +14,7 @@ const SPOT_IDLE := Vector2(285, 140)
 const SPOT_BED := Vector2(110, 125)
 const SPOT_BOWL := Vector2(405, 150)
 const SPOT_TOY := Vector2(330, 175)
+const SPOT_HOUSE := Vector2(500, 150)
 
 const PATTERN_LABELS := {
 	"plain": "➖ Plain", "stripes": "🦓 Stripes", "dots": "⚪ Dots", "hearts": "💗 Hearts",
@@ -23,6 +24,7 @@ const SHAPE_LABELS := {
 	"round": "⭕ Round", "square": "🟦 Square", "heart": "💗 Heart", "star": "⭐ Star",
 	"tall": "🥫 Tall", "wide": "🥣 Wide",
 	"ball": "🔴 Ball", "bone": "🦴 Bone", "fish": "🐟 Fish",
+	"cottage": "🏡 Cottage", "tower": "🏰 Tower", "tent": "⛺ Tent",
 }
 const INK := Color(0.4, 0.25, 0.3)
 
@@ -48,6 +50,12 @@ var wall_buttons := {}
 var floor_buttons := {}
 var room_coin_label: Label
 var weather_button: Button
+var house_actions: HBoxContainer
+var door_button: Button
+var go_out_button: Button
+var kind_tabs: HBoxContainer
+var going_in := false
+var fav_buttons: Array = []   # [button, item id] for the active pet's favourite toys
 var set_actions: HBoxContainer
 var play_actions: HBoxContainer
 var set_options: VBoxContainer
@@ -69,6 +77,8 @@ func _ready() -> void:
 	canvas.food_color = SetCanvas.FOOD_COLORS.get(PetalState.pet_species(), SetCanvas.FOOD_COLORS["cat"])
 	canvas.bed_name_default = "%s's Bed" % PetalState.pet_name
 	canvas.bowl_name_default = "%s's Bowl" % PetalState.pet_name
+	canvas.house_name_default = "%s's House" % PetalState.pet_name
+	canvas.house_deco.text = "%s🌷" % PetalState.species_emoji(PetalState.pet_species())
 	play_stage.load_space(PetalState.play_space(pet_id))
 	room_stage.load_space(PetalState.play_room(pet_id))
 	_refresh()
@@ -77,6 +87,7 @@ func _ready() -> void:
 	PetalState.coins_changed.connect(_refresh_shop)
 	petal.position = SPOT_IDLE
 	PetCameo.spawn(petal)
+	_build_pet_favourites()
 
 # A scroll box keeps every control reachable above the bottom bar: the stage
 # and its buttons on the left, the design controls on the right.
@@ -121,6 +132,14 @@ func _build() -> void:
 	petal.size = PET_SIZE
 	petal.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stage.add_child(petal)
+	# an invisible button over the front door: tap it to walk in
+	door_button = Button.new()
+	door_button.flat = true
+	door_button.position = SetCanvas.DOOR_RECT.position - Vector2(0, 32)
+	door_button.size = SetCanvas.DOOR_RECT.size + Vector2(0, 32)
+	door_button.tooltip_text = "Go inside!"
+	door_button.pressed.connect(_on_enter_house)
+	stage.add_child(door_button)
 
 	set_actions = _action_row(left)
 	set_actions.add_child(_action_button("😴 Nap", _on_nap))
@@ -128,6 +147,10 @@ func _build() -> void:
 	set_actions.add_child(_action_button("🧸 Play", _on_toy))
 	set_actions.add_child(_action_button("🎲 Surprise me!", _on_surprise))
 	set_actions.add_child(_action_button("✅ I love it!", _on_done))
+	house_actions = _action_row(left)
+	house_actions.add_child(_action_button("🚪 Go inside!", _on_enter_house))
+	house_actions.add_child(_action_button("🎲 Surprise me!", _on_house_surprise))
+	house_actions.add_child(_action_button("✅ I love it!", _on_house_done))
 	play_actions = _action_row(left)
 	play_actions.add_child(_action_button("🎉 Play!", _on_play))
 	put_away_button = _action_button("🧺 Put away", _on_put_away)
@@ -136,6 +159,8 @@ func _build() -> void:
 	play_actions.add_child(weather_button)
 	play_actions.add_child(_action_button("🧹 Clear all", _on_clear))
 	play_actions.add_child(_action_button("✅ I love it!", _on_play_done))
+	go_out_button = _action_button("🚪 Go outside", _on_exit_house)
+	play_actions.add_child(go_out_button)
 
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -152,14 +177,14 @@ func _build() -> void:
 	modes.add_theme_constant_override("separation", 8)
 	outer.add_child(modes)
 	var mode_group := ButtonGroup.new()
-	for entry in [["set", "🛏️ Bed & Bowl"], ["play", "🎪 Play Space"], ["room", "🏠 Play Room"]]:
+	for entry in [["set", "🛏️ Bed & Bowl"], ["play", "🎪 Play Space"], ["room", "🏠 Play Room"], ["house", "🏡 House"]]:
 		var tab := Button.new()
 		tab.text = entry[1]
 		tab.toggle_mode = true
 		tab.button_group = mode_group
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tab.custom_minimum_size = Vector2(0, 50)
-		tab.add_theme_font_size_override("font_size", 17)
+		tab.add_theme_font_size_override("font_size", 15)
 		tab.pressed.connect(_on_mode.bind(String(entry[0])))
 		modes.add_child(tab)
 		mode_buttons[entry[0]] = tab
@@ -177,6 +202,7 @@ func _build() -> void:
 	_build_room_options()
 
 	var tabs := HBoxContainer.new()
+	kind_tabs = tabs
 	tabs.add_theme_constant_override("separation", 8)
 	options.add_child(tabs)
 	var group := ButtonGroup.new()
@@ -330,8 +356,9 @@ func _refresh() -> void:
 	for id in stamp_buttons:
 		stamp_buttons[id].set_pressed_no_signal(id == piece["stamp"])
 	_rebuild_shapes()
-	name_button.visible = kind == "bed" or kind == "bowl"
-	name_button.text = "✏️ Name the %s: %s" % [kind, canvas.bed_name.text if kind == "bed" else canvas.bowl_name.text]
+	name_button.visible = kind == "bed" or kind == "bowl" or kind == "house"
+	if name_button.visible:
+		name_button.text = "✏️ Name the %s: %s" % [kind, (canvas.get(kind + "_name") as Label).text]
 
 func _price_text(id: String) -> String:
 	if PetalState.play_cost(id) == 0:
@@ -346,16 +373,20 @@ func _refresh_shop() -> void:
 	for id in floor_buttons:
 		_label_choice(floor_buttons[id], id, id == room_stage.floor_id)
 	for id in shop_buttons:
-		var data: Dictionary = PetalState.play_def(id)
-		var button: Button = shop_buttons[id]
-		button.text = "%s\n%s" % [data["emoji"], _price_text(id)]
-		button.tooltip_text = String(data["label"])
-		button.modulate = Color.WHITE if PetalState.play_unlocked(id) or PetalState.coins >= PetalState.play_cost(id) else Color(0.6, 0.6, 0.6)
+		_label_item(shop_buttons[id], id)
+	for entry in fav_buttons:
+		_label_item(entry[0], entry[1])
 	for id in theme_buttons:
 		var data: Dictionary = PetalState.PLAY_THEMES[id]
 		theme_buttons[id].text = "%s %s %s" % [data["emoji"], data["label"], "" if PetalState.play_cost(id) == 0 and id == "cosy" else _price_text(id)]
 		theme_buttons[id].set_pressed_no_signal(id == play_stage.backdrop)
 		theme_buttons[id].modulate = Color.WHITE if PetalState.play_unlocked(id) or PetalState.coins >= PetalState.play_cost(id) else Color(0.6, 0.6, 0.6)
+
+func _label_item(button: Button, id: String) -> void:
+	var data: Dictionary = PetalState.play_def(id)
+	button.text = "%s\n%s" % [data["emoji"], _price_text(id)]
+	button.tooltip_text = String(data["label"])
+	button.modulate = Color.WHITE if PetalState.play_unlocked(id) or PetalState.coins >= PetalState.play_cost(id) else Color(0.6, 0.6, 0.6)
 
 func _label_choice(button: Button, id: String, current: bool) -> void:
 	var data: Dictionary = PetalState.play_def(id)
@@ -407,12 +438,20 @@ func _on_mode(which: String) -> void:
 func _show_mode() -> void:
 	var playing := mode == "play"
 	var decorating := mode == "room"
-	canvas.visible = mode == "set"
+	canvas.visible = mode == "set" or mode == "house"
+	canvas.set_view("house" if mode == "house" else "set")
+	kind = "house" if mode == "house" else ("bed" if kind == "house" else kind)
+	kind_tabs.visible = mode == "set"
+	house_actions.visible = mode == "house"
+	door_button.visible = mode == "house"
+	go_out_button.visible = mode == "room"
+	if not going_in and petal:
+		petal.position = SPOT_HOUSE if mode == "house" else SPOT_IDLE
 	play_stage.visible = playing
 	room_stage.visible = mode == "room"
 	set_actions.visible = mode == "set"
 	play_actions.visible = playing or decorating
-	set_options.visible = mode == "set"
+	set_options.visible = mode == "set" or mode == "house"
 	play_options.visible = playing
 	room_options.visible = decorating
 	weather_button.visible = playing
@@ -421,11 +460,78 @@ func _show_mode() -> void:
 	_refresh_put_away()
 	_refresh_shop()
 
+# --- The house: design it outside, then walk in to decorate the room ---------
+
+func _on_enter_house() -> void:
+	if going_in:
+		return
+	going_in = true
+	var tween := create_tween()
+	tween.tween_property(petal, "position", SetCanvas.DOOR_CENTER - PET_SIZE / 2.0 + Vector2(0, 20), 0.7).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(petal, "scale", Vector2(0.3, 0.3), 0.25)
+	tween.parallel().tween_property(petal, "modulate:a", 0.0, 0.25)
+	await tween.finished
+	if not is_instance_valid(petal):
+		return
+	Sfx.chime(self)
+	mode = "room"
+	going_in = false
+	petal.scale = Vector2.ONE
+	petal.modulate.a = 1.0
+	_show_mode()
+	_pop("🏠 welcome in!", petal)
+	PetCameo.jump_for_joy(petal)
+
+func _on_exit_house() -> void:
+	mode = "house"
+	going_in = true
+	_show_mode()
+	petal.position = SetCanvas.DOOR_CENTER - PET_SIZE / 2.0 + Vector2(0, 20)
+	petal.scale = Vector2(0.3, 0.3)
+	petal.modulate.a = 0.0
+	var tween := create_tween()
+	tween.tween_property(petal, "scale", Vector2.ONE, 0.25)
+	tween.parallel().tween_property(petal, "modulate:a", 1.0, 0.25)
+	tween.tween_property(petal, "position", SPOT_HOUSE, 0.6).set_trans(Tween.TRANS_SINE)
+	await tween.finished
+	going_in = false
+
+func _on_house_surprise() -> void:
+	var piece: Dictionary = design["house"]
+	piece["color"] = randi() % PetalState.SET_COLORS.size()
+	piece["trim"] = (int(piece["color"]) + 3 + randi() % 6) % PetalState.SET_COLORS.size()
+	piece["pattern"] = PetalState.SET_PATTERNS.pick_random()
+	piece["shape"] = PetalState.SET_SHAPES["house"].pick_random()
+	_changed()
+	_pop("🎲 ta-da!", petal)
+
+func _on_house_done() -> void:
+	PetalState.finish_pet_set(pet_id, design, "homesweet")
+	Sfx.fanfare(self)
+	Confetti.burst(self, petal.global_position + petal.size / 2.0, 24)
+	_pop("🏡 Home sweet home!", petal)
+	PetCameo.jump_for_joy(petal)
+
+# Each kind of pet gets its own favourite toys at the top of both shops.
+func _build_pet_favourites() -> void:
+	for pair in [[play_options, 2], [room_options, 2]]:
+		var holder: VBoxContainer = pair[0]
+		var row := HFlowContainer.new()
+		row.add_theme_constant_override("h_separation", 4)
+		holder.add_child(_titled("⭐ %s likes" % PetalState.pet_name.left(8), row))
+		holder.move_child(row.get_parent(), pair[1])
+		for id in PetalState.pet_favourites(pet_id):
+			var button := _option_button(row, "", 17, Vector2(72, 62), _on_shop.bind(id))
+			button.toggle_mode = false
+			fav_buttons.append([button, id])
+	_refresh_shop()
+
 func _on_shop(id: String) -> void:
-	if not _buy(id, shop_buttons[id]):
+	var anchor: Control = shop_buttons.get(id, petal)
+	if not _buy(id, anchor):
 		return
 	if _stage().is_full():
-		_pop("🧺 full! put one away", shop_buttons[id])
+		_pop("🧺 full! put one away", anchor)
 		return
 	_stage().add_item(id)
 	Sfx.pop(self)
