@@ -193,6 +193,9 @@ var day_list: VBoxContainer = null
 var what_input: LineEdit = null
 var where_input: LineEdit = null
 var go_input: LineEdit = null
+var go_ampm: OptionButton = null
+var leave_ampm: OptionButton = null
+var pick_row: Control = null
 var leave_input: LineEdit = null
 var weekdays_box: CheckBox = null
 var side_cats: Array[Button] = []
@@ -628,6 +631,7 @@ func _build_planner() -> void:
 	right.add_child(day_title)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2(0, 110)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	right.add_child(scroll)
 	day_list = VBoxContainer.new()
@@ -635,14 +639,18 @@ func _build_planner() -> void:
 	day_list.add_theme_constant_override("separation", 4)
 	scroll.add_child(day_list)
 	what_input = _field(right, "What is it? (school, swimming...)")
+	var pick_toggle := Button.new()
+	pick_toggle.text = "🎨 Pick a picture ▾"
+	pick_toggle.toggle_mode = true
+	pick_toggle.add_theme_font_size_override("font_size", 16)
+	pick_toggle.toggled.connect(func(on: bool) -> void: pick_row.visible = on)
+	right.add_child(pick_toggle)
 	var pick := HFlowContainer.new()
+	pick.visible = false
+	pick_row = pick
 	pick.add_theme_constant_override("h_separation", 2)
 	pick.add_theme_constant_override("v_separation", 2)
 	right.add_child(pick)
-	var pick_label := Label.new()
-	pick_label.text = "📌 Other:"
-	pick_label.add_theme_font_size_override("font_size", 16)
-	pick.add_child(pick_label)
 	for face in OTHER_EMOJIS:
 		var choice := Button.new()
 		choice.text = face
@@ -657,7 +665,9 @@ func _build_planner() -> void:
 	times.add_theme_constant_override("separation", 6)
 	right.add_child(times)
 	go_input = _field(times, "⏰ Time you go")
+	go_ampm = _ampm(times, 0)
 	leave_input = _field(times, "🏠 Time you leave")
+	leave_ampm = _ampm(times, 1)
 	weekdays_box = CheckBox.new()
 	weekdays_box.text = "📅 Every weekday (Mon-Fri)"
 	weekdays_box.add_theme_font_size_override("font_size", 18)
@@ -676,6 +686,16 @@ func _build_planner() -> void:
 	chat_button = _button("💬 Text her", 18, Vector2(0, 52), _open_phone)
 	chat_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_child(chat_button)
+
+func _ampm(parent: Control, selected_index: int) -> OptionButton:
+	var option := OptionButton.new()
+	option.add_item("AM")
+	option.add_item("PM")
+	option.selected = selected_index
+	option.custom_minimum_size = Vector2(70, 42)
+	option.add_theme_font_size_override("font_size", 18)
+	parent.add_child(option)
+	return option
 
 func _field(parent: Control, hint: String) -> LineEdit:
 	var field := LineEdit.new()
@@ -769,7 +789,22 @@ func _refresh_day() -> void:
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		label.add_theme_font_size_override("font_size", 18)
 		row.add_child(label)
+		row.add_child(_button("✏️", 16, Vector2(40, 40), _edit_event.bind(i)))
 		row.add_child(_button("✖", 16, Vector2(40, 40), _remove_event.bind(i)))
+
+# Puts an event back in the boxes so it can be changed, then removes the old one.
+func _edit_event(index: int) -> void:
+	var entry: Dictionary = _events_on(selected)[index]
+	what_input.text = entry["name"]
+	where_input.text = entry["place"]
+	for pair in [[go_input, go_ampm, entry["start"]], [leave_input, leave_ampm, entry["end"]]]:
+		var minutes: int = pair[2]
+		pair[0].text = "" if minutes < 0 else "%d:%02d" % [(minutes / 60 + 11) % 12 + 1, minutes % 60]
+		pair[1].selected = 1 if minutes >= 720 else 0
+	picked_emoji = String(entry.get("emoji", ""))
+	for choice in emoji_buttons:
+		choice.set_pressed_no_signal(choice.text == picked_emoji)
+	_remove_event(index)
 
 func _remove_event(index: int) -> void:
 	var events: Array = _events_on(selected).duplicate()
@@ -782,29 +817,25 @@ func _remove_event(index: int) -> void:
 	_refresh_calendar()
 
 # A time typed any way: "8", "8am", "8:30", "800", "3 pm" -> minutes, -1 if blank,
-# -2 if it is not a time. With no am/pm, 1-6 means the afternoon.
-func _loose_time(text: String) -> int:
+# -2 if it is not a time. Without am/pm in the text, the AM/PM box decides.
+func _loose_time(text: String, default_suffix: String) -> int:
 	var lower := text.strip_edges().to_lower().replace(".", "")
 	if lower == "":
 		return -1
-	var suffix := ""
+	var suffix := default_suffix
 	for tail in ["am", "pm"]:
 		if lower.ends_with(tail):
 			suffix = tail
 			lower = lower.trim_suffix(tail).strip_edges()
 	var minutes := _time_minutes(lower, suffix)
-	if minutes < 0:
-		return -2
-	if suffix == "" and minutes < 7 * 60 and minutes >= 60:
-		minutes += 12 * 60
-	return minutes
+	return minutes if minutes >= 0 else -2
 
 # The four plain boxes -> an event on the highlighted day.
 func _type_event() -> void:
 	var what := what_input.text.strip_edges()
 	var where := where_input.text.strip_edges()
-	var go := _loose_time(go_input.text)
-	var leave := _loose_time(leave_input.text)
+	var go := _loose_time(go_input.text, "am" if go_ampm.selected == 0 else "pm")
+	var leave := _loose_time(leave_input.text, "am" if leave_ampm.selected == 0 else "pm")
 	var entry := {}
 	if where == "" and go == -1 and leave == -1 and what != "":
 		entry = _parse_event(what) # still understands "school 8-3 at Watkins"
@@ -834,18 +865,19 @@ func _type_event() -> void:
 	if picked_emoji != "":
 		entry["emoji"] = picked_emoji
 	var spread := weekdays_box.button_pressed or _find_activity(entry["name"]) == "school"
-	var week_day := _weekday_of(int(selected.split("-")[0]), int(selected.split("-")[1]), int(selected.split("-")[2]))
-	if spread and week_day >= 1 and week_day <= 5:
-		# School (or the ticked box) goes on Monday to Friday, never the weekend.
+	if spread:
+		# School (or the ticked box) goes on Monday to Friday of this week, never the weekend.
 		for key in _week_of(selected).slice(1, 6):
 			_replace_event(key, entry)
-		Feedback.pop(self, "😸 Added Mon-Fri!", what_input.global_position + Vector2(0, -50))
+		Feedback.pop(self, "😸 Added Mon-Fri! Weekend stays free.", what_input.global_position + Vector2(0, -50))
 	else:
 		_add_event(selected, entry)
 	weekdays_box.button_pressed = false
 	picked_emoji = ""
 	for choice in emoji_buttons:
 		choice.set_pressed_no_signal(false)
+	go_ampm.selected = 0
+	leave_ampm.selected = 1
 	for field in [what_input, where_input, go_input, leave_input]:
 		field.text = ""
 	_refresh_calendar()
