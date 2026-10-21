@@ -253,7 +253,7 @@ func _start_case(index: int) -> void:
 	for suspect in case_data["suspects"]:
 		var button := Button.new()
 		button.toggle_mode = true
-		button.custom_minimum_size = Vector2(250, 150)
+		button.custom_minimum_size = Vector2(250, 200)
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.add_theme_font_size_override("font_size", 30)
 		button.text = "%s\n%s\n%s" % [suspect["emoji"], suspect["name"], suspect["icons"]]
