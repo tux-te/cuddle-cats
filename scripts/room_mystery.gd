@@ -79,12 +79,12 @@ const CASES := [
 		"bg": "res://Sprites/mystery/bg_cookie_kitchen.jpg",
 		"story": "🫙 Oh no! The cookie jar is EMPTY! Who took the cookies? Careful: one clue is not enough!",
 		"suspects": [
-			{"id": "mimi", "emoji": "🐭", "name": "Mimi", "icons": "tiny • grey fur • long tail"},
-			{"id": "fenny", "emoji": "🦊", "name": "Fenny", "icons": "small • sandy fur • bushy tail"},
-			{"id": "pip", "emoji": "🐥", "name": "Pip", "icons": "small • yellow • wings"},
-			{"id": "hop", "emoji": "🦫", "name": "Cappy", "icons": "big • brown • no tail"},
-			{"id": "rusty", "emoji": "🐶", "name": "Rusty", "icons": "medium • grey fur • fluffy tail"},
-			{"id": "bruno", "emoji": "🐼", "name": "Bruno", "icons": "huge • black & white"},
+			{"id": "mimi", "emoji": "🐭", "name": "Mimi", "icons": "tiny • grey fur • long tail", "says": "I was snuggled in my mouse hole all night. I never went to the kitchen!"},
+			{"id": "fenny", "emoji": "🦊", "name": "Fenny", "icons": "small • sandy fur • bushy tail", "says": "I was out digging in the sand dunes all night."},
+			{"id": "pip", "emoji": "🐥", "name": "Pip", "icons": "small • yellow • wings", "says": "I was flapping around outside in the garden."},
+			{"id": "hop", "emoji": "🦫", "name": "Cappy", "icons": "big • brown • no tail", "says": "I was splashing in the pond all night."},
+			{"id": "rusty", "emoji": "🐶", "name": "Rusty", "icons": "medium • grey fur • fluffy tail", "says": "I was chasing my tail in the yard."},
+			{"id": "bruno", "emoji": "🐼", "name": "Bruno", "icons": "huge • black & white", "says": "I was munching bamboo in my bed."},
 		],
 		"clues": [
 			{"emoji": "👣", "at": Vector2(0.14, 0.55), "text": "The footprints in the flour are each as small as a button."},
@@ -107,12 +107,12 @@ const CASES := [
 		"bg": "res://Sprites/mystery/bg_teddy.jpg",
 		"story": "🧸 Oh no! Teddy is gone from the toy shelf! Who took him? Careful: one clue is not enough!",
 		"suspects": [
-			{"id": "henny", "emoji": "🐥", "name": "Henny", "icons": "yellow • feathers"},
-			{"id": "axel", "emoji": "🦎", "name": "Axel", "icons": "pink • smooth skin"},
-			{"id": "snowy", "emoji": "🐰", "name": "Snowy", "icons": "white • fur • soft paws"},
-			{"id": "rusty", "emoji": "🐶", "name": "Rusty", "icons": "brown • fur • paws with claws"},
-			{"id": "fawny", "emoji": "🦌", "name": "Fawny", "icons": "brown • fur • hooves"},
-			{"id": "pom", "emoji": "🐕", "name": "Pom", "icons": "cream • fluffy fur • paws with claws"},
+			{"id": "henny", "emoji": "🐥", "name": "Henny", "icons": "yellow • feathers", "says": "I was sitting on my nest all night."},
+			{"id": "axel", "emoji": "🦎", "name": "Axel", "icons": "pink • smooth skin", "says": "I was swimming in my tank. Glub glub!"},
+			{"id": "snowy", "emoji": "🐰", "name": "Snowy", "icons": "white • fur • soft paws", "says": "I was hopping about in the garden."},
+			{"id": "rusty", "emoji": "🐶", "name": "Rusty", "icons": "brown • fur • paws with claws", "says": "I was digging a hole in the yard."},
+			{"id": "fawny", "emoji": "🦌", "name": "Fawny", "icons": "brown • fur • hooves", "says": "I was fast asleep in the forest."},
+			{"id": "pom", "emoji": "🐕", "name": "Pom", "icons": "cream • fluffy fur • paws with claws", "says": "I was getting my fur brushed all evening."},
 		],
 		"clues": [
 			{"emoji": "📦", "at": Vector2(0.14, 0.55), "text": "Soft tufts of hair are caught on the toy box."},
@@ -135,12 +135,12 @@ const CASES := [
 		"bg": "res://Sprites/backgrounds/garden_sunny.jpg",
 		"story": "🎨 Oh no! Someone splashed paint all over the barn wall! Careful: one clue is not enough!",
 		"suspects": [
-			{"id": "sid", "emoji": "🐌", "name": "Sid", "icons": "slimy • brown shell • no legs"},
-			{"id": "daisy", "emoji": "🐮", "name": "Daisy", "icons": "black & white • hooves"},
-			{"id": "woolly", "emoji": "🐑", "name": "Woolly", "icons": "white • hooves • says baa"},
-			{"id": "fawny", "emoji": "🦌", "name": "Fawny", "icons": "brown • hooves • white spots"},
-			{"id": "hoofy", "emoji": "🐴", "name": "Hoofy", "icons": "brown • hooves • no spots"},
-			{"id": "fox", "emoji": "🦊", "name": "Fox", "icons": "orange • four paws"},
+			{"id": "sid", "emoji": "🐌", "name": "Sid", "icons": "slimy • brown shell • no legs", "says": "I was slowly sliming along the garden path."},
+			{"id": "daisy", "emoji": "🐮", "name": "Daisy", "icons": "black & white • hooves", "says": "I was eating grass in the field."},
+			{"id": "woolly", "emoji": "🐑", "name": "Woolly", "icons": "white • hooves • says baa", "says": "I was counting sheep. Baa!"},
+			{"id": "fawny", "emoji": "🦌", "name": "Fawny", "icons": "brown • hooves • white spots", "says": "I was hiding in the bushes."},
+			{"id": "hoofy", "emoji": "🐴", "name": "Hoofy", "icons": "brown • hooves • no spots", "says": "I was racing round the track."},
+			{"id": "fox", "emoji": "🦊", "name": "Fox", "icons": "orange • four paws", "says": "I was sneaking around the hen house."},
 		],
 		"clues": [
 			{"emoji": "🐾", "at": Vector2(0.14, 0.55), "text": "Four footprints lead away from the wall."},
@@ -163,12 +163,12 @@ const CASES := [
 		"bg": "res://Sprites/mystery/bg_kitchen.jpg",
 		"story": "🎂 Oh no! The birthday cake was on the high shelf and it's GONE! Careful: one clue is not enough!",
 		"suspects": [
-			{"id": "leo", "emoji": "🦁", "name": "Leo", "icons": "huge • golden mane"},
-			{"id": "bruno", "emoji": "🐼", "name": "Bruno", "icons": "huge • black & white"},
-			{"id": "pip", "emoji": "🐥", "name": "Pip", "icons": "small • yellow feathers"},
-			{"id": "marmie", "emoji": "🐿️", "name": "Marmie", "icons": "small • fur • eats nuts"},
-			{"id": "fenny", "emoji": "🦊", "name": "Fenny", "icons": "small • fur • eats bugs"},
-			{"id": "mimi", "emoji": "🐭", "name": "Mimi", "icons": "tiny • fur • loves cheese and nuts"},
+			{"id": "leo", "emoji": "🦁", "name": "Leo", "icons": "huge • golden mane", "says": "I was napping in the sun."},
+			{"id": "bruno", "emoji": "🐼", "name": "Bruno", "icons": "huge • black & white", "says": "I was eating bamboo."},
+			{"id": "pip", "emoji": "🐥", "name": "Pip", "icons": "small • yellow feathers", "says": "I was pecking seeds outside."},
+			{"id": "marmie", "emoji": "🐿️", "name": "Marmie", "icons": "small • fur • eats nuts", "says": "I was gathering acorns."},
+			{"id": "fenny", "emoji": "🦊", "name": "Fenny", "icons": "small • fur • eats bugs", "says": "I was catching bugs in the dunes."},
+			{"id": "mimi", "emoji": "🐭", "name": "Mimi", "icons": "tiny • fur • loves cheese and nuts", "says": "I was nibbling cheese downstairs."},
 		],
 		"clues": [
 			{"emoji": "🪟", "at": Vector2(0.14, 0.55), "text": "The only open window is tiny. Only a small friend fits through."},
@@ -191,12 +191,12 @@ const CASES := [
 		"bg": "res://Sprites/mystery/bg_library.jpg",
 		"story": "👑 Oh no! The sparkly crown vanished in a flash! Careful: one clue is not enough!",
 		"suspects": [
-			{"id": "tilly", "emoji": "🐢", "name": "Tilly", "icons": "a slow, slow turtle"},
-			{"id": "sid", "emoji": "🐌", "name": "Sid", "icons": "an even slower snail"},
-			{"id": "clover", "emoji": "🐂", "name": "Clover", "icons": "eats grass • stays on the ground"},
-			{"id": "hoofy", "emoji": "🐴", "name": "Hoofy", "icons": "very fast • stays on the ground"},
-			{"id": "batty", "emoji": "🦇", "name": "Batty", "icons": "very fast • flies • loves shiny things"},
-			{"id": "fossy", "emoji": "🐆", "name": "Fossy", "icons": "very fast • sharp claws • climbs"},
+			{"id": "tilly", "emoji": "🐢", "name": "Tilly", "icons": "a slow, slow turtle", "says": "I was crawling to the tower. I'll get there soon!"},
+			{"id": "sid", "emoji": "🐌", "name": "Sid", "icons": "an even slower snail", "says": "I left home yesterday and I'm nearly at the gate."},
+			{"id": "clover", "emoji": "🐂", "name": "Clover", "icons": "eats grass • stays on the ground", "says": "I was chewing grass in the meadow."},
+			{"id": "hoofy", "emoji": "🐴", "name": "Hoofy", "icons": "very fast • stays on the ground", "says": "I was racing round the track."},
+			{"id": "batty", "emoji": "🦇", "name": "Batty", "icons": "very fast • flies • loves shiny things", "says": "I was hanging upside-down in my cave, fast asleep."},
+			{"id": "fossy", "emoji": "🐆", "name": "Fossy", "icons": "very fast • sharp claws • climbs", "says": "I was climbing about in the trees."},
 		],
 		"clues": [
 			{"emoji": "⚡", "at": Vector2(0.14, 0.55), "text": "The crown was gone before the clock could tick twice."},
@@ -221,6 +221,7 @@ var found: Array = []
 var picked := ""
 var solved_now := false
 var wrong_guesses := 0
+var heard: Array = []
 
 var title_label: Label
 var story_label: Label
@@ -284,14 +285,14 @@ func _build() -> void:
 	bubble = _label(20, Color(0.25, 0.2, 0.55))
 	talk.add_child(bubble)
 
-	box.add_child(_label(16, Color(0.4, 0.4, 0.6), "🔍 Tap the pictures to look for clues"))
+	box.add_child(_label(16, Color(0.4, 0.4, 0.6), "🔍 Tap the spots for clues. Tap the animals to hear their stories!"))
 	clue_row = HBoxContainer.new()
 	clue_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	clue_row.add_theme_constant_override("separation", 14)
 	box.add_child(clue_row)
 
 	scene_panel = Control.new()
-	scene_panel.custom_minimum_size = Vector2(0, 280)
+	scene_panel.custom_minimum_size = Vector2(0, 430)
 	scene_panel.clip_contents = true
 	scene_panel.visible = false
 	box.add_child(scene_panel)
@@ -370,6 +371,7 @@ func _start_case(index: int) -> void:
 		button.pressed.connect(_on_clue.bind(i))
 		if has_scene:
 			var at: Vector2 = clues[i]["at"]
+			at.y *= 0.6
 			button.anchor_left = at.x
 			button.anchor_right = at.x
 			button.anchor_top = at.y
@@ -388,14 +390,32 @@ func _start_case(index: int) -> void:
 	for child in suspect_row.get_children():
 		child.queue_free()
 	suspect_buttons.clear()
+	heard = []
+	suspect_row.visible = not has_scene
+	var lineup: HBoxContainer = null
+	if has_scene:
+		lineup = HBoxContainer.new()
+		lineup.anchor_right = 1.0
+		lineup.anchor_top = 1.0
+		lineup.anchor_bottom = 1.0
+		lineup.offset_top = -150
+		lineup.offset_bottom = -6
+		lineup.alignment = BoxContainer.ALIGNMENT_CENTER
+		lineup.add_theme_constant_override("separation", 8)
+		scene_panel.add_child(lineup)
 	for suspect in case_data["suspects"]:
 		var button := Button.new()
 		button.toggle_mode = true
-		button.custom_minimum_size = Vector2(200, 200 if suspect.has("says") else 150)
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.add_theme_font_size_override("font_size", 18)
-		var detail := "“%s”" % suspect["says"] if suspect.has("says") else String(suspect["icons"])
-		button.text = "%s\n%s\n%s" % [suspect["emoji"], suspect["name"], detail]
+		var traits := String(suspect.get("icons", ""))
+		if has_scene:
+			button.custom_minimum_size = Vector2(176, 144)
+			button.add_theme_font_size_override("font_size", 14)
+			button.text = "%s\n%s" % [suspect["name"], traits] if traits != "" else String(suspect["name"])
+		else:
+			button.custom_minimum_size = Vector2(200, 200 if suspect.has("says") else 150)
+			button.add_theme_font_size_override("font_size", 18)
+			button.text = "%s\n%s\n%s" % [suspect["emoji"], suspect["name"], traits if traits != "" else "“%s”" % suspect["says"]]
 		var art := String(suspect.get("art", ""))
 		if art == "" and SUSPECT_ART.has(suspect["id"]):
 			art = "res://Sprites/mystery/%s.png" % SUSPECT_ART[suspect["id"]]
@@ -404,9 +424,12 @@ func _start_case(index: int) -> void:
 			button.expand_icon = true
 			button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
-			button.add_theme_constant_override("icon_max_width", 56)
+			button.add_theme_constant_override("icon_max_width", 70 if has_scene else 56)
 		button.pressed.connect(_on_suspect.bind(String(suspect["id"])))
-		suspect_row.add_child(button)
+		if has_scene:
+			lineup.add_child(button)
+		else:
+			suspect_row.add_child(button)
 		suspect_buttons[suspect["id"]] = button
 
 	next_button.visible = false
@@ -424,6 +447,11 @@ func _refresh() -> void:
 	var lines: Array[String] = ["📓 Clues:"]
 	for i in found:
 		lines.append("%s %s" % [clues[i]["emoji"], clues[i]["text"]])
+	if not heard.is_empty():
+		lines.append("🗣️ Stories:")
+		for suspect in case_data["suspects"]:
+			if heard.has(suspect["id"]):
+				lines.append("%s %s: “%s”" % [suspect["emoji"], suspect["name"], suspect["says"]])
 	notebook_label.text = "\n".join(lines)
 	var ready := found.size() == clues.size()
 	accuse_button.disabled = solved_now or not ready
@@ -452,6 +480,8 @@ func _on_suspect(id: String) -> void:
 	for suspect in case_data["suspects"]:
 		if suspect["id"] == id and suspect.has("says"):
 			_say("%s says: “%s”" % [suspect["name"], suspect["says"]])
+			if not heard.has(id):
+				heard.append(id)
 	_refresh()
 
 func _on_accuse() -> void:

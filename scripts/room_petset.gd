@@ -296,7 +296,7 @@ func _refresh_shop() -> void:
 	for id in theme_buttons:
 		var data: Dictionary = PetalState.PLAY_THEMES[id]
 		theme_buttons[id].text = "%s %s %s" % [data["emoji"], data["label"], "" if PetalState.play_cost(id) == 0 and id == "cosy" else _price_text(id)]
-		theme_buttons[id].set_pressed_no_signal(id == play_stage.theme)
+		theme_buttons[id].set_pressed_no_signal(id == play_stage.backdrop)
 		theme_buttons[id].modulate = Color.WHITE if PetalState.play_unlocked(id) or PetalState.coins >= PetalState.play_cost(id) else Color(0.6, 0.6, 0.6)
 
 func _refresh_put_away() -> void:
@@ -364,7 +364,7 @@ func _on_shop(id: String) -> void:
 
 func _on_theme(id: String) -> void:
 	if not _buy(id, theme_buttons[id]):
-		theme_buttons[id].set_pressed_no_signal(id == play_stage.theme)
+		theme_buttons[id].set_pressed_no_signal(id == play_stage.backdrop)
 		return
 	play_stage.set_theme_id(id)
 	Sfx.chime(self)
