@@ -13,17 +13,17 @@ const PET_SIZE := Vector2(220, 200)
 const CASES := [
 	{
 		"id": "cookies", "emoji": "🍪", "title": "The Missing Cookies",
-		"story": "🫙🍪 ➡️ 😱",
+		"story": "🫙 Oh no! The cookie jar is EMPTY! Who took the cookies?",
 		"suspects": [
-			{"id": "mimi", "emoji": "🐭", "name": "Mimi", "icons": "🤏 〰️"},
-			{"id": "bruno", "emoji": "🐻", "name": "Bruno", "icons": "🏔️ 🐾"},
-			{"id": "pip", "emoji": "🐦", "name": "Pip", "icons": "🪶 🪽"},
-			{"id": "hop", "emoji": "🐸", "name": "Hop", "icons": "🟢 🦵"},
+			{"id": "mimi", "emoji": "🐭", "name": "Mimi", "icons": "tiny • long tail"},
+			{"id": "bruno", "emoji": "🐻", "name": "Bruno", "icons": "big • big feet"},
+			{"id": "pip", "emoji": "🐦", "name": "Pip", "icons": "feathers • wings"},
+			{"id": "hop", "emoji": "🐸", "name": "Hop", "icons": "green • no tail"},
 		],
 		"clues": [
-			{"emoji": "👣", "pic": "👣 🤏", "text": "Tiny footprints, no bigger than a button!"},
-			{"emoji": "🪟", "pic": "🪟🔒 ➡️ 🚫🪽", "text": "The window is shut tight. Nobody flew in!"},
-			{"emoji": "🍪", "pic": "🍪 〰️", "text": "A long skinny tail swept through the crumbs."},
+			{"emoji": "👣", "pic": "👣 🤏", "text": "The footprints are TINY. The thief has small feet!"},
+			{"emoji": "🪟", "pic": "🪟🔒 ➡️ 🚫🪽", "text": "The window was shut tight. The thief has NO wings!"},
+			{"emoji": "🍪", "pic": "🍪 〰️", "text": "A long tail swept the crumbs. The thief has a TAIL!"},
 		],
 		"culprit": "mimi",
 		"alibis": {
@@ -35,17 +35,17 @@ const CASES := [
 	},
 	{
 		"id": "teddy", "emoji": "🧸", "title": "The Missing Teddy",
-		"story": "🧸 ➡️ 💨 😱",
+		"story": "🧸 Oh no! Teddy is gone from the toy shelf! Who took him?",
 		"suspects": [
-			{"id": "dilly", "emoji": "🦆", "name": "Dilly", "icons": "🪶 🟡"},
-			{"id": "henny", "emoji": "🐔", "name": "Henny", "icons": "🪶 🔴"},
-			{"id": "snowy", "emoji": "🐰", "name": "Snowy", "icons": "🧶 ⚪"},
-			{"id": "rusty", "emoji": "🐶", "name": "Rusty", "icons": "🧶 🟤 👃"},
+			{"id": "dilly", "emoji": "🦆", "name": "Dilly", "icons": "yellow • feathers"},
+			{"id": "henny", "emoji": "🐔", "name": "Henny", "icons": "red • feathers"},
+			{"id": "snowy", "emoji": "🐰", "name": "Snowy", "icons": "white • fur"},
+			{"id": "rusty", "emoji": "🐶", "name": "Rusty", "icons": "brown • fur • wet nose"},
 		],
 		"clues": [
-			{"emoji": "📦", "pic": "📦 🧶", "text": "Soft fur is stuck to the lid."},
-			{"emoji": "🧹", "pic": "🧹 🟤", "text": "There are brown hairs on the floor. Not white ones!"},
-			{"emoji": "🪟", "pic": "🪟 👃💦", "text": "A big wet nose smudge is on the glass."},
+			{"emoji": "📦", "pic": "📦 🧶", "text": "Soft FUR is stuck to the toy box. The thief has fur!"},
+			{"emoji": "🧹", "pic": "🧹 🟤", "text": "The hairs on the floor are BROWN, not white."},
+			{"emoji": "🪟", "pic": "🪟 👃💦", "text": "A wet nose smudge is on the window."},
 		],
 		"culprit": "rusty",
 		"alibis": {
@@ -57,17 +57,17 @@ const CASES := [
 	},
 	{
 		"id": "paint", "emoji": "🎨", "title": "The Paint Splash",
-		"story": "🎨 💦 🧱 😱",
+		"story": "🎨 Oh no! Someone splashed paint all over the barn wall!",
 		"suspects": [
-			{"id": "finn", "emoji": "🐟", "name": "Finn", "icons": "🌊 🚫🦶"},
-			{"id": "rosie", "emoji": "🐷", "name": "Rosie", "icons": "🦶 🩷 🐽"},
-			{"id": "daisy", "emoji": "🐮", "name": "Daisy", "icons": "🦶 ⚫⚪", "art": "res://Sprites/mystery/cow.png"},
-			{"id": "woolly", "emoji": "🐑", "name": "Woolly", "icons": "🦶 ⚪ ☁️"},
+			{"id": "finn", "emoji": "🐟", "name": "Finn", "icons": "swims • no legs"},
+			{"id": "rosie", "emoji": "🐷", "name": "Rosie", "icons": "pink • legs • snout"},
+			{"id": "daisy", "emoji": "🐮", "name": "Daisy", "icons": "black & white • legs", "art": "res://Sprites/mystery/cow.png"},
+			{"id": "woolly", "emoji": "🐑", "name": "Woolly", "icons": "white • legs • says baa"},
 		],
 		"clues": [
-			{"emoji": "🐾", "pic": "🐾🐾🐾🐾 🦶", "text": "Four little hoof prints walked away."},
-			{"emoji": "🧱", "pic": "🧱 🩷", "text": "There are PINK smudges where someone rubbed the wall."},
-			{"emoji": "👂", "pic": "🐽 👀", "text": "Somebody heard a happy OINK!"},
+			{"emoji": "🐾", "pic": "🐾🐾🐾🐾 🦶", "text": "Hoof prints! The thief has LEGS."},
+			{"emoji": "🧱", "pic": "🧱 🩷", "text": "Pink smudges on the wall. The thief is PINK!"},
+			{"emoji": "👂", "pic": "🐽 👀", "text": "A snout print! The thief has a SNOUT."},
 		],
 		"culprit": "rosie",
 		"alibis": {
@@ -79,17 +79,17 @@ const CASES := [
 	},
 	{
 		"id": "cake", "emoji": "🎂", "title": "The Birthday Cake",
-		"story": "🎂 ⬆️ ➡️ 💨 😱",
+		"story": "🎂 Oh no! The birthday cake was on the high shelf and it's GONE!",
 		"suspects": [
-			{"id": "leo", "emoji": "🦁", "name": "Leo", "icons": "🏔️ 🦁"},
-			{"id": "coco", "emoji": "🐵", "name": "Coco", "icons": "🤏 🖐️ 🍌"},
-			{"id": "ella", "emoji": "🐘", "name": "Ella", "icons": "🏔️ 🐘"},
-			{"id": "percy", "emoji": "🐧", "name": "Percy", "icons": "🤏 🚫🖐️"},
+			{"id": "leo", "emoji": "🦁", "name": "Leo", "icons": "huge • big mane"},
+			{"id": "coco", "emoji": "🐵", "name": "Coco", "icons": "small • has hands • loves bananas"},
+			{"id": "ella", "emoji": "🐘", "name": "Ella", "icons": "huge • long trunk"},
+			{"id": "percy", "emoji": "🐧", "name": "Percy", "icons": "small • flippers, no hands"},
 		],
 		"clues": [
-			{"emoji": "🖐️", "pic": "🖐️ ✨", "text": "Sticky FINGERprints are on the plate."},
-			{"emoji": "🪟", "pic": "🪟 🤏", "text": "The open window is tiny. Only a small friend fits through."},
-			{"emoji": "🍌", "pic": "🍌 👀", "text": "There is a banana peel by the shelf."},
+			{"emoji": "🖐️", "pic": "🖐️ ✨", "text": "Fingerprints on the plate. The thief has HANDS!"},
+			{"emoji": "🪟", "pic": "🪟 🤏", "text": "The window is tiny. The thief is SMALL."},
+			{"emoji": "🍌", "pic": "🍌 👀", "text": "A banana peel! The thief loves BANANAS."},
 		],
 		"culprit": "coco",
 		"alibis": {
@@ -101,16 +101,16 @@ const CASES := [
 	},
 	{
 		"id": "crown", "emoji": "👑", "title": "The Sparkly Crown",
-		"story": "👑 ✨ ➡️ 💨 😱",
+		"story": "👑 Oh no! The sparkly crown vanished in a flash!",
 		"suspects": [
-			{"id": "tilly", "emoji": "🐢", "name": "Tilly", "icons": "⏳ 🐢"},
-			{"id": "sid", "emoji": "🐌", "name": "Sid", "icons": "⏳ 🐌"},
-			{"id": "clover", "emoji": "🐂", "name": "Clover", "icons": "🌿 🚫🪶", "art": "res://Sprites/mystery/bull.png"},
-			{"id": "maggie", "emoji": "🐦", "name": "Maggie", "icons": "⚡ 🪶 ✨"},
+			{"id": "tilly", "emoji": "🐢", "name": "Tilly", "icons": "very slow"},
+			{"id": "sid", "emoji": "🐌", "name": "Sid", "icons": "super slow"},
+			{"id": "clover", "emoji": "🐂", "name": "Clover", "icons": "eats grass • no feathers", "art": "res://Sprites/mystery/bull.png"},
+			{"id": "maggie", "emoji": "🐦", "name": "Maggie", "icons": "fast • feathers • loves shiny things"},
 		],
 		"clues": [
-			{"emoji": "⚡", "pic": "⚡ 🏃", "text": "It was gone in a FLASH. The thief is fast!"},
-			{"emoji": "🪶", "pic": "🪶 🪟", "text": "Black and white feathers are on the sill."},
+			{"emoji": "⚡", "pic": "⚡ 🏃", "text": "Gone in a flash! The thief is FAST."},
+			{"emoji": "🪶", "pic": "🪶 🪟", "text": "Feathers on the windowsill. The thief has FEATHERS!"},
 			{"emoji": "🪺", "pic": "🪺 ✨", "text": "A nest up high is full of shiny things."},
 		],
 		"culprit": "maggie",
@@ -168,20 +168,21 @@ func _build() -> void:
 
 	title_label = _label(34, Color(0.25, 0.2, 0.55))
 	box.add_child(title_label)
-	story_label = _label(60, Color(0.2, 0.2, 0.3))
+	story_label = _label(26, Color(0.2, 0.2, 0.3))
 	box.add_child(story_label)
 
-	box.add_child(_label(20, Color(0.4, 0.4, 0.6), "🔍 👆"))
+	box.add_child(_label(20, Color(0.4, 0.4, 0.6), "🔍 Tap the pictures to look for clues"))
 	clue_row = HBoxContainer.new()
 	clue_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	clue_row.add_theme_constant_override("separation", 14)
 	box.add_child(clue_row)
 
-	notebook_label = _label(44, Color(0.2, 0.2, 0.3))
-	notebook_label.custom_minimum_size = Vector2(0, 70)
+	notebook_label = _label(22, Color(0.2, 0.2, 0.3))
+	notebook_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	notebook_label.custom_minimum_size = Vector2(0, 100)
 	box.add_child(notebook_label)
 
-	box.add_child(_label(20, Color(0.4, 0.4, 0.6), "🕵️ ❓ 👇"))
+	box.add_child(_label(20, Color(0.4, 0.4, 0.6), "🕵️ Who did it? Think about the clues, then tap a suspect"))
 	suspect_row = HBoxContainer.new()
 	suspect_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	suspect_row.add_theme_constant_override("separation", 14)
@@ -268,7 +269,7 @@ func _start_case(index: int) -> void:
 		suspect_buttons[suspect["id"]] = button
 
 	next_button.visible = false
-	_say("🕵️ 🔍 👇")
+	_say("%s the detective is on the case! Tap a picture to look for clues." % PetalState.pet_name)
 	_refresh()
 
 func _say(text: String) -> void:
@@ -279,10 +280,10 @@ func _refresh() -> void:
 	for i in range(clues.size()):
 		var done := found.has(i)
 		clue_buttons[i].text = "%s%s" % [clues[i]["emoji"], " ✅" if done else ""]
-	var pics: Array[String] = []
+	var lines: Array[String] = ["📓 Clues:"]
 	for i in found:
-		pics.append(String(clues[i]["pic"]))
-	notebook_label.text = "📓   " + "      ".join(pics)
+		lines.append("%s %s" % [clues[i]["emoji"], clues[i]["text"]])
+	notebook_label.text = "\n".join(lines)
 	var ready := found.size() == clues.size()
 	accuse_button.disabled = solved_now or not ready
 	if solved_now:
@@ -300,10 +301,10 @@ func _on_clue(index: int) -> void:
 	if not found.has(index):
 		found.append(index)
 	var clue: Dictionary = case_data["clues"][index]
-	_say(String(clue["pic"]))
+	_say("%s %s" % [clue["emoji"], clue["text"]])
 	_refresh()
 	if found.size() == case_data["clues"].size():
-		_say("%s   🤔 ➡️ 🕵️ 👇" % clue["pic"])
+		_say("%s %s Now think: who fits ALL the clues?" % [clue["emoji"], clue["text"]])
 
 func _on_suspect(id: String) -> void:
 	picked = id
@@ -311,7 +312,7 @@ func _on_suspect(id: String) -> void:
 
 func _on_accuse() -> void:
 	if picked == "":
-		_say("👆 🕵️ ❓")
+		_say("Tap the suspect you think did it first!")
 		return
 	if picked == case_data["culprit"]:
 		_solve()
@@ -320,7 +321,7 @@ func _on_accuse() -> void:
 	for suspect in case_data["suspects"]:
 		if suspect["id"] == picked:
 			suspect_name = suspect["name"]
-	_say("❌ %s   🤔 📓 👀   (%s)" % [suspect_name, case_data["alibis"][picked]])
+	_say("Hmm, not %s! %s" % [suspect_name, case_data["alibis"][picked]])
 	suspect_buttons[picked].disabled = true
 	picked = ""
 	_refresh()
@@ -328,7 +329,7 @@ func _on_accuse() -> void:
 func _solve() -> void:
 	solved_now = true
 	PetalState.solve_case(String(case_data["id"]))
-	_say("🎉 ✅ 🕵️ %s" % case_data["confession"])
+	_say("🎉 %s You solved it!" % case_data["confession"])
 	_refresh()
 	next_button.visible = true
 	var at := petal.global_position + petal.size / 2.0
