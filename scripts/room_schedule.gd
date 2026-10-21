@@ -1500,6 +1500,91 @@ func _pet_face() -> String:
 func _in_pet_voice(text: String) -> String:
 	return PetalState.in_voice(text)
 
+# "What's your favourite colour?" -> a real answer and a question back. "" if the
+# words aren't asking about a favourite (or it's about treats, handled elsewhere).
+func _favourite_reply(words: PackedStringArray) -> String:
+	var asked := false
+	for w in FAVOURITE_WORDS:
+		if words.has(w):
+			asked = true
+	if not asked:
+		return ""
+	if words.has("treat") or words.has("treats") or words.has("snack") or words.has("snacks"):
+		return ""
+	var category := ""
+	for w in words:
+		var key: String = FAV_CATEGORY_ALIASES.get(w, w)
+		if key.ends_with("s") and not FAVOURITES.has(key):
+			key = key.trim_suffix("s")
+		if FAVOURITES.has(key):
+			category = key
+			break
+	if category == "":
+		return "Ooh, my favourite what? 🤔 Ask me about colours, animals, food, games, songs..."
+	# Asking about theirs, not hers.
+	if words.has("my") and not words.has("your"):
+		var liked := PetalState.remembered_likes
+		if liked.is_empty():
+			return "Hmm, I don't know your favourite %s yet! 🤔 Tell me!" % category
+		return "I remember you like %s! 💕 Is that your favourite %s?" % [_list_words(liked), category]
+	var options: Array = FAVOURITES[category][0]
+	var emoji: String = FAVOURITES[category][1]
+	var species_picks: Dictionary = SPECIES_FAVOURITES.get(_pet_species(), {})
+	var answer: String = String(species_picks[category]) if species_picks.has(category) else String(options[absi(hash(PetalState.active_pet + category)) % options.size()])
+	if answer == "you":
+		return "You!! 💕😻 You're my favourite %s in the whole world! Who's yours?" % category
+	return "My favourite %s is %s! %s What's yours? 😸" % [category, answer, emoji]
+
+func _delight() -> String:
+	var options: Array = DELIGHT.get(_pet_species(), DELIGHT["cat"])
+	return String(options.pick_random())
+
+# The sound of eating this food ("*crunch crunch*"), found from an emoji or a word.
+func _eat_sound(text: String, words: PackedStringArray) -> String:
+	for sound in EAT_EMOJI_SOUNDS:
+		for e in EAT_EMOJI_SOUNDS[sound]:
+			if text.contains(e):
+				return sound
+	for sound in EAT_SOUNDS:
+		for food in EAT_SOUNDS[sound]:
+			if words.has(food) or words.has(food + "s") or words.has(food + "es"):
+				return sound
+	return ""
+
+# True for foods she knows by name, so "carrot" is never "fixed" into "parrot".
+func _is_food_word(w: String) -> bool:
+	var bases := [w, w.trim_suffix("s"), w.trim_suffix("es")]
+	for sound in EAT_SOUNDS:
+		for b in bases:
+			if EAT_SOUNDS[sound].has(b):
+				return true
+	for emoji in PetalState.TREAT_WORDS:
+		for b in bases:
+			if PetalState.TREAT_WORDS[emoji].has(b):
+				return true
+	return false
+
+# Giving her food that isn't one of her treats: she eats it and loves it.
+func _give_food_reply(text: String, words: PackedStringArray) -> String:
+	var sound := _eat_sound(text, words)
+	if sound == "":
+		return ""
+	# "Do you want a cookie?" - yes please!
+	if words.has("want") and words.has("you") and not words.has("i"):
+		return "Yes please!! 🤤 %s Yummy! 😋 %s" % [sound, _delight()]
+	var gave := text.strip_edges().begins_with("*")
+	for w in GIVE_WORDS:
+		if words.has(w):
+			gave = true
+	if words.size() <= 2:
+		gave = true
+	for no in LIKE_WORDS + ["want", "hate", "dislike", "favorite", "favourite", "fav", "what", "why", "how", "when", "where", "do", "does", "can"]:
+		if words.has(no):
+			gave = false
+	if not gave:
+		return ""
+	return "%s Yummy! 😋 %s" % [sound, _delight()]
+
 # A sum like "56x189", "7 + 8", "9 times 6", or asking for homework help.
 func _is_math(text: String) -> bool:
 	var t := text.to_lower().replace("×", "x").replace("÷", "/")
