@@ -55,6 +55,7 @@ const WORDS := {
 
 # Misspellings she has learned.
 const ALIASES := {
+	"oroenge": "orange", "orenge": "orange", "orang": "orange", "violotet": "violet", "violette": "violet", "voilet": "violet", "viollet": "violet", "lavendar": "lavender", "lavander": "lavender", "tael": "teal", "teel": "teal", "gren": "green", "grean": "green", "bleu": "blue", "pnk": "pink", "yelow": "yellow", "yelllow": "yellow", "rd": "red", "colors": "colour", "colours": "colour", "colour": "colour",
 	"shcool": "school", "actividys": "activities", "activitys": "activities", "activity": "activities",
 	"animl": "animal", "emojes": "emojis", "emoji": "emojis", "pumkin": "pumpkin", "chrismas": "christmas",
 	"valentanes": "valentines", "valentines": "valentines", "alo": "all", "meave": "meow", "meaw": "meow",
@@ -209,6 +210,7 @@ const REPLIES := {
 	"light": "Light! 💡✨", "dark": "Ooh, it's dark! 🌙 I can see in the dark, I'm a cat! 😼", "spot": "A spot! 🔵 Where?",
 	"stoplight": "A stop light! 🚦 Red means stop, yellow means slow, green means go!", "backpack": "A backpack! 🎒 What's inside?",
 	"pink": "Pink! 🩷 So pretty!", "purple": "Purple! 💜 So pretty!",
+	"blue": "Blue! 💙 Like the sky and the ocean!", "red": "Red! ❤️ Like strawberries and hearts!", "orange": "Orange! 🧡 Like a sunset, or a carrot!", "yellow": "Yellow! 💛 Sunshine and bananas!", "teal": "Teal! 🩵 Blue and green mixed together, so pretty!", "green": "Green! 💚 Like grass and leaves!", "lavender": "Lavender! 💜 Soft purple, and it smells so nice!", "violet": "Violet! 💜 A deep, pretty purple!", "colour": "I know lots of colours! 🌈 Pink, blue, purple, red, orange, yellow, teal, green, lavender, violet... which do you like?",
 }
 # Little words she knows but has nothing special to say about.
 const FILLER := ["a", "i", "but", "as", "it", "them", "she", "him", "all", "on", "to", "of", "is", "the", "and", "an", "my", "we", "do", "can", "so", "in", "its", "im"]
@@ -1623,6 +1625,46 @@ func _house_answer(words: Array) -> String:
 		return "Ooh, %s! 😺 I'll remember you like %s! 💕" % [choice, label]
 	return ""
 
+# Any question she has no special answer for still gets a real answer, never a shrug.
+func _answer_question(words: PackedStringArray) -> String:
+	var first := String(words[0]) if words.size() > 0 else ""
+	match first:
+		"why":
+			return String(["Because it makes me happy! 😸💕", "Because I'm %s and that's what we do! 🐾" % PetalState.pet_name, "Because it's fun! 🎉"].pick_random())
+		"how":
+			return String(["Very carefully! 🐾😼", "With lots of love and snacks! 💕🍓", "Like this! ✨ *wiggles*"].pick_random())
+		"when":
+			return String(["Right now! ⏰😸", "Soon! Maybe after a snack! 🍓", "Later today! 📅"].pick_random())
+		"where":
+			return String(["Right here with you! 🏡💕", "Under the cosy blanket! 🛏️😸", "In my favourite spot! 🐾"].pick_random())
+		"who":
+			return String(["You and me! 💖", "Me! Me! Me! 🙋", "Our best friend! 😻"].pick_random())
+		"what", "which":
+			return String(["Hmm, I pick the yummy one! 🍓😸", "The fun one! 🎉", "Whatever you pick! 💕"].pick_random())
+	return String(["Yes! 😻", "Yes yes yes! 🎉", "Of course! 💕", "Hmm... no, not today! 😹", "Maybe! 😸 Ask me again later!"].pick_random())
+
+# "What colour/pattern/height/post do you want?" -> what she wants; it becomes known.
+func _house_wish_reply(words: PackedStringArray) -> String:
+	var names := {"color": "colour", "colour": "colour", "pattern": "pattern", "height": "height", "post": "post", "posts": "post"}
+	for w in words:
+		if not names.has(w):
+			continue
+		var category: String = names[w]
+		if category == "colour":
+			category = "color"
+		var wants := PetalState.house_wants_for_pet()
+		if not wants.has(category):
+			continue
+		var choice := String(wants[category])
+		PetalState.house_known_for_pet()[category] = true
+		PetalState.save_game()
+		match category:
+			"color": return "I want %s! 😻🏡 %s is my favourite colour for my house!" % [choice, choice.capitalize()]
+			"pattern": return "I want %s! 😻🏡 %s everywhere on my house!" % [choice, choice.capitalize()]
+			"height": return "I want a %s house! 😻🏡" % choice
+			_: return "I want a %s scratching post! 😻🏡" % choice
+	return ""
+
 # Does she love this house choice? Telling you also fills in her wish list.
 func _house_survey_reply(words: Array) -> String:
 	var wants := PetalState.house_wants_for_pet()
@@ -1741,6 +1783,11 @@ func _reply_to(text: String) -> String:
 			riddle_reveal = riddle[2]
 			return "Riddle time! 🧩 %s" % riddle[0]
 		return "Let's cheer up! 😸 " + String(JOKES.pick_random())
+	# "What colour do you want?" -> she names the one she actually wants for her house.
+	if has.call(["want", "wants", "like", "prefer", "pick"]) and has.call(["you", "your", "u", "ur"]) and has.call(["what", "which"]):
+		var wish := _house_wish_reply(words)
+		if wish != "":
+			return wish
 	# House survey by text: "do you like pink?" -> she says whether it's her favourite.
 	if has.call(["house", "home", "post", "scratching"]) or (has.call(["you", "your", "u", "ur"]) and has.call(LIKE_WORDS + ["want", "prefer", "wants"])):
 		var asked := _house_survey_reply(words)
@@ -1839,7 +1886,7 @@ func _reply_to(text: String) -> String:
 	for w in words:
 		if FILLER.has(w):
 			return "Mm-hm! 😸 Tell me more!"
-	if text.contains("?"):
-		return "Good question! ❓😸 Let me think... Maybe!"
+	if text.contains("?") or has.call(["what", "why", "how", "when", "where", "who", "which", "do", "does", "did", "can", "will", "is", "are", "should", "would", "could"]):
+		return _answer_question(words)
 	var shown := text.left(18)
 	return "Meow? 🤔 \"%s\" is nonsense to me! 😹 Say it another way?" % shown
