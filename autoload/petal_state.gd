@@ -729,7 +729,7 @@ const SPECIES_TREATS := {
 	"cat": ["🐟", "🐠", "🍤", "🥛", "🐟"],
 	"dog": ["🦴", "🍖", "🥩", "🍗", "🦴"],
 	"bird": ["🌻", "🌾", "🍇", "🍎", "🫐"],
-	"gerbil": ["🥜", "🌰", "🌻", "🥕", "🌽"],
+	"gerbil": ["🌻", "🥜", "🌰", "🥕", "🌽"],
 	"bunny": ["🥕", "🥬", "🍎", "🍓", "🥦"],
 }
 
@@ -743,13 +743,10 @@ const TREAT_WORDS := {
 }
 var treats_found := {} # pet id -> true once their favourite has been shown
 
-# Each pet secretly loves one of their species' treats most of all.
+# Each kind of pet secretly loves its first treat most of all (cats: fish), the same
+# food she names when asked her favourite.
 func favorite_treat() -> String:
-	var options: Array = []
-	for treat in treat_emojis():
-		if not options.has(treat):
-			options.append(treat)
-	return options[absi(active_pet.hash()) % options.size()]
+	return treat_emojis()[0]
 
 # She is shown her favourite: very happy, and a reward the first time.
 func favorite_treat_shown() -> void:

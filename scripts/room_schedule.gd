@@ -528,11 +528,11 @@ func _cats_mad(message: String) -> void:
 		tween.tween_callback(_update_cat_moods)
 
 # A little cat that says meow or purr when clicked.
-func _cat_button(face: String) -> Button:
+func _cat_button(face: String, size := Vector2(140, 76)) -> Button:
 	var cat := Button.new()
 	cat.flat = true
 	cat.focus_mode = Control.FOCUS_NONE
-	cat.custom_minimum_size = Vector2(80, 44)
+	cat.custom_minimum_size = size
 	cat.expand_icon = true
 	cat.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cat.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -549,7 +549,9 @@ func _cat_says(cat: Button) -> void:
 	var empties := _empty_days()
 	var no_place := _no_place_events()
 	var sound: String = ["Meow! 😺", "Purrrr... 😻", "Meow meow! 😸", "Purr purr 💖", "Mew! 🎀"].pick_random()
-	if no_place > 0:
+	if _nonsense_events() > 0:
+		sound = ["HISSSS! 😾 That doesn't make sense!", "Grrr! 😾 What does that even say?!", "MROWW! 😾 Use real words!"].pick_random()
+	elif no_place > 0:
 		sound = ["HISSSS! 😾 Where are you going?!", "Hssss! 😾 %d plans have no place!" % no_place, "MROWW! 😾 Add where you're going! 📍"].pick_random()
 	elif empties > 0:
 		sound = ["HISSS! 😾 Fill in your calendar!", "Grrr! 😾 %d days are empty!" % empties, "MROWW! 😾 Plan your week!", "Hmph! 😾 So many empty days!"].pick_random()
@@ -580,9 +582,44 @@ func _no_place_events() -> int:
 				count += 1
 	return count
 
+# Consonant pairs English words really use; anything else ("qd", "hd") is key-mashing.
+const OK_PAIRS := ["bl", "br", "bs", "bt", "ch", "ck", "cl", "cr", "ct", "dd", "dl", "dr", "ds", "dw", "ff", "fl", "fr", "ft", "gg", "gh", "gl", "gn", "gr", "gs", "kl", "kn", "ks", "ld", "lf", "ll", "lm", "lp", "ls", "lt", "lv", "mb", "mm", "mp", "ms", "nc", "nd", "ng", "nk", "nn", "ns", "nt", "nv", "pl", "pp", "pr", "ps", "pt", "rb", "rc", "rd", "rf", "rg", "rk", "rl", "rm", "rn", "rp", "rr", "rs", "rt", "rv", "rw", "sc", "sh", "sk", "sl", "sm", "sn", "sp", "ss", "st", "sw", "tch", "th", "tr", "ts", "tt", "tw", "wh", "wr", "xt", "zz", "tl", "bb", "cc", "dg", "gm", "hm", "sq", "ph", "pn", "mn", "wl", "wn", "ws", "tz", "zl", "yn", "yl", "ym", "ys", "dm", "tk", "cs", "lk", "lb", "lc", "kt", "nj", "nz", "rz", "hr", "fs", "hs", "ht", "lg", "mt", "pk", "xp", "ls", "tm", "dn", "fn", "hn"]
+
+# False for key-mashing like "qdedwehdue": a word with no vowel, a q without u,
+# a letter three times in a row, or a consonant pair no word uses.
+func _makes_sense(text: String) -> bool:
+	for raw in text.to_lower().split(" ", false):
+		var word := ""
+		for ch in raw:
+			if (ch >= "a" and ch <= "z"):
+				word += ch
+		if word.length() < 3 or ["mrs", "mss"].has(word) or _find_activity(word) != "other":
+			continue
+		if not RegEx.create_from_string("[aeiouy]").search(word):
+			return false
+		if RegEx.create_from_string("(.)\\1\\1|q(?!u)").search(word):
+			return false
+		for i in range(word.length() - 1):
+			var a := word[i]
+			var b := word[i + 1]
+			if "aeiouy".contains(a) or "aeiouy".contains(b):
+				continue
+			if not OK_PAIRS.has(a + b):
+				return false
+	return true
+
+# How many plans in the shown week have a name or place that is key-mashing.
+func _nonsense_events() -> int:
+	var count := 0
+	for key in _week_of(selected):
+		for entry in _events_on(key):
+			if not _makes_sense(String(entry["name"])) or not _makes_sense(String(entry["place"])):
+				count += 1
+	return count
+
 # Cats are cross while the week has empty days or plans with no place, happy once it is all filled in.
 func _update_cat_moods() -> void:
-	var mad := _empty_days() > 0 or _no_place_events() > 0
+	var mad := _empty_days() > 0 or _no_place_events() > 0 or _nonsense_events() > 0
 	for cat in side_cats:
 		_set_mood(cat, "angry" if mad else "cat")
 
@@ -792,19 +829,19 @@ func _build_planner() -> void:
 	# Left: the month.
 	var left := VBoxContainer.new()
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left.size_flags_stretch_ratio = 1.7
+	left.size_flags_stretch_ratio = 3.6
 	left.add_theme_constant_override("separation", 6)
 	columns.add_child(left)
 	var head := HBoxContainer.new()
 	left.add_child(head)
 	head.add_child(_button("◀", 22, Vector2(56, 44), _change_week.bind(-1)))
-	head.add_child(_cat_button("😺"))
+	head.add_child(_cat_button("😺", Vector2(110, 60)))
 	month_label = Label.new()
 	month_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	month_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_style_label(month_label, 30, Color(0.78, 0.25, 0.55))
 	head.add_child(month_label)
-	head.add_child(_cat_button("😻"))
+	head.add_child(_cat_button("😻", Vector2(110, 60)))
 	head.add_child(_button("▶", 22, Vector2(56, 44), _change_week.bind(1)))
 	grid = GridContainer.new()
 	grid.columns = 7
@@ -819,20 +856,14 @@ func _build_planner() -> void:
 	var left_cats := VBoxContainer.new()
 	left_cats.alignment = BoxContainer.ALIGNMENT_CENTER
 	middle.add_child(left_cats)
-	for face in ["😸", "🐈", "😽"]:
+	for face in ["😸"]:
 		left_cats.add_child(_cat_button(face))
 	middle.add_child(grid)
 	var right_cats := VBoxContainer.new()
 	right_cats.alignment = BoxContainer.ALIGNMENT_CENTER
 	middle.add_child(right_cats)
-	for face in ["😼", "🐱", "😺"]:
+	for face in ["😼"]:
 		right_cats.add_child(_cat_button(face))
-	var cats := HBoxContainer.new()
-	cats.alignment = BoxContainer.ALIGNMENT_CENTER
-	cats.add_theme_constant_override("separation", 10)
-	left.add_child(cats)
-	for face in ["🐱", "😸", "😽", "😼", "🐈", "😻", "🐱"]:
-		cats.add_child(_cat_button(face))
 
 	# Right: the chosen day, and the box to type a new event.
 	var right := VBoxContainer.new()
@@ -956,7 +987,7 @@ func _refresh_calendar() -> void:
 		cell.clip_text = true
 		cell.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		cell.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		cell.custom_minimum_size = Vector2(0, 50)
+		cell.custom_minimum_size = Vector2(0, 90)
 		cell.add_theme_font_size_override("font_size", 14)
 		cell.add_theme_color_override("font_color", Color(0.3, 0.15, 0.35))
 		var fill := Color(1, 0.97, 0.88) if key == selected else (Color(1.0, 0.8, 0.9) if key == today else Color(1.0, 0.95, 0.98))
@@ -1069,6 +1100,8 @@ func _type_event() -> void:
 	if not missing.is_empty():
 		_cats_mad("😾 Grrr! Add the " + " and ".join(missing) + "!")
 		return
+	if not _makes_sense(String(entry["name"])) or not _makes_sense(String(entry["place"])):
+		_cats_mad("😾 Grrr! That doesn't make sense!")
 	if picked_emoji != "":
 		entry["emoji"] = picked_emoji
 	var spread := weekdays_box.button_pressed or _find_activity(entry["name"]) == "school"
@@ -1905,6 +1938,74 @@ func _house_survey_reply(words: Array) -> String:
 			return String(["Hmm, not really 😐 %s isn't my favourite." % choice.capitalize(), "Meh... 😾 Not %s." % choice, "Nope! 🙅 Try something else!"].pick_random())
 	return ""
 
+# "Do you like 🐟 or 🥕?" / "fish or carrot?" -> she picks the one her kind likes best.
+func _choice_reply(text: String, words: PackedStringArray) -> String:
+	if not words.has("or"):
+		return ""
+	var asked := false
+	for w in LIKE_WORDS + ["want", "prefer", "better", "eat", "choose", "pick", "rather"]:
+		if words.has(w):
+			asked = true
+	if not asked:
+		return ""
+	var segments := text.to_lower().replace("?", " ").split(" or ", false)
+	var options: Array = []
+	for segment in segments:
+		var item := _choice_item(segment)
+		if not item.is_empty() and not options.any(func(o: Dictionary) -> bool: return o["name"] == item["name"]):
+			options.append(item)
+	if options.size() < 2:
+		return ""
+	var best: Dictionary = options[0]
+	var best_score := -1
+	var favourite := PetalState.favorite_treat()
+	var treats: Array = PetalState.treat_emojis()
+	for o in options:
+		var score := 0
+		if o["emoji"] == favourite:
+			score = 1000
+		elif treats.has(o["emoji"]):
+			score = 500 - treats.find(o["emoji"])
+		else:
+			score = absi(hash(PetalState.active_pet + String(o["name"]))) % 100
+		if score > best_score:
+			best_score = score
+			best = o
+	var shown := "%s%s" % [best["name"], best["emoji"]]
+	if best_score >= 500:
+		return String(["%s!! 😻 I like %s the most!", "Ooh, %s! 💕 I pick %s!"].pick_random()) % [shown.capitalize(), best["name"]]
+	return "I pick %s! 😸 %s is nice!" % [best["name"], shown.capitalize()]
+
+# One side of an "or": the food, animal or thing in it, as {name, emoji}.
+func _choice_item(segment: String) -> Dictionary:
+	var by_emoji := {}
+	for e in PetalState.TREAT_WORDS:
+		by_emoji[e] = String(PetalState.TREAT_WORDS[e][0])
+	for f in FOODS:
+		by_emoji[FOODS[f][0]] = f
+	for a in ANIMALS:
+		by_emoji[ANIMALS[a]] = a
+	var best_at := 1 << 30
+	var found := {}
+	for e in by_emoji:
+		var at := segment.find(e)
+		if at >= 0 and at < best_at:
+			best_at = at
+			found = {"name": by_emoji[e], "emoji": e}
+	if not found.is_empty():
+		return found
+	for w in _words(segment):
+		var food := _food_word(w)
+		if food != "":
+			return {"name": food, "emoji": FOODS[food][0]}
+		for e in PetalState.TREAT_WORDS:
+			var names: Array = PetalState.TREAT_WORDS[e]
+			if names.has(w) or names.has(w.trim_suffix("s")):
+				return {"name": w.trim_suffix("s"), "emoji": e}
+		if ANIMALS.has(w):
+			return {"name": w, "emoji": ANIMALS[w]}
+	return {}
+
 # Her answer to whatever was typed. Anything she has no word for is "nonsense".
 func _reply_to(text: String) -> String:
 	var words := _words(text)
@@ -1916,6 +2017,9 @@ func _reply_to(text: String) -> String:
 	var favourite := _favourite_reply(words)
 	if favourite != "":
 		return favourite
+	var chosen := _choice_reply(text, words)
+	if chosen != "":
+		return chosen
 	var fed := _give_food_reply(text, words) if _treat_shown(text, words) == "" else ""
 	if fed != "":
 		return fed
