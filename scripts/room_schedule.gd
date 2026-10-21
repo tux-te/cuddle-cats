@@ -252,6 +252,41 @@ const SHORT_WORDS := {
 	"if": "If? 🤔 If what? Tell me more!", "can": "Can I? Can you? 🥺 Can what?", "i": "You! 💕 Tell me about you!",
 }
 
+# Everyday words she knows, grouped: each group has one reply and every word has its own emoji.
+const WORD_GROUPS := [
+	["weather", "%s%s! Weather is fun to watch from the window!", {"rain": "🌧️", "sun": "☀️", "snowy": "🌨️", "wind": "💨", "storm": "⛈️", "thunder": "⚡", "lightning": "🌩️", "cloud": "☁️", "rainbow": "🌈", "fog": "🌫️", "hot": "🥵", "warm": "🌡️", "sunny": "🌞", "windy": "🌬️", "hail": "🧊", "frost": "❄️", "tornado": "🌪️", "hurricane": "🌀", "puddle": "💦", "umbrella": "☂️", "breeze": "🍃"}],
+	["body", "%s%s! I have those too! Well, mine are cuter 😸", {"head": "🗣️", "nose": "👃", "eye": "👁️", "ear": "👂", "mouth": "👄", "tooth": "🦷", "teeth": "🦷", "tongue": "👅", "finger": "👆", "foot": "🦶", "feet": "🦶", "leg": "🦵", "arm": "💪", "knee": "🦵", "elbow": "💪", "shoulder": "🤷", "tummy": "🫃", "back": "🔙", "neck": "🦒", "hair": "💇", "skin": "🧴", "brain": "🧠", "muscle": "💪", "toe": "🦶", "chin": "🙂", "cheek": "😊", "lip": "💋", "whisker": "🐱", "tail": "🐾", "paw": "🐾", "fur": "🧶", "feather": "🪶", "wing": "🪽", "beak": "🐦"}],
+	["clothes", "%s%s! Ooh, fashion! Do I get a bow too? 🎀", {"shirt": "👕", "dress": "👗", "pants": "👖", "jeans": "👖", "shorts": "🩳", "skirt": "👗", "sock": "🧦", "shoe": "👟", "boot": "🥾", "sandal": "🩴", "hat": "🎩", "cap": "🧢", "scarf": "🧣", "glove": "🧤", "coat": "🧥", "jacket": "🧥", "sweater": "🧶", "hoodie": "🧥", "pajama": "🛌", "swimsuit": "🩱", "bow": "🎀", "crown": "👑", "tiara": "👑", "necklace": "📿", "bracelet": "📿", "ring": "💍", "earring": "💎", "glasses": "👓", "purse": "👛", "belt": "👖", "tie": "👔", "uniform": "👔", "mask": "😷", "cape": "🦸", "apron": "🍳", "slipper": "🥿"}],
+	["family", "%s%s! Family is the best! 💕", {"mommy": "👩", "mother": "👩", "daddy": "👨", "father": "👨", "grandma": "👵", "grandpa": "👴", "grandmother": "👵", "grandfather": "👴", "aunt": "👩", "uncle": "👨", "family": "👨‍👩‍👧", "parent": "👪", "child": "🧒", "neighbor": "🏘️", "twin": "👯", "husband": "🤵", "wife": "👰", "son": "👦", "daughter": "👧", "nephew": "🧒", "niece": "🧒"}],
+	["jobs", "%s%s! What a cool job! What do they do all day?", {"doctor": "🧑‍⚕️", "nurse": "🧑‍⚕️", "dentist": "🦷", "firefighter": "🧑‍🚒", "police": "👮", "chef": "🧑‍🍳", "farmer": "🧑‍🌾", "pilot": "🧑‍✈️", "astronaut": "🧑‍🚀", "scientist": "🧑‍🔬", "artist": "🧑‍🎨", "singer": "🎤", "dancer": "💃", "builder": "👷", "mechanic": "🔧", "librarian": "📚", "mailman": "📬", "driver": "🚌", "captain": "⚓", "president": "🏛️", "judge": "⚖️", "lawyer": "⚖️", "writer": "✍️", "actor": "🎭", "princess": "👸", "prince": "🤴", "queen": "👑", "king": "🤴", "pirate": "🏴‍☠️", "wizard": "🧙", "witch": "🧙", "fairy": "🧚", "mermaid": "🧜", "superhero": "🦸", "ninja": "🥷", "knight": "🛡️", "cashier": "🛒", "barber": "💈"}],
+	["sports", "%s%s! Sports are so fun! Ready, set, go! 🏃", {"basketball": "🏀", "baseball": "⚾", "tennis": "🎾", "volleyball": "🏐", "golf": "⛳", "hockey": "🏒", "running": "🏃", "skating": "⛸️", "skiing": "⛷️", "surfing": "🏄", "cycling": "🚴", "bowling": "🎳", "boxing": "🥊", "archery": "🏹", "rugby": "🏉", "badminton": "🏸", "ballet": "🩰", "yoga": "🧘", "hiking": "🥾", "climbing": "🧗", "fishing": "🎣", "camping": "🏕️", "trophy": "🏆", "medal": "🥇", "race": "🏁", "team": "👥", "coach": "📣", "score": "🎯", "goal": "🥅", "jump": "🦘", "kick": "🦵", "throw": "🤾"}],
+	["subjects", "%s%s! Learning is fun! Smart kitty! 🤓", {"math": "➕", "science": "🔬", "writing": "✏️", "spelling": "🔤", "geography": "🗺️", "grammar": "📝", "test": "📝", "quiz": "❓", "recess": "🛝", "classroom": "🏫", "desk": "🪑", "pencil": "✏️", "pen": "🖊️", "crayon": "🖍️", "marker": "🖍️", "eraser": "🧽", "notebook": "📓", "paper": "📄", "scissors": "✂️", "glue": "🧴", "ruler": "📏", "calculator": "🧮", "computer": "💻", "tablet": "📱", "phone": "📱", "map": "🗺️", "globe": "🌍", "alphabet": "🔤", "story": "📖", "poem": "📜", "dictionary": "📕", "grade": "💯"}],
+	["vehicles", "%s%s! Vroom vroom! Can we go for a ride? 🚗", {"bus": "🚌", "truck": "🚚", "helicopter": "🚁", "boat": "⛵", "ship": "🚢", "bike": "🚲", "bicycle": "🚲", "scooter": "🛴", "skateboard": "🛹", "rocket": "🚀", "taxi": "🚕", "tractor": "🚜", "motorcycle": "🏍️", "ambulance": "🚑", "subway": "🚇", "submarine": "🚢", "wagon": "🛒", "sled": "🛷", "canoe": "🛶", "balloon": "🎈", "van": "🚐", "limo": "🚙", "bridge": "🌉", "traffic": "🚦", "tunnel": "🚇", "wheel": "🛞", "engine": "⚙️", "seatbelt": "🪢"}],
+	["nature", "%s%s! Nature is so pretty! 🌿", {"rose": "🌹", "tulip": "🌷", "grass": "🌱", "leaf": "🍃", "leaves": "🍂", "bush": "🌿", "cactus": "🌵", "rock": "🪨", "stone": "🪨", "sand": "🏖️", "mud": "🟤", "dirt": "🟤", "hill": "⛰️", "volcano": "🌋", "cave": "🕳️", "desert": "🏜️", "jungle": "🌴", "island": "🏝️", "waterfall": "🏞️", "wave": "🌊", "planet": "🪐", "sky": "🌌", "earth": "🌍", "sunrise": "🌅", "sunset": "🌇", "branch": "🌿", "nest": "🪺", "web": "🕸️", "shell": "🐚", "pearl": "🦪", "stick": "🪵", "log": "🪵", "fire": "🔥", "smoke": "💨", "air": "🌬️"}],
+	["feelings", "%s%s! Feelings are important! Want a cuddle? 🫂", {"mad": "😡", "nervous": "😬", "excited": "🤩", "jealous": "😒", "shy": "🙈", "silly": "🤪", "grumpy": "😤", "thirsty": "🥤", "sick": "🤒", "brave": "🦁", "calm": "😌", "worried": "😟", "confused": "😕", "surprised": "😲", "cranky": "😒", "giggly": "🤭", "cheerful": "😄", "hopeful": "🤞", "kind": "💗", "gentle": "🤲", "lazy": "🛋️", "busy": "⏰", "curious": "🧐", "grateful": "🙏", "joyful": "😆"}],
+	["music", "%s%s! La la la! Music makes me dance! 💃", {"guitar": "🎸", "drum": "🥁", "violin": "🎻", "trumpet": "🎺", "flute": "🪈", "saxophone": "🎷", "harp": "🪕", "banjo": "🪕", "microphone": "🎤", "concert": "🎤", "band": "🎸", "choir": "🎶", "melody": "🎵", "rhythm": "🥁", "karaoke": "🎤", "headphones": "🎧", "radio": "📻", "speaker": "🔊", "note": "🎼", "lyrics": "📜", "dancing": "🕺", "disco": "🪩"}],
+	["toys", "%s%s! Ooh, can I play too?! 🎾", {"doll": "🪆", "teddy": "🧸", "puzzle": "🧩", "lego": "🧱", "block": "🧱", "kite": "🪁", "yoyo": "🪀", "marble": "🔮", "chess": "♟️", "dice": "🎲", "slide": "🛝", "swing": "🛝", "trampoline": "🤸", "bubble": "🫧", "yarn": "🧶", "laser": "🔴", "squeaky": "🐭", "frisbee": "🥏", "sandbox": "🏖️", "playdough": "🎨", "slime": "🟢", "fidget": "🌀", "robot": "🤖", "drone": "🛸", "videogame": "🎮", "console": "🎮", "tent": "⛺", "fort": "🏰", "treehouse": "🏡", "boomerang": "🪃"}],
+	["holidays", "%s%s! Celebrations are the best! 🎉", {"birthday": "🎂", "easter": "🐣", "thanksgiving": "🦃", "hanukkah": "🕎", "diwali": "🪔", "eid": "🌙", "ramadan": "🌙", "kwanzaa": "🕯️", "valentine": "💘", "weekend": "🛋️", "fall": "🍂", "fireworks": "🎆", "confetti": "🎊", "surprise": "🎁", "parade": "🎺", "picnic": "🧺", "bbq": "🍖", "sleepover": "🛏️"}],
+	["time", "%s%s! Time flies when we play! ⏰", {"monday": "📅", "tuesday": "📅", "wednesday": "📅", "thursday": "📅", "friday": "🎉", "saturday": "🛋️", "sunday": "🌞", "january": "📅", "february": "📅", "march": "📅", "april": "🌧️", "june": "☀️", "july": "🎆", "august": "☀️", "september": "🍂", "october": "🎃", "november": "🦃", "december": "🎄", "morning": "🌅", "afternoon": "🌞", "evening": "🌆", "tonight": "🌙", "tomorrow": "📆", "yesterday": "⏪", "calendar": "📅", "always": "♾️", "sometimes": "🤷", "soon": "⏳"}],
+	["shapes", "%s%s! I know my shapes! ✨", {"square": "🟦", "triangle": "🔺", "rectangle": "▭", "oval": "🥚", "diamond": "💎", "cube": "🧊", "sphere": "🔮", "cone": "🍦", "cylinder": "🥫", "curve": "〰️", "stripe": "🦓", "dot": "⚫", "spiral": "🌀", "zigzag": "⚡", "big": "🐘", "small": "🐜", "tiny": "🔬", "huge": "🦣", "round": "⚽", "flat": "📄", "tall": "🦒", "tallest": "🦒", "fast": "🐆", "slow": "🐌", "heavy": "🏋️", "soft": "🧸", "hard": "🪨", "smooth": "🪞", "fluffy": "☁️", "sparkly": "✨", "shiny": "✨", "bumpy": "🥒", "sticky": "🍯"}],
+	["home", "%s%s! Home sweet home! I love cosy things! 🛋️", {"couch": "🛋️", "sofa": "🛋️", "blanket": "🧣", "chair": "🪑", "table": "🍽️", "lamp": "💡", "door": "🚪", "window": "🪟", "stairs": "🪜", "roof": "🏠", "floor": "🟫", "wall": "🧱", "rug": "🧶", "mirror": "🪞", "fridge": "🧊", "oven": "🔥", "stove": "🍳", "sink": "🚰", "shower": "🚿", "toilet": "🚽", "toothbrush": "🪥", "brush": "🪮", "broom": "🧹", "trash": "🗑️", "laundry": "🧺", "closet": "👚", "shelf": "📚", "basket": "🧺", "cup": "🥤", "plate": "🍽️", "bowl": "🥣", "spoon": "🥄", "fork": "🍴", "knife": "🔪", "bottle": "🍼", "key": "🔑", "television": "📺", "fireplace": "🔥", "attic": "🏚️", "garage": "🚗", "fence": "🚧", "mailbox": "📬"}],
+	["verbs", "%s%s! Ooh, I know that word! Tell me more! 😸", {"climb": "🧗", "hide": "🙈", "seek": "🔍", "chase": "🏃", "catch": "🤲", "dig": "⛏️", "fly": "🕊️", "laugh": "😂", "smile": "😊", "wake": "⏰", "walk": "🚶", "skip": "🏃", "spin": "🌀", "twirl": "💃", "wiggle": "🪱", "stretch": "🧘", "yawn": "🥱", "sneeze": "🤧", "cough": "😷", "blink": "😉", "clap": "👏", "cheer": "📣", "whisper": "🤫", "shout": "📢", "draw": "✏️"}],
+]
+
+var _word_index: Dictionary = {}
+
+# word -> [emoji, reply template], built once from WORD_GROUPS.
+func _group_word(w: String) -> Array:
+	if _word_index.is_empty():
+		for group in WORD_GROUPS:
+			for word in group[2]:
+				_word_index[word] = [group[2][word], group[1]]
+	for base in [w, w.trim_suffix("s"), w.trim_suffix("es")]:
+		if _word_index.has(base):
+			return [base] + _word_index[base]
+	return []
+
+
 # Places she knows: name -> [emoji, what she says].
 const PLACES := {
 	"home": ["🏡", "Home is my favourite place!"], "house": ["🏠", "A house! So cosy!"], "park": ["🌳", "The park! Can we play there?"], "beach": ["🏖️", "The beach! Sand and waves!"],
@@ -2233,6 +2268,10 @@ func _reply_to(text: String) -> String:
 	var topics := _topics_reply(words)
 	if topics != "":
 		return topics
+	for w in words:
+		var known := _group_word(w)
+		if not known.is_empty():
+			return String(known[2]) % [String(known[0]).capitalize(), known[1]]
 	if words.size() == 1 and SHORT_WORDS.has(words[0]):
 		return String(SHORT_WORDS[words[0]])
 	for w in words:
