@@ -45,8 +45,42 @@ const ALIASES := {
 	"animl": "animal", "emojes": "emojis", "emoji": "emojis", "pumkin": "pumpkin", "chrismas": "christmas",
 	"valentanes": "valentines", "valentines": "valentines", "alo": "all", "meave": "meow", "meaw": "meow",
 	"setings": "settings", "settings": "settings", "resevie": "", "sitter": "babysitter", "baby": "baby",
-	"vent": "vent", "mabe": "maybe", "mabye": "maybe", "yup": "yes", "yep": "yes", "nope": "no", "ew": "eel", "eww": "eel", "vacatoin": "vacation", "vacations": "vacation", "richmand": "richmond", "virgin": "virginia", "wisconson": "wisconsin", "candoa": "canada", "cars": "car", "trips": "trip", "presant": "present", "presants": "present", "coustume": "costume", "costumes": "costume", "gifts": "gift", "books": "book", "ruthie": "ruthie", "norakate": "norakate", "nora": "norakate", "kate": "norakate",
+	"vent": "vent", "boyfreind": "boyfriend", "boyfrend": "boyfriend", "boyfreinds": "boyfriend", "boyfriends": "boyfriend", "girlfreind": "girlfriend", "girlfrend": "girlfriend", "girlfreinds": "girlfriend", "girlfriends": "girlfriend", "chalkbored": "chalkboard", "chalkboared": "chalkboard", "chalkbord": "chalkboard", "stor": "store", "conrer": "corner", "cornor": "corner", "nales": "nails", "wanna": "want", "wnat": "want", "waant": "want", "purpal": "purple", "purpel": "purple", "purpul": "purple", "perple": "purple", "purple": "purple", "ocenan": "ocean", "oceon": "ocean", "baody": "body", "bod": "body", "baodys": "body", "stoplite": "stoplight", "backpak": "backpack", "bakpack": "backpack", "rivers": "river", "creeks": "creek", "creak": "creek", "creeek": "creek", "lite": "light", "darkk": "dark", "spott": "spot", "lgbtq": "lgbtq", "lgbtqia": "lgbtqia", "lgbtqai": "lgbtqia", "lbgt": "lgbt", "lbgtq": "lgbtq", "bisexul": "bisexual", "homosexual": "gay", "transexual": "transgender", "non": "non", "gaye": "gay", "gai": "gay", "lesbain": "lesbian", "lezbian": "lesbian", "panssexual": "pansexual", "pronown": "pronoun", "mabe": "maybe", "mabye": "maybe", "yup": "yes", "yep": "yes", "nope": "no", "ew": "eel", "eww": "eel", "vacatoin": "vacation", "vacations": "vacation", "richmand": "richmond", "virgin": "virginia", "wisconson": "wisconsin", "candoa": "canada", "cars": "car", "trips": "trip", "presant": "present", "presants": "present", "coustume": "costume", "costumes": "costume", "gifts": "gift", "books": "book", "ruthie": "ruthie", "norakate": "norakate", "nora": "norakate", "kate": "norakate",
 }
+
+# LGBTQIA+ words she knows. Short ambiguous ones (bi, pan, ace...) only count with a
+# cue (gay, pride, gender, "I am ...") so "pan" in "frying pan" is still a pan.
+const PRIDE_WORDS := {
+	"gay": "Gay means loving someone of the same gender, like two boys or two girls. Love is love! 🏳️‍🌈💕",
+	"lesbian": "A lesbian is a girl who loves girls. 💗🏳️‍🌈",
+	"bi": "Bi means loving more than one gender, like boys and girls. 💜💙💗",
+	"bisexual": "Bisexual means loving more than one gender, like boys and girls. 💜💙💗",
+	"pan": "Pan means loving someone no matter their gender. 💛💗💙",
+	"pansexual": "Pansexual means loving someone no matter their gender. 💛💗💙",
+	"trans": "Trans means your gender is different from the one you were told at birth. Everyone gets to be who they are! 🏳️‍⚧️💙💗",
+	"transgender": "Transgender means your gender is different from the one you were told at birth. Everyone gets to be who they are! 🏳️‍⚧️💙💗",
+	"nonbinary": "Nonbinary means not only a boy or only a girl. 💛🤍💜🖤 They/them is okay too!",
+	"enby": "Enby is short for nonbinary: not only a boy or only a girl. 💛🤍💜🖤",
+	"queer": "Queer is a word some people use for being LGBTQIA+. 🌈 Some like it and some don't, so ask first!",
+	"ace": "Ace means not feeling crushes the same way other people do. 🖤🤍💜 That's okay!",
+	"asexual": "Asexual (or ace) means not feeling crushes the same way other people do. 🖤🤍💜 That's okay!",
+	"aro": "Aro means not feeling romantic crushes. 🌿 That's okay too!",
+	"aromantic": "Aromantic (or aro) means not feeling romantic crushes. 🌿 That's okay too!",
+	"intersex": "Intersex means a body that's a little different from what people usually expect of a boy or girl. 💛💜",
+	"straight": "Straight means loving the opposite gender. 💕 Everyone's love is welcome here!",
+	"gender": "Gender is how you feel inside: a girl, a boy, both, or neither. 🌈 Everyone gets to be themselves!",
+	"lgbt": "LGBTQIA+ means lesbian, gay, bi, trans, queer, intersex, ace and more. Everybody is welcome! 🏳️‍🌈💖",
+	"lgbtq": "LGBTQIA+ means lesbian, gay, bi, trans, queer, intersex, ace and more. Everybody is welcome! 🏳️‍🌈💖",
+	"lgbtqia": "LGBTQIA+ means lesbian, gay, bi, trans, queer, intersex, ace and more. Everybody is welcome! 🏳️‍🌈💖",
+	"pride": "Pride is celebrating being exactly who you are! 🏳️‍🌈🎉 Meow!",
+	"pronoun": "Pronouns are words like she, he and they. I'll use yours! 💕",
+	"pronouns": "Pronouns are words like she, he and they. I'll use yours! 💕",
+	"questioning": "It's okay to wonder and take your time. 💛 No rush. I'm here, and it stays between us. 🤫",
+}
+const PRIDE_AMBIGUOUS := ["bi", "pan", "ace", "aro", "trans", "straight", "pride", "gender", "enby"]
+const PRIDE_CUES := ["lgbt", "lgbtq", "lgbtqia", "gay", "lesbian", "queer", "sexual", "bisexual", "pansexual", "asexual", "transgender", "nonbinary", "flag", "orientation", "identity", "intersex", "aromantic", "questioning"]
+const PRIDE_GOOD := ["good", "great", "awesome", "cool", "nice", "amazing", "best", "wonderful", "love", "fine", "okay", "ok", "proud", "happy", "yay", "beautiful"]
+const PRIDE_MEAN := ["hate", "bad", "gross", "eel", "eww", "yuck", "wrong", "stupid", "weird", "disgusting", "dumb", "ugly", "sin"]
 
 # Words she knows, and what she says about them.
 const REPLIES := {
@@ -57,7 +91,7 @@ const REPLIES := {
 	"emojis": "I love emojis! 😻🎉🌈", "cute": "You're cuter! 🥰", "animal": "I love animals! 🐾🦁🐶🐦",
 	"no": "Oh no! 😿", "thank": "You're welcome! 😸", "you": "Me? 😺", "whatever": "Hehe, whatever! 😹",
 	"sure": "Okay! 👍", "yes": "Yay! 😸", "mouse": "A mouse?! 🐭 Where?!", "amazing": "Amazing! 🌟",
-	"here": "I'm here! 🐾", "me": "You and me! 💕", "pj": "PJ is my pal! 🧸", "meow": "Meow meow! 😻",
+	"here": "I'm here! 🐾", "me": "You and me! 💕", "pj": "PJ! 💖 Hi PJ!", "pjs": "Cozy PJs! 😴🩳", "meow": "Meow meow! 😻",
 	"ruthie": "Ruthie! 💖 Hi Ruthie!", "norakate": "Hi Norakate! 🎀", "lion": "Roar! 🦁 A big cat, like me!",
 	"net": "Ooh, a net! 🥅", "sleep": "Night night! 😴💤", "crate": "My crate is cosy! 📦", "cat": "Meow! I'm a cat! 🐱",
 	"toy": "I love my toys! 🧶🎾", "ball": "Ball! ⚽ Throw it!", "line": "Line up! 🐾🐾🐾",
@@ -81,13 +115,22 @@ const REPLIES := {
 	"grow": "I'm growing! 🌱📈", "plant": "A plant! 🪴 Grow, grow!", "ant": "An ant! 🐜 Tiny!", "bug": "A bug! 🐛 Ooh!",
 	"cool": "Cool! 😎", "can": "I can! 😸", "now": "Right now! ⏰", "tell": "Tell me! 👂", "answer": "The answer? 🤔",
 	"question": "A question? ❓ Ask me!", "riddle": "Ooh, a riddle! 🧩", "joke": "Ooh, a joke! 😹",
+	"boyfriend": "A boyfriend? 😳💕 Ooh, tell me about them!", "girlfriend": "A girlfriend? 😳💕 Ooh, tell me about them!",
+	"want": "Ooh, what do you want? 🥺 Tell me!", "store": "A store! 🏪 What are we buying?", "shop": "A shop! 🛍️ Ooh!", "corner": "A corner! 📐 I hide in corners! 😼",
+	"nail": "Nails! 💅 Mine are claws! 🐾", "chalk": "Chalk! 🖍️ It makes dusty paws!", "chalkboard": "A chalkboard! 🧑‍🏫 Don't scratch it!", "board": "A board! 📋",
+	"creek": "A creek! 🏞️💦 Splash splash!", "ocean": "The ocean! 🌊 So big and blue!", "river": "A river! 🏞️ Flow, flow, flow!",
+	"lake": "A lake! 🛶 Calm and shiny!", "pond": "A pond! 🐸 Ribbit!", "sea": "The sea! 🌊🐚",
+	"body": "A body of water? 🌊 Like a creek, river, lake or ocean! Or my fluffy body? 😸", "stop": "Stop! 🛑 Okay, I'm frozen! 😹",
+	"light": "Light! 💡✨", "dark": "Ooh, it's dark! 🌙 I can see in the dark, I'm a cat! 😼", "spot": "A spot! 🔵 Where?",
+	"stoplight": "A stop light! 🚦 Red means stop, yellow means slow, green means go!", "backpack": "A backpack! 🎒 What's inside?",
+	"pink": "Pink! 🩷 So pretty!", "purple": "Purple! 💜 So pretty!",
 }
 # Little words she knows but has nothing special to say about.
 const FILLER := ["a", "i", "but", "as", "it", "them", "she", "him", "all", "on", "to", "of", "is", "the", "and", "an", "my", "we", "do", "can", "so", "in", "its", "im"]
 
 # Tell her you like one of these and she gets excited about it.
 const LIKE_WORDS := ["like", "love", "luv", "heart", "enjoy", "favorite", "favourite"]
-const THINGS := ["book", "tv", "video", "toy", "ball", "gift", "present", "costume", "harry", "potter", "flower", "garden", "muffin", "food", "soup", "pumpkin", "christmas", "halloween", "valentines", "cat", "dog", "bird", "mouse", "lion", "kitten", "chicken", "tree", "pillow", "bed", "box", "rap", "dance", "sports", "school", "bath", "emojis", "animal", "learn", "travel", "cart", "car", "trip", "vacation", "richmond", "virginia", "wisconsin", "canada", "house"]
+const THINGS := ["book", "tv", "video", "toy", "ball", "gift", "present", "costume", "harry", "potter", "flower", "garden", "muffin", "food", "soup", "pumpkin", "christmas", "halloween", "valentines", "cat", "dog", "bird", "mouse", "lion", "kitten", "chicken", "tree", "pillow", "bed", "box", "rap", "dance", "sports", "school", "bath", "emojis", "animal", "learn", "travel", "cart", "car", "trip", "vacation", "richmond", "virginia", "wisconsin", "canada", "house", "pink", "purple", "ocean", "creek", "river", "lake", "backpack"]
 
 # Animal names she knows: name -> emoji.
 const ANIMALS := {
@@ -430,6 +473,46 @@ func _words(text: String) -> PackedStringArray:
 	for w in clean.split(" ", false):
 		out.append(_canon(w))
 	return out
+
+# Her answer to an LGBTQIA+ word, or "" if the words aren't about that.
+func _pride_reply(words: PackedStringArray) -> String:
+	var found := ""
+	var cued := false
+	for c in PRIDE_CUES:
+		if words.has(c):
+			cued = true
+	var me_cue := words.has("im") or words.has("m") or words.has("am")
+	var friend_cue := words.has("is") and (words.has("friend") or words.has("sister") or words.has("brother") or words.has("mom") or words.has("dad") or words.has("cousin") or words.has("teacher"))
+	for w in words:
+		if not PRIDE_WORDS.has(w):
+			continue
+		if PRIDE_AMBIGUOUS.has(w) and not (cued or me_cue or friend_cue or words.has("pride") or words.has("gender")):
+			continue
+		if PRIDE_AMBIGUOUS.has(w) and w != "gender" and w != "pride" and not cued and not me_cue and not friend_cue:
+			continue
+		found = w
+		break
+	if found == "":
+		return ""
+	var mean := false
+	for m in PRIDE_MEAN:
+		if words.has(m):
+			mean = true
+	if mean:
+		return "Hmm, I don't think so. 😿 Everyone deserves love and respect. Cats don't mind who you love! 🏳️‍🌈"
+	var about_me := (words.has("i") and (me_cue or words.has("feel") or words.has("think") or words.has("might"))) or words.has("im") or words.has("m")
+	var about_friend := words.has("friend") or words.has("sister") or words.has("brother") or words.has("mom") or words.has("dad") or words.has("cousin") or words.has("teacher")
+	if about_me and not words.has("what") and not words.has("means") and not words.has("mean"):
+		return "Thank you for telling me! 🏳️‍🌈💕 I love you exactly as you are. It stays between us. 🤫 Purr..."
+	var good := false
+	for g in PRIDE_GOOD:
+		if words.has(g):
+			good = true
+	if good and not words.has("what") and not about_friend:
+		return "Yes! 🏳️‍🌈💖 That's good! Everyone is welcome and loved here. Meow! 😻"
+	if about_friend and not words.has("what"):
+		return "Your friend is lucky to have you! 🏳️‍🌈 Friends who accept each other are the best. 💕"
+	return String(PRIDE_WORDS[found])
 
 # Fixes a misspelling she recognises: a known alias, or one letter off a word she knows.
 func _canon(w: String) -> String:
@@ -1266,6 +1349,18 @@ func _reply_to(text: String) -> String:
 		return "Your name is %s! 💖 I know you!" % PetalState.player_name
 	if mine != "" and words.has(mine):
 		return "%s! 💖 That's you! Hi %s! 🐾" % [PetalState.player_name, PetalState.player_name]
+	# LGBTQIA+ words: warm and simple, never mean, and what she hears stays between us.
+	var pride := _pride_reply(words)
+	if pride != "":
+		return pride
+	if has.call(["chalk", "chalkboard"]) or (has.call(["nail", "nails"]) and has.call(["board", "bored", "chalk"])):
+		return "EEEEK! 😖🙀 Nails on a chalkboard?! That sound makes my whiskers curl! Skreeeech! 😿"
+	if (has.call(["boy"]) and has.call(["friend"])) or has.call(["boyfriend"]):
+		return "A boyfriend? 😳💕 Ooh, tell me about them!"
+	if (has.call(["girl"]) and has.call(["friend"])) or has.call(["girlfriend"]):
+		return "A girlfriend? 😳💕 Ooh, tell me about them!"
+	if has.call(["corner"]) and has.call(["store", "shop"]):
+		return "The corner store! 🏪🍬 Can we get treats? Meow!"
 	if has.call(["bored", "boring", "joke", "jokes", "riddle", "riddles", "funny"]):
 		if has.call(["riddle", "riddles"]) or randi() % 2 == 0:
 			var riddle: Array = RIDDLES.pick_random()
@@ -1273,7 +1368,7 @@ func _reply_to(text: String) -> String:
 			riddle_reveal = riddle[2]
 			return "Riddle time! 🧩 %s" % riddle[0]
 		return "Let's cheer up! 😸 " + String(JOKES.pick_random())
-	if has.call(["want", "wants", "wish", "dream", "survey"]):
+	if has.call(["wish", "dream", "survey"]) or (has.call(["want", "wants"]) and has.call(["you", "your", "house", "home", "cat"])):
 		var found: Array[String] = []
 		var known := PetalState.house_known_for_pet()
 		var wants := PetalState.house_wants_for_pet()
@@ -1288,18 +1383,18 @@ func _reply_to(text: String) -> String:
 			if _is_thing(w):
 				return "Oh no! 😿 Why do you hate that %s?" % w
 	if has.call(LIKE_WORDS):
-		var liked := ""
+		var liked: Array[String] = []
 		for w in words:
 			if _is_thing(w):
-				liked = w
-		if liked != "":
-			if liked == "potter":
-				liked = "harry potter"
-			elif liked == "harry":
-				liked = "harry potter"
-			elif liked == "tv" or liked == "video":
-				liked = liked.to_upper() if liked == "tv" else liked
-			return "Ooohhhhh I 😻💖✨ %s!" % ("that " + liked if liked != "harry potter" else "Harry Potter")
+				var name_ := "harry potter" if (w == "potter" or w == "harry") else w
+				if name_ == "tv":
+					name_ = "TV"
+				if not liked.has(name_):
+					liked.append(name_)
+		if not liked.is_empty():
+			var text_ := liked[0] if liked.size() == 1 else ", ".join(liked.slice(0, liked.size() - 1)) + " and " + liked[liked.size() - 1]
+			var shown_ := "Harry Potter" if text_ == "harry potter" else ("that " + text_ if liked.size() == 1 else text_)
+			return "Ooohhhhh I 😻💖✨ %s!" % shown_
 	if has.call(["favorite", "favourite", "fav"]) and has.call(["treat", "treats", "snack"]):
 		if PetalState.treats_found.get(PetalState.active_pet, false):
 			return "My favourite is %s! 😻" % PetalState.favorite_treat()
@@ -1311,6 +1406,15 @@ func _reply_to(text: String) -> String:
 		if PetalState.treat_emojis().has(treat):
 			return "Yum! %s😋 Nice, but it's not my very favourite!" % treat
 		return "Hmm, %s isn't a treat for me 😹" % treat
+	if has.call(["stop"]) and has.call(["light", "lights"]):
+		return "A stop light! 🚦 Red means stop, yellow means slow, green means go!"
+	for w in words:
+		if w.length() > 0 and w.is_valid_int():
+			if w == "1234567890":
+				return "1, 2, 3, 4, 5, 6, 7, 8, 9, 10! 🔢😸 I can count!"
+			if w.length() == 1:
+				return "Number %s! 🔢 Let's count: %s 😸" % [w, " ".join(range(1, maxi(int(w), 1) + 1).map(func(n): return str(n)))]
+			return "%s! 🔢 That's a big number! 😸" % w
 	var id := _find_activity(text)
 	if id != "" and has.call(["when", "time", "what"]) and not has.call(["doing", "today"]):
 		var times: Array[String] = []
