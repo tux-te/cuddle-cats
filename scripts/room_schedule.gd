@@ -23,17 +23,29 @@ const PET_SIZE := Vector2(280, 260)
 # bg: [room id for PetalState.room_bg, default picture]; school draws its own.
 const ACTIVITIES := {
 	"school": {"emoji": "🏫", "label": "School", "text": "I'm at school! 📚 I'm wearing my glasses 👓"},
-	"sports": {"emoji": "⚽", "label": "Sports", "text": "Sports day! ⚽ I'm kicking the ball!", "bg": ["garden", "res://Sprites/backgrounds/garden_sunny.jpg"]},
+	"sports": {"emoji": "⚽", "label": "Sports", "text": "Sports day! ⚽ I'm kicking the ball!", "bg": ["sports_field", "res://Sprites/backgrounds/sports_field.jpg"]},
 	"home": {"emoji": "🏠", "label": "Home", "text": "Home time! 🍓 Snacks then a nap 😴", "bg": ["living", "res://Sprites/backgrounds/living_room.jpg"]},
 	"music": {"emoji": "🎵", "label": "Music", "text": "Music class! 🎵 La la la!", "bg": ["party", "res://Sprites/backgrounds/party_room.jpg"]},
-	"swim": {"emoji": "🏊", "label": "Swimming", "text": "Swimming! 💦 Splash splash!", "bg": ["swim", "res://Sprites/backgrounds/swim_pool.jpg"]},
+	"swim": {"emoji": "🏊", "label": "Swimming", "text": "Swimming! 💦 Splash splash!", "bg": ["pool_side", "res://Sprites/backgrounds/pool_side.jpg"]},
 	"playdate": {"emoji": "🧸", "label": "Playdate", "text": "Playdate with friends! 🎈", "bg": ["garden", "res://Sprites/backgrounds/garden_sunny.jpg"]},
+	"martial": {"emoji": "🥋", "label": "Martial Arts", "text": "Martial arts! 🥋 Hi-yah!", "bg": ["martial_arts", "res://Sprites/backgrounds/martial_arts.jpg"]},
+	"library": {"emoji": "📚", "label": "Library", "text": "At the library! 📚 Shhh, quiet reading 👓", "bg": ["library", "res://Sprites/backgrounds/library.jpg"]},
+	"car": {"emoji": "🚗", "label": "Car Trip", "text": "Car trip! 🚗 Are we there yet?", "bg": ["car_trip", "res://Sprites/backgrounds/car_trip.jpg"]},
+	"plane": {"emoji": "✈️", "label": "Airplane", "text": "Up in the airplane! ✈️ Look at the clouds ☁️", "bg": ["airplane", "res://Sprites/backgrounds/airplane.jpg"]},
+	"train": {"emoji": "🚂", "label": "Train", "text": "Choo choo! 🚂 All aboard!", "bg": ["train", "res://Sprites/backgrounds/train.jpg"]},
+	"beach": {"emoji": "🏖️", "label": "Beach House", "text": "Beach house! 🏖️ Sand and waves 🌊", "bg": ["beach_house", "res://Sprites/backgrounds/beach_house.jpg"]},
 	"other": {"emoji": "📌", "label": "Event", "text": "Look, an event! 🎀", "bg": ["living", "res://Sprites/backgrounds/living_room.jpg"]},
 }
 
 # Words that mean each activity, for typed plans and typed texts.
 const WORDS := {
-	"school": ["school", "class", "teacher", "lesson", "read", "book", "homework", "library"],
+	"school": ["school", "class", "teacher", "lesson", "read", "book", "homework"],
+	"martial": ["martial", "karate", "judo", "taekwondo", "dojo"],
+	"library": ["library"],
+	"beach": ["beach", "beachhouse", "seaside"],
+	"car": ["car", "drive", "road"],
+	"plane": ["plane", "airplane", "flight", "airport"],
+	"train": ["train", "railway"],
 	"sports": ["sport", "sports", "football", "soccer", "ball", "run", "gym", "game"],
 	"home": ["home", "house", "nap", "rest", "tea", "dinner", "lunch"],
 	"music": ["music", "sing", "song", "dance", "piano"],
@@ -990,7 +1002,7 @@ func _run_step(key: String, entry: Dictionary, mine: int) -> void:
 	_clear_layer(front_layer)
 	book = null
 	ball = null
-	glasses.visible = id == "school"
+	glasses.visible = id == "school" or id == "library"
 	if id == "school":
 		_build_classroom()
 		pet.position = Vector2(size.x / 2.0 - PET_SIZE.x / 2.0, size.y - 360.0)
@@ -1060,6 +1072,22 @@ func _act(id: String, t: int) -> void:
 			if t % 2 == 0:
 				PetCameo.jump_for_joy(pet)
 			_drift("💦", 140.0)
+		"martial":
+			if t % 2 == 0:
+				PetCameo.jump_for_joy(pet)
+			_drift(["🥋", "💪", "⭐"][t % 3], 140.0)
+		"library":
+			_drift(["📚", "📖", "🤫"][t % 3], 120.0)
+		"car":
+			_drift(["🚗", "💨", "🛣️"][t % 3], 160.0)
+		"plane":
+			_drift(["✈️", "☁️", "🌤️"][t % 3], 160.0)
+		"train":
+			_drift(["🚂", "💨", "🎫"][t % 3], 160.0)
+		"beach":
+			if t % 3 == 0:
+				PetCameo.jump_for_joy(pet)
+			_drift(["🌊", "🐚", "☀️"][t % 3], 150.0)
 		"playdate":
 			if t % 2 == 1:
 				PetCameo.jump_for_joy(pet)
@@ -1251,6 +1279,8 @@ func _you() -> String:
 	return PetalState.player_name if PetalState.player_name != "" else "friend"
 
 func _bubble(from_pet: bool, text: String) -> void:
+	if from_pet:
+		text = _in_pet_voice(text)
 	PetalState.chat_log.append({"from": "pet" if from_pet else "you", "text": text})
 	if PetalState.chat_log.size() > 200:
 		PetalState.chat_log.pop_front()
@@ -1370,10 +1400,45 @@ func _pet_species() -> String:
 	return String(PetalState.PETS.get(PetalState.active_pet, {}).get("species", "cat"))
 
 func _pet_sound() -> String:
-	return String({"cat": "meow", "dog": "woof", "bird": "tweet", "gerbil": "squeak"}.get(_pet_species(), "meow"))
+	return String({"cat": "meow", "dog": "woof", "bird": "tweet", "gerbil": "squeak", "bunny": "nibble"}.get(_pet_species(), "meow"))
 
 func _pet_face() -> String:
-	return String({"cat": "🐱", "dog": "🐶", "bird": "🐦", "gerbil": "🐹"}.get(_pet_species(), "🐾"))
+	return String({"cat": "🐱", "dog": "🐶", "bird": "🐦", "gerbil": "🐹", "bunny": "🐰"}.get(_pet_species(), "🐾"))
+
+# Her replies are written in cat. This turns the noises into the active pet's own:
+# a dog woofs and growls, a bird tweets, a gerbil squeaks, a bunny nibbles.
+const VOICES := {
+	"dog": {"purr": "*tail wag*", "hiss": "Grrrr", "kitty": "puppy", "noun": "dog"},
+	"bird": {"purr": "*chirp chirp*", "hiss": "Squawk", "kitty": "birdie", "noun": "bird"},
+	"gerbil": {"purr": "*squeak*", "hiss": "Squeak", "kitty": "gerbil", "noun": "gerbil"},
+	"bunny": {"purr": "*nuzzle*", "hiss": "*thump*", "kitty": "bunny", "noun": "bunny"},
+}
+
+func _in_pet_voice(text: String) -> String:
+	var species := _pet_species()
+	if species == "cat" or not VOICES.has(species):
+		return text
+	var v: Dictionary = VOICES[species]
+	var out := text
+	for rule in [
+		["(?i)\\bmeow+\\b", _pet_sound()],
+		["(?i)\\bpurr+\\b", v["purr"]],
+		["(?i)\\bhi+s{2,}\\b", v["hiss"]],
+		["(?i)\\bkitty\\b", v["kitty"]],
+	]:
+		var rx := RegEx.new()
+		rx.compile(rule[0])
+		var pieces := ""
+		var last := 0
+		for m in rx.search_all(out):
+			pieces += out.substr(last, m.get_start() - last)
+			var word := String(rule[1])
+			var first := m.get_string()[0]
+			pieces += word.capitalize() if first == first.to_upper() and not word.begins_with("*") else word
+			last = m.get_end()
+		out = pieces + out.substr(last)
+	out = out.replace("I'm a cat", "I'm a " + String(v["noun"])).replace("🐱", _pet_face())
+	return out
 
 # A sum like "56x189", "7 + 8", "9 times 6", or asking for homework help.
 func _is_math(text: String) -> bool:
