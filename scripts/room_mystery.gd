@@ -304,7 +304,7 @@ func _build() -> void:
 	who_label = _label(16, Color(0.4, 0.4, 0.6))
 	box.add_child(who_label)
 	suspect_row = HFlowContainer.new()
-	suspect_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	suspect_row.alignment = FlowContainer.ALIGNMENT_CENTER
 	suspect_row.add_theme_constant_override("separation", 10)
 	box.add_child(suspect_row)
 
