@@ -517,8 +517,7 @@ func _pick_emoji(on: bool, face: String, button: Button) -> void:
 func _cats_mad(message: String) -> void:
 	Feedback.pop(self, message, what_input.global_position + Vector2(0, -50))
 	for cat in side_cats:
-		var face := cat.text
-		cat.text = "😾"
+		_set_mood(cat, "angry")
 		cat.pivot_offset = cat.size / 2.0
 		var tween := create_tween()
 		for i in range(3):
@@ -526,20 +525,25 @@ func _cats_mad(message: String) -> void:
 			tween.tween_property(cat, "rotation", -0.25, 0.05)
 		tween.tween_property(cat, "rotation", 0.0, 0.05)
 		tween.tween_interval(1.2)
-		tween.tween_callback(func() -> void: cat.text = face)
+		tween.tween_callback(_update_cat_moods)
 
 # A little cat that says meow or purr when clicked.
 func _cat_button(face: String) -> Button:
 	var cat := Button.new()
-	cat.text = face
 	cat.flat = true
 	cat.focus_mode = Control.FOCUS_NONE
-	cat.custom_minimum_size = Vector2(48, 44)
-	cat.add_theme_font_size_override("font_size", 30)
-	cat.set_meta("face", face)
+	cat.custom_minimum_size = Vector2(80, 44)
+	cat.expand_icon = true
+	cat.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cat.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+	_set_mood(cat, "cat")
 	cat.pressed.connect(_cat_says.bind(cat))
 	side_cats.append(cat)
 	return cat
+
+# The real cat photos: "cat", "angry" or "purring".
+func _set_mood(cat: Button, mood: String) -> void:
+	cat.icon = load("res://Sprites/calendar_cats/%s.jpeg" % mood)
 
 func _cat_says(cat: Button) -> void:
 	var empties := _empty_days()
@@ -547,10 +551,11 @@ func _cat_says(cat: Button) -> void:
 	var sound: String = ["Meow! 😺", "Purrrr... 😻", "Meow meow! 😸", "Purr purr 💖", "Mew! 🎀"].pick_random()
 	if no_place > 0:
 		sound = ["HISSSS! 😾 Where are you going?!", "Hssss! 😾 %d plans have no place!" % no_place, "MROWW! 😾 Add where you're going! 📍"].pick_random()
-		cat.text = "😾"
 	elif empties > 0:
 		sound = ["HISSS! 😾 Fill in your calendar!", "Grrr! 😾 %d days are empty!" % empties, "MROWW! 😾 Plan your week!", "Hmph! 😾 So many empty days!"].pick_random()
-		cat.text = "😾"
+	else:
+		_set_mood(cat, "purring")
+		get_tree().create_timer(1.2).timeout.connect(_update_cat_moods)
 	Feedback.pop(self, sound, cat.global_position + Vector2(0, -40))
 	cat.pivot_offset = cat.size / 2.0
 	var tween := create_tween()
@@ -558,10 +563,10 @@ func _cat_says(cat: Button) -> void:
 	tween.tween_property(cat, "rotation", -0.3, 0.1)
 	tween.tween_property(cat, "rotation", 0.0, 0.07)
 
-# How many days of the shown week have nothing planned.
+# How many school days (Mon-Fri) of the shown week have nothing planned. The weekend may stay free.
 func _empty_days() -> int:
 	var count := 0
-	for key in _week_of(selected):
+	for key in _week_of(selected).slice(1, 6):
 		if _events_on(key).is_empty():
 			count += 1
 	return count
@@ -579,7 +584,7 @@ func _no_place_events() -> int:
 func _update_cat_moods() -> void:
 	var mad := _empty_days() > 0 or _no_place_events() > 0
 	for cat in side_cats:
-		cat.text = "😾" if mad else String(cat.get_meta("face"))
+		_set_mood(cat, "angry" if mad else "cat")
 
 # One time like "8", "8:30", "800" or "1030" with an optional am/pm -> minutes
 # since midnight, or -1 if it is not a time.
@@ -1773,7 +1778,7 @@ func _math_reply(text: String) -> String:
 	var cheating := t.contains("homework") or t.contains("do my")
 	if m == null:
 		if cheating:
-			return "%d! 😸%s" % [randi_range(2, 99), _pet_face()]
+			return _cheat_grumble(randi_range(2, 99))
 		return "%s! 😸%s" % [_pet_sound().capitalize(), _pet_face()]
 	var a := m.get_string(1).to_int()
 	var b := m.get_string(3).to_int()
@@ -1799,7 +1804,13 @@ func _math_reply(text: String) -> String:
 	var wrong := answer
 	while wrong == answer:
 		wrong = answer + (randi_range(1, 9) * (1 if randf() < 0.5 else -1)) * maxi(1, str(absi(answer)).length() - 1)
+	if cheating:
+		return _cheat_grumble(wrong)
 	return "%d! 😸%s" % [wrong, _pet_face()]
+
+# She's a little mad you're trying to cheat, so she gives a wrong answer on purpose.
+func _cheat_grumble(wrong: int) -> String:
+	return String(["Hmph! 😾 You should do your own homework! ...fine, it's %d.", "Hey! 😠 That's cheating! Is it %d? Who knows! 😼", "Hiss! 😾 No cheating! Maybe %d? Try it yourself!", "Hmph! 🙄 I'm not doing your homework! %d. Probably."].pick_random()) % wrong
 
 # A sum like "56x189", "7 + 8", "9 times 6", or asking for homework help.
 func _is_math(text: String) -> bool:
