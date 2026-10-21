@@ -1270,7 +1270,10 @@ func _open_phone() -> void:
 	if not PetalState.safety_alerts.is_empty():
 		PetSafety.grownup_overlay(self, false)
 	if chat_box.get_child_count() == 0:
-		_text_from_pet("Hi %s! 🐾 Today: %s" % [_you(), _summary_for(_today_key())])
+		var memory := ""
+		if not PetalState.remembered_likes.is_empty() and randf() < 0.5:
+			memory = " I remember you like %s! 💕" % String(PetalState.remembered_likes.pick_random())
+		_text_from_pet("Hi %s! 🐾%s Today: %s" % [_you(), memory, _summary_for(_today_key())])
 
 func _close_phone() -> void:
 	phone.visible = false
@@ -1395,6 +1398,12 @@ func _treat_shown(text: String, words: PackedStringArray) -> String:
 func _is_thing(w: String) -> bool:
 	return THINGS.has(w) or ANIMALS.has(w)
 
+# "kitten, pink and purple"
+func _list_words(items: Array) -> String:
+	if items.size() == 1:
+		return String(items[0])
+	return ", ".join(items.slice(0, items.size() - 1)) + " and " + String(items[items.size() - 1])
+
 # The active pet's noise and face: cat meow, dog woof, bird tweet, gerbil squeak.
 func _pet_species() -> String:
 	return String(PetalState.PETS.get(PetalState.active_pet, {}).get("species", "cat"))
@@ -1460,7 +1469,7 @@ func _reply_to(text: String) -> String:
 		return false
 	# Sums ("56x189", "7 plus 8") and homework help: she can't do your homework.
 	if _is_math(text):
-		return "Ummmmm... %s? 🤔%s I can't do your homework! 📚 Try it on paper, or ask a grown-up! ✏️" % [_pet_sound(), _pet_face()]
+		return "Ummmmm... %s? 🤔%s" % [_pet_sound(), _pet_face()]
 	# Said they like trump: she stops talking for the rest of this session.
 	if PetalState.snubbing_player:
 		return String(["Booooo! 👎", "Hisssssss! 😾", "Booooo! Hiiisssss! 😾👎", "😾😾😾 Hissssss!", "Boooooo! 😡"].pick_random())
@@ -1520,6 +1529,11 @@ func _reply_to(text: String) -> String:
 		return String(["Hehe! 💨😹 Stinky!", "Pffft! 😹💨 *runs away*"].pick_random())
 	if has.call(["sing", "song"]) and not has.call(["dance"]):
 		return "Meow meow meow~ 🎤😹 La la la!"
+	if has.call(["remember", "remembers", "remembered", "forget", "forgot"]) or (has.call(["what"]) and has.call(["i"]) and has.call(["like", "love"])):
+		var likes := PetalState.remembered_likes
+		if likes.is_empty():
+			return "Of course I remember you, %s! 💕 Tell me what you like and I'll never forget!" % _you()
+		return "Of course I remember you, %s! 💕 You like %s!" % [_you(), _list_words(likes)]
 	if has.call(["chalk", "chalkboard"]) or (has.call(["nail", "nails"]) and has.call(["board", "bored", "chalk"])):
 		return "EEEEK! 😖🙀 Nails on a chalkboard?! That sound makes my whiskers curl! Skreeeech! 😿"
 	if (has.call(["boy"]) and has.call(["friend"])) or has.call(["boyfriend"]):
@@ -1559,6 +1573,9 @@ func _reply_to(text: String) -> String:
 				if not liked.has(name_):
 					liked.append(name_)
 		if not liked.is_empty():
+			for l in liked:
+				if l != "TV":
+					PetalState.remember_like(l)
 			var text_ := liked[0] if liked.size() == 1 else ", ".join(liked.slice(0, liked.size() - 1)) + " and " + liked[liked.size() - 1]
 			var shown_ := "Harry Potter" if text_ == "harry potter" else ("that " + text_ if liked.size() == 1 else text_)
 			return "Ooohhhhh I 😻💖✨ %s!" % shown_
@@ -1597,6 +1614,8 @@ func _reply_to(text: String) -> String:
 	if has.call(["doing", "today", "plan", "plans", "schedule", "week"]):
 		return "Today: %s" % _summary_for(_today_key())
 	if has.call(["hi", "hello", "hey", "hiya", "yo"]):
+		if not PetalState.remembered_likes.is_empty() and randf() < 0.4:
+			return "Meow! 🐾 Hi %s! I remember you like %s! 💕" % [_you(), String(PetalState.remembered_likes.pick_random())]
 		return "Meow! 🐾 Hi %s!" % _you()
 	if has.call(["love", "luv", "like", "heart", "cute"]) or text.contains("❤") or text.contains("💕"):
 		return "Love you more! 💕💕"

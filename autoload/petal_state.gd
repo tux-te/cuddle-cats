@@ -492,6 +492,7 @@ func _reset_progress() -> void:
 	schedule = {}
 	chat_log = []
 	safety_alerts = []
+	remembered_likes = []
 	treats_found = {}
 	house_wants = {}
 	house_design = {}
@@ -501,6 +502,14 @@ func _reset_progress() -> void:
 	_init_pet_records()
 
 # A worrying message was typed in the pet chat. Only the time is kept.
+func remember_like(word: String) -> void:
+	if word == "" or remembered_likes.has(word):
+		return
+	remembered_likes.append(word)
+	if remembered_likes.size() > 12:
+		remembered_likes.pop_front()
+	save_game()
+
 func add_safety_alert() -> void:
 	safety_alerts.append(Time.get_unix_time_from_system())
 	if safety_alerts.size() > 20:
@@ -525,6 +534,7 @@ func save_game() -> void:
 	cfg.set_value("game", "treats_found", treats_found)
 	cfg.set_value("game", "pet_records", pet_records)
 	cfg.set_value("safety", "alerts", safety_alerts)
+	cfg.set_value("memory", "likes", remembered_likes)
 	cfg.save(slot_path(current_slot))
 	VisitorExport.export_if_allowed(current_slot, chat_log, schedule)
 
@@ -533,6 +543,8 @@ func _load_slot(slot: int) -> void:
 	if cfg.load(slot_path(slot)) != OK:
 		return
 	player_name = String(cfg.get_value("names", "player", ""))
+	var saved_likes = cfg.get_value("memory", "likes", [])
+	remembered_likes = (saved_likes as Array).duplicate() if saved_likes is Array else []
 	var saved_alerts = cfg.get_value("safety", "alerts", [])
 	safety_alerts = (saved_alerts as Array).duplicate() if saved_alerts is Array else []
 	var saved_nicks = cfg.get_value("names", "pets", {})
@@ -855,6 +867,7 @@ var earned_stickers := {}
 var schedule := {}
 # Texts with the pet, newest last: {"from": "pet" or "you", "text": String}.
 var chat_log: Array = []
+var remembered_likes: Array = []   # harmless things she was told you like (kittens, pink...); saved per slot
 var safety_alerts: Array = []   # unix times of worrying messages (never the words); saved per slot
 
 # Photo Book: snapshots taken in the Photo Booth, newest last. Capped so
