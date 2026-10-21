@@ -4,7 +4,7 @@ const Feedback = preload("res://scripts/room_feedback.gd")
 const PetCameo = preload("res://scripts/pet_cameo.gd")
 const Confetti = preload("res://scripts/confetti.gd")
 
-const PET_SIZE := Vector2(220, 200)
+const PET_SIZE := Vector2(130, 120)
 
 # Each case: something goes missing, 4 suspects, and clues that rule suspects
 # out one by one. Nobody can win by tapping at random - the accuse button only
@@ -146,46 +146,62 @@ func _ready() -> void:
 	paper.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(paper)
 	_build()
+	PetCameo.spawn(petal)
+	_start_case(_first_unsolved())
+
+# Everything sits in a scroll box (so nothing can end up hidden behind the
+# bottom bar), with the pet and her speech bubble at the top.
+func _build() -> void:
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
+	var margin := MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 12)
+	scroll.add_child(margin)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	margin.add_child(box)
+
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 12)
+	box.add_child(top)
+	var pet_slot := Control.new()
+	pet_slot.custom_minimum_size = PET_SIZE
+	top.add_child(pet_slot)
 	petal = TextureRect.new()
 	petal.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	petal.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	petal.size = PET_SIZE
-	petal.position = Vector2(24, 560)
 	petal.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(petal)
-	PetCameo.spawn(petal)
-	_start_case(_first_unsolved())
+	pet_slot.add_child(petal)
+	var talk := VBoxContainer.new()
+	talk.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	talk.alignment = BoxContainer.ALIGNMENT_CENTER
+	top.add_child(talk)
+	title_label = _label(30, Color(0.25, 0.2, 0.55))
+	talk.add_child(title_label)
+	story_label = _label(20, Color(0.2, 0.2, 0.3))
+	talk.add_child(story_label)
+	bubble = _label(20, Color(0.25, 0.2, 0.55))
+	talk.add_child(bubble)
 
-func _build() -> void:
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 16)
-	add_child(margin)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
-	margin.add_child(box)
-
-	title_label = _label(34, Color(0.25, 0.2, 0.55))
-	box.add_child(title_label)
-	story_label = _label(26, Color(0.2, 0.2, 0.3))
-	box.add_child(story_label)
-
-	box.add_child(_label(20, Color(0.4, 0.4, 0.6), "🔍 Tap the pictures to look for clues"))
+	box.add_child(_label(16, Color(0.4, 0.4, 0.6), "🔍 Tap the pictures to look for clues"))
 	clue_row = HBoxContainer.new()
 	clue_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	clue_row.add_theme_constant_override("separation", 14)
 	box.add_child(clue_row)
 
-	notebook_label = _label(22, Color(0.2, 0.2, 0.3))
+	notebook_label = _label(18, Color(0.2, 0.2, 0.3))
 	notebook_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	notebook_label.custom_minimum_size = Vector2(0, 100)
 	box.add_child(notebook_label)
 
-	box.add_child(_label(20, Color(0.4, 0.4, 0.6), "🕵️ Who did it? Think about the clues, then tap a suspect"))
+	box.add_child(_label(16, Color(0.4, 0.4, 0.6), "🕵️ Who did it? Think about the clues, then tap a suspect"))
 	suspect_row = HBoxContainer.new()
 	suspect_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	suspect_row.add_theme_constant_override("separation", 14)
+	suspect_row.add_theme_constant_override("separation", 10)
 	box.add_child(suspect_row)
 
 	var buttons := HBoxContainer.new()
@@ -193,25 +209,16 @@ func _build() -> void:
 	buttons.add_theme_constant_override("separation", 14)
 	box.add_child(buttons)
 	accuse_button = Button.new()
-	accuse_button.custom_minimum_size = Vector2(360, 56)
-	accuse_button.add_theme_font_size_override("font_size", 22)
+	accuse_button.custom_minimum_size = Vector2(340, 48)
+	accuse_button.add_theme_font_size_override("font_size", 20)
 	accuse_button.pressed.connect(_on_accuse)
 	buttons.add_child(accuse_button)
 	next_button = Button.new()
 	next_button.text = "➡️ Next mystery"
-	next_button.custom_minimum_size = Vector2(240, 56)
-	next_button.add_theme_font_size_override("font_size", 22)
+	next_button.custom_minimum_size = Vector2(220, 48)
+	next_button.add_theme_font_size_override("font_size", 20)
 	next_button.pressed.connect(_on_next)
 	buttons.add_child(next_button)
-
-	# The pet's speech bubble sits to the right of her corner.
-	bubble = Label.new()
-	bubble.position = Vector2(260, 590)
-	bubble.custom_minimum_size = Vector2(760, 0)
-	bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	bubble.add_theme_font_size_override("font_size", 24)
-	bubble.add_theme_color_override("font_color", Color(0.25, 0.2, 0.55))
-	add_child(bubble)
 
 func _label(size: int, color: Color, text := "") -> Label:
 	var label := Label.new()
@@ -242,8 +249,8 @@ func _start_case(index: int) -> void:
 	var clues: Array = case_data["clues"]
 	for i in range(clues.size()):
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(190, 84)
-		button.add_theme_font_size_override("font_size", 44)
+		button.custom_minimum_size = Vector2(150, 56)
+		button.add_theme_font_size_override("font_size", 32)
 		button.pressed.connect(_on_clue.bind(i))
 		clue_row.add_child(button)
 		clue_buttons.append(button)
@@ -254,16 +261,16 @@ func _start_case(index: int) -> void:
 	for suspect in case_data["suspects"]:
 		var button := Button.new()
 		button.toggle_mode = true
-		button.custom_minimum_size = Vector2(250, 200)
+		button.custom_minimum_size = Vector2(230, 150)
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.add_theme_font_size_override("font_size", 30)
+		button.add_theme_font_size_override("font_size", 18)
 		button.text = "%s\n%s\n%s" % [suspect["emoji"], suspect["name"], suspect["icons"]]
 		if suspect.has("art"):
 			button.icon = load(String(suspect["art"]))
 			button.expand_icon = true
 			button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
-			button.add_theme_constant_override("icon_max_width", 90)
+			button.add_theme_constant_override("icon_max_width", 56)
 		button.pressed.connect(_on_suspect.bind(String(suspect["id"])))
 		suspect_row.add_child(button)
 		suspect_buttons[suspect["id"]] = button
