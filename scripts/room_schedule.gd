@@ -229,6 +229,26 @@ const ANIMALS := {
 	"parrot": "🦜", "kiwi": "🥝", "unicorn": "🦄", "dinosaur": "🦖", "dragon": "🐉", "puppy": "🐶", "goat": "🐐",
 	"llama": "🦙", "hedgehog": "🦔", "bat": "🦇", "ant": "🐜", "ladybug": "🐞", "swan": "🦢", "flamingo": "🦩",
 	"peacock": "🦚", "seal": "🦭", "otter": "🦦", "camel": "🐫", "gorilla": "🦍", "raccoon": "🦝", "skunk": "🦨",
+	"cheetah": "🐆", "leopard": "🐆", "rhino": "🦏", "hippo": "🦛", "eagle": "🦅", "lizard": "🦎", "snail": "🐌", "worm": "🪱",
+	"jellyfish": "🪼", "lobster": "🦞", "shrimp": "🦐", "rooster": "🐓", "chick": "🐥", "lamb": "🐑", "donkey": "🫏",
+	"moose": "🫎", "beaver": "🦫", "sloth": "🦥", "mammoth": "🦣", "bison": "🦬", "buffalo": "🐃", "dodo": "🦤", "crocodile": "🐊", "alligator": "🐊",
+	"goldfish": "🐠", "pony": "🐴", "kitten": "🐱", "mosquito": "🦟", "scorpion": "🦂",
+}
+
+# Something true and fun about animals she knows.
+const ANIMAL_FACTS := {
+	"horse": "Horses can sleep standing up!", "cow": "Cows have best friends!", "pig": "Pigs are super smart!", "sheep": "Sheep never forget a friendly face!",
+	"duck": "Ducks have waterproof feathers!", "fish": "Fish never close their eyes!", "frog": "Frogs drink water through their skin!", "bear": "Bears have an amazing sense of smell!",
+	"fox": "Foxes pounce on mice like cats!", "wolf": "Wolves howl to talk to each other!", "rabbit": "Rabbits jump for joy, it's called a binky!", "bunny": "Bunnies jump for joy, it's called a binky!",
+	"hamster": "Hamsters keep snacks in their cheeks!", "gerbil": "Gerbils love to dig tunnels!", "turtle": "Turtles carry their house on their back!", "snake": "Snakes smell with their tongues!",
+	"monkey": "Monkeys love bananas and swinging!", "elephant": "Elephants never forget!", "giraffe": "Giraffes have super long tongues!", "zebra": "Every zebra has different stripes!",
+	"tiger": "Tigers are the biggest cats!", "panda": "Pandas munch bamboo all day!", "penguin": "Penguins slide on their tummies!", "owl": "Owls can turn their heads almost all the way round!",
+	"bee": "Bees dance to show where the flowers are!", "butterfly": "Butterflies taste with their feet!", "dolphin": "Dolphins have names for each other!", "whale": "Whales sing songs!",
+	"shark": "Sharks have been around longer than dinosaurs!", "octopus": "Octopuses have three hearts!", "crab": "Crabs walk sideways!", "squirrel": "Squirrels plant trees by forgetting their nuts!",
+	"koala": "Koalas sleep almost all day!", "kangaroo": "Kangaroos hop with their babies in a pouch!", "parrot": "Parrots can learn to talk!", "unicorn": "Unicorns are magical and shiny!",
+	"dinosaur": "Dinosaurs were super duper big!", "goat": "Goats love climbing high!", "llama": "Llamas hum to their babies!", "hedgehog": "Hedgehogs curl into a prickly ball!",
+	"bat": "Bats hang upside down to sleep!", "flamingo": "Flamingos are pink from the food they eat!", "otter": "Otters hold hands when they sleep!", "sloth": "Sloths are very, very slow!",
+	"cheetah": "Cheetahs are the fastest runners!", "eagle": "Eagles can see super far!", "hippo": "Hippos make pink sweat!", "snail": "Snails carry their shell everywhere!",
 }
 
 const JOKES := [
@@ -1882,7 +1902,8 @@ func _reply_to(text: String) -> String:
 			return String(REPLIES[w]).replace("%NAME%", PetalState.pet_name).replace("%YOU%", _you()).replace("%TODAY%", _summary_for(_today_key()))
 	for w in words:
 		if ANIMALS.has(w):
-			return "%s%s! I love %ss!" % [w.capitalize(), ANIMALS[w], w]
+			var fact: String = ANIMAL_FACTS.get(w, "")
+			return "%s%s! I love %ss! %s" % [w.capitalize(), ANIMALS[w], w, fact]
 	for w in words:
 		if FILLER.has(w):
 			return "Mm-hm! 😸 Tell me more!"
