@@ -491,6 +491,8 @@ func _reset_progress() -> void:
 	earned_stickers = {}
 	solved_cases = []
 	pet_sets = {}
+	play_owned = []
+	play_spaces = {}
 	schedule = {}
 	chat_log = []
 	safety_alerts = []
@@ -577,6 +579,8 @@ func save_game() -> void:
 	cfg.set_value("game", "schedule", schedule)
 	cfg.set_value("game", "solved_cases", solved_cases)
 	cfg.set_value("game", "pet_sets", pet_sets)
+	cfg.set_value("game", "play_owned", play_owned)
+	cfg.set_value("game", "play_spaces", play_spaces)
 	cfg.set_value("game", "house", _save_house())
 	cfg.set_value("game", "treats_found", treats_found)
 	cfg.set_value("game", "pet_records", pet_records)
@@ -615,6 +619,16 @@ func _load_slot(slot: int) -> void:
 		for id in saved_sets:
 			if PETS.has(id) and saved_sets[id] is Dictionary:
 				pet_sets[id] = pet_set_from_save(String(id), saved_sets[id])
+	var saved_owned = cfg.get_value("game", "play_owned", [])
+	if saved_owned is Array:
+		for id in saved_owned:
+			if (PLAY_ITEMS.has(id) or PLAY_THEMES.has(id)) and not play_owned.has(String(id)):
+				play_owned.append(String(id))
+	var saved_spaces = cfg.get_value("game", "play_spaces", {})
+	if saved_spaces is Dictionary:
+		for id in saved_spaces:
+			if PETS.has(id) and saved_spaces[id] is Dictionary:
+				play_spaces[id] = play_space_from_save(saved_spaces[id])
 	_load_house(cfg.get_value("game", "house", {}))
 	var saved_treats = cfg.get_value("game", "treats_found", {})
 	if saved_treats is Dictionary:
@@ -915,6 +929,7 @@ const STICKERS := {
 	"treat": {"emoji": "💝", "label": "Favourite Treat"},
 	"detective": {"emoji": "🕵️", "label": "Super Detective"},
 	"designer": {"emoji": "🛏️", "label": "Pet Designer"},
+	"playspace": {"emoji": "🎪", "label": "Play Space Pro"},
 }
 var earned_stickers := {}
 
@@ -981,6 +996,87 @@ func save_pet_set(id: String, design: Dictionary) -> void:
 func finish_pet_set(id: String, design: Dictionary) -> void:
 	save_pet_set(id, design)
 	award_sticker("designer")
+
+
+# Play Space (room_petset.gd): toys and scenery bought with Treat Coins, then
+# dragged around a stage. What you've bought is kept for the whole save slot
+# (use it for any pet); each pet has its own layout. A cost of 0 is free.
+const PLAY_ITEMS := {
+	"yarn": {"emoji": "🧶", "label": "Yarn Ball", "cost": 0},
+	"ball": {"emoji": "🎾", "label": "Ball", "cost": 0},
+	"flower": {"emoji": "🌷", "label": "Flower", "cost": 3},
+	"teddy": {"emoji": "🧸", "label": "Teddy", "cost": 5},
+	"balloon": {"emoji": "🎈", "label": "Balloon", "cost": 5},
+	"tree": {"emoji": "🌳", "label": "Tree", "cost": 8},
+	"tent": {"emoji": "⛺", "label": "Tent", "cost": 10},
+	"easel": {"emoji": "🎨", "label": "Painting", "cost": 10},
+	"drum": {"emoji": "🥁", "label": "Drum", "cost": 12},
+	"piano": {"emoji": "🎹", "label": "Piano", "cost": 15},
+	"car": {"emoji": "🚗", "label": "Toy Car", "cost": 15},
+	"fountain": {"emoji": "⛲", "label": "Fountain", "cost": 20},
+	"rainbow": {"emoji": "🌈", "label": "Rainbow", "cost": 25},
+	"horse": {"emoji": "🎠", "label": "Merry-go-round", "cost": 30},
+	"circus": {"emoji": "🎪", "label": "Circus Tent", "cost": 40},
+	"castle": {"emoji": "🏰", "label": "Castle", "cost": 60},
+	"wheel": {"emoji": "🎡", "label": "Big Wheel", "cost": 80},
+	"coaster": {"emoji": "🎢", "label": "Roller Coaster", "cost": 100},
+}
+const PLAY_THEMES := {
+	"cosy": {"emoji": "🏠", "label": "Cosy Room", "cost": 0},
+	"meadow": {"emoji": "🌼", "label": "Meadow", "cost": 10},
+	"beach": {"emoji": "🏖️", "label": "Beach", "cost": 20},
+	"night": {"emoji": "🌙", "label": "Starry Night", "cost": 25},
+	"candy": {"emoji": "🍭", "label": "Candy Land", "cost": 35},
+}
+const PLAY_MAX_ITEMS := 14
+var play_owned: Array = []        # ids of bought items and themes
+var play_spaces := {}             # pet id -> {"theme": id, "items": [{"id", "x", "y"}]}
+
+func play_cost(id: String) -> int:
+	return int(PLAY_ITEMS.get(id, PLAY_THEMES.get(id, {})).get("cost", 0))
+
+func play_unlocked(id: String) -> bool:
+	return play_cost(id) == 0 or play_owned.has(id)
+
+# Spends Treat Coins the first time; false if you can't afford it yet.
+func try_buy_play(id: String) -> bool:
+	if play_unlocked(id):
+		return true
+	var cost := play_cost(id)
+	if coins < cost:
+		return false
+	coins -= cost
+	play_owned.append(id)
+	coins_changed.emit()
+	save_game()
+	return true
+
+func play_space(id: String) -> Dictionary:
+	var saved = play_spaces.get(id, {})
+	return play_space_from_save(saved if saved is Dictionary else {})
+
+func play_space_from_save(saved: Dictionary) -> Dictionary:
+	var theme := String(saved.get("theme", "cosy"))
+	if not PLAY_THEMES.has(theme):
+		theme = "cosy"
+	var items: Array = []
+	var raw = saved.get("items", [])
+	if raw is Array:
+		for entry in raw:
+			if items.size() >= PLAY_MAX_ITEMS:
+				break
+			if entry is Dictionary and PLAY_ITEMS.has(entry.get("id")) and (entry.get("x") is float or entry.get("x") is int) and (entry.get("y") is float or entry.get("y") is int):
+				items.append({"id": String(entry["id"]), "x": float(entry["x"]), "y": float(entry["y"])})
+	return {"theme": theme, "items": items}
+
+func save_play_space(id: String, space: Dictionary) -> void:
+	play_spaces[id] = space.duplicate(true)
+	save_game()
+
+func finish_play_space(id: String, space: Dictionary) -> void:
+	save_play_space(id, space)
+	if space["items"].size() >= 3:
+		award_sticker("playspace")
 
 # Mystery room (room_mystery.gd): ids of the cases solved so far.
 var solved_cases: Array = []

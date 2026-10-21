@@ -31,7 +31,8 @@ const CASES := [
 		],
 		"clues": [
 			{"emoji": "🪜", "at": Vector2(0.12, 0.4), "text": "A rumbling snore echoes down from the loft, and wool is caught on the ladder."},
-			{"emoji": "🐾", "at": Vector2(0.32, 0.78), "text": "Fox prints cross the stepping stones, and the far bank is full of worm holes."},
+			{"emoji": "🐾", "at": Vector2(0.32, 0.78), "text": "A fallen log makes a bridge over the river. It is covered in fox prints, and the far bank is full of worm holes."},
+			{"emoji": "🌊", "at": Vector2(0.22, 0.6), "text": "The river is deep and wide tonight. Nobody could wade across it."},
 			{"emoji": "🌾", "at": Vector2(0.52, 0.42), "text": "There is a tiny nest in the hay, made with a cosy blanket."},
 			{"emoji": "🌳", "at": Vector2(0.72, 0.3), "text": "Deep hoof prints dot the far field, all the way to the fence."},
 			{"emoji": "💧", "at": Vector2(0.88, 0.78), "text": "The puddle by the pond has a crust of cracked, dry earth."},
@@ -57,7 +58,8 @@ const CASES := [
 			{"id": "fossy", "emoji": "🐆", "name": "Fossy", "says": "I was having a nap up in the attic."},
 		],
 		"clues": [
-			{"emoji": "☀️", "at": Vector2(0.12, 0.35), "text": "The window cushion has golden hairs on it and a warm, round dent."},
+			{"emoji": "☀️", "at": Vector2(0.12, 0.35), "text": "The cushion by the window is warm, with golden hairs and a round dent, even with the curtains shut."},
+			{"emoji": "🪟", "at": Vector2(0.06, 0.55), "text": "The curtains over the window were closed all afternoon."},
 			{"emoji": "🧊", "at": Vector2(0.3, 0.78), "text": "The ice pond is covered in skid marks and paw prints."},
 			{"emoji": "👣", "at": Vector2(0.5, 0.6), "text": "A slow trail of tiny footprints leads to the kitchen."},
 			{"emoji": "🔼", "at": Vector2(0.7, 0.2), "text": "A sleepy purr comes from the attic, above a nest of blankets."},
@@ -75,75 +77,81 @@ const CASES := [
 	{
 		"id": "cookies", "emoji": "🍪", "title": "The Missing Cookies",
 		"bg": "res://Sprites/mystery/bg_cookie_kitchen.jpg",
-		"story": "🫙 Oh no! The cookie jar is EMPTY! Who took the cookies?",
+		"story": "🫙 Oh no! The cookie jar is EMPTY! Who took the cookies? Careful: one clue is not enough!",
 		"suspects": [
-			{"id": "mimi", "emoji": "🐭", "name": "Mimi", "icons": "tiny • long tail"},
-			{"id": "bruno", "emoji": "🐼", "name": "Bruno", "icons": "huge • round"},
-			{"id": "pip", "emoji": "🐥", "name": "Pip", "icons": "feathers • wings"},
-			{"id": "hop", "emoji": "🦫", "name": "Cappy", "icons": "brown • no tail"},
-			{"id": "rusty", "emoji": "🐶", "name": "Rusty", "icons": "medium size • fluffy tail"},
+			{"id": "mimi", "emoji": "🐭", "name": "Mimi", "icons": "tiny • grey fur • long tail"},
+			{"id": "fenny", "emoji": "🦊", "name": "Fenny", "icons": "small • sandy fur • bushy tail"},
+			{"id": "pip", "emoji": "🐥", "name": "Pip", "icons": "small • yellow • wings"},
+			{"id": "hop", "emoji": "🦫", "name": "Cappy", "icons": "big • brown • no tail"},
+			{"id": "rusty", "emoji": "🐶", "name": "Rusty", "icons": "medium • grey fur • fluffy tail"},
+			{"id": "bruno", "emoji": "🐼", "name": "Bruno", "icons": "huge • black & white"},
 		],
 		"clues": [
 			{"emoji": "👣", "at": Vector2(0.14, 0.55), "text": "The footprints in the flour are each as small as a button."},
 			{"emoji": "🪟", "at": Vector2(0.38, 0.78), "text": "The window was shut tight all night, so nobody flew in."},
-			{"emoji": "🍪", "at": Vector2(0.62, 0.42), "text": "A thin line was dragged through the crumbs, like a piece of string."},
+			{"emoji": "🫙", "at": Vector2(0.62, 0.42), "text": "Grey hairs were left stuck to the lid of the jar."},
 			{"emoji": "📻", "at": Vector2(0.86, 0.7), "text": "The radio was playing music in the next room."},
 		],
 		"culprit": "mimi",
 		"alibis": {
-			"bruno": "Bruno's feet are BIG, but the footprints are tiny!",
-			"rusty": "Rusty's feet are too big for button-sized footprints!",
+			"bruno": "Bruno is huge, but the footprints are tiny!",
+			"hop": "Cappy is big, but the footprints are tiny!",
+			"rusty": "Rusty is too big to leave button-sized footprints!",
 			"pip": "The window was shut, so Pip could not fly in!",
-			"hop": "Cappy has no tail, but something thin was dragged through the crumbs!",
+			"fenny": "Fenny has sandy fur, but the hairs on the lid are grey!",
 		},
 		"confession": "Squeak! It was me. I was SO hungry. I'm sorry!",
 	},
 	{
 		"id": "teddy", "emoji": "🧸", "title": "The Missing Teddy",
 		"bg": "res://Sprites/mystery/bg_teddy.jpg",
-		"story": "🧸 Oh no! Teddy is gone from the toy shelf! Who took him?",
+		"story": "🧸 Oh no! Teddy is gone from the toy shelf! Who took him? Careful: one clue is not enough!",
 		"suspects": [
 			{"id": "henny", "emoji": "🐥", "name": "Henny", "icons": "yellow • feathers"},
 			{"id": "axel", "emoji": "🦎", "name": "Axel", "icons": "pink • smooth skin"},
-			{"id": "snowy", "emoji": "🐰", "name": "Snowy", "icons": "white • fur • paws"},
-			{"id": "rusty", "emoji": "🐶", "name": "Rusty", "icons": "brown • fur • paws"},
+			{"id": "snowy", "emoji": "🐰", "name": "Snowy", "icons": "white • fur • soft paws"},
+			{"id": "rusty", "emoji": "🐶", "name": "Rusty", "icons": "brown • fur • paws with claws"},
 			{"id": "fawny", "emoji": "🦌", "name": "Fawny", "icons": "brown • fur • hooves"},
+			{"id": "pom", "emoji": "🐕", "name": "Pom", "icons": "cream • fluffy fur • paws with claws"},
 		],
 		"clues": [
 			{"emoji": "📦", "at": Vector2(0.14, 0.55), "text": "Soft tufts of hair are caught on the toy box."},
-			{"emoji": "🧹", "at": Vector2(0.38, 0.78), "text": "The hairs on the floor are the colour of chocolate. There is no white at all."},
-			{"emoji": "🐾", "at": Vector2(0.62, 0.42), "text": "Round prints with little claw marks lead out the door, not hoof prints."},
-			{"emoji": "🌧️", "at": Vector2(0.86, 0.7), "text": "It was raining outside the window last night."},
+			{"emoji": "🐾", "at": Vector2(0.38, 0.78), "text": "Round prints with little claw marks lead out the door."},
+			{"emoji": "🧹", "at": Vector2(0.62, 0.42), "text": "The hairs on the floor are the colour of chocolate."},
+			{"emoji": "🌧️", "at": Vector2(0.86, 0.7), "text": "It was raining outside last night."},
 		],
 		"culprit": "rusty",
 		"alibis": {
-			"henny": "Henny has feathers, but the hairs are hair, not feathers!",
-			"axel": "Axel has smooth skin, but hair was caught on the toy box!",
-			"snowy": "Snowy is white, but the hairs are brown!",
+			"henny": "Henny has feathers, but the toy box has hair on it!",
+			"axel": "Axel has smooth skin, but the toy box has hair on it!",
+			"snowy": "Snowy has soft paws with no claws, and white fur!",
 			"fawny": "Fawny has hooves, but the prints have claw marks!",
+			"pom": "Pom is cream coloured, but the hairs are brown like chocolate!",
 		},
 		"confession": "Woof... I just wanted a cuddle buddy. Sorry!",
 	},
 	{
 		"id": "paint", "emoji": "🎨", "title": "The Paint Splash",
 		"bg": "res://Sprites/backgrounds/garden_sunny.jpg",
-		"story": "🎨 Oh no! Someone splashed paint all over the barn wall!",
+		"story": "🎨 Oh no! Someone splashed paint all over the barn wall! Careful: one clue is not enough!",
 		"suspects": [
-			{"id": "sid", "emoji": "🐌", "name": "Sid", "icons": "slimy • no legs"},
+			{"id": "sid", "emoji": "🐌", "name": "Sid", "icons": "slimy • brown shell • no legs"},
 			{"id": "daisy", "emoji": "🐮", "name": "Daisy", "icons": "black & white • hooves"},
 			{"id": "woolly", "emoji": "🐑", "name": "Woolly", "icons": "white • hooves • says baa"},
 			{"id": "fawny", "emoji": "🦌", "name": "Fawny", "icons": "brown • hooves • white spots"},
 			{"id": "hoofy", "emoji": "🐴", "name": "Hoofy", "icons": "brown • hooves • no spots"},
+			{"id": "fox", "emoji": "🦊", "name": "Fox", "icons": "orange • four paws"},
 		],
 		"clues": [
-			{"emoji": "🐾", "at": Vector2(0.14, 0.55), "text": "Four hoof prints lead away from the wall."},
-			{"emoji": "🧱", "at": Vector2(0.38, 0.78), "text": "The smudges on the wall are the colour of toast."},
-			{"emoji": "🖌️", "at": Vector2(0.62, 0.42), "text": "Tiny white dots are scattered all along the paint streaks."},
-			{"emoji": "🌾", "at": Vector2(0.86, 0.7), "text": "The paintbrush was found lying in the hay."},
+			{"emoji": "🐾", "at": Vector2(0.14, 0.55), "text": "Four footprints lead away from the wall."},
+			{"emoji": "🦶", "at": Vector2(0.38, 0.78), "text": "The prints are hoof-shaped, not paw-shaped."},
+			{"emoji": "🧱", "at": Vector2(0.62, 0.42), "text": "The smudges on the wall are the colour of toast."},
+			{"emoji": "🖌️", "at": Vector2(0.86, 0.7), "text": "Tiny white dots are scattered along the paint streaks."},
 		],
 		"culprit": "fawny",
 		"alibis": {
-			"sid": "Snails have no legs, so no hoof prints from Sid!",
+			"sid": "Snails have no legs, so no footprints from Sid!",
+			"fox": "Fox has paws, but the prints are hoof-shaped!",
 			"daisy": "Daisy is black and white, but the smudges are brown!",
 			"woolly": "Woolly is white, but the smudges are brown!",
 			"hoofy": "Hoofy has no spots, but there are white dots in the paint!",
@@ -153,52 +161,56 @@ const CASES := [
 	{
 		"id": "cake", "emoji": "🎂", "title": "The Birthday Cake",
 		"bg": "res://Sprites/mystery/bg_kitchen.jpg",
-		"story": "🎂 Oh no! The birthday cake was on the high shelf and it's GONE!",
+		"story": "🎂 Oh no! The birthday cake was on the high shelf and it's GONE! Careful: one clue is not enough!",
 		"suspects": [
-			{"id": "leo", "emoji": "🦁", "name": "Leo", "icons": "huge • big mane"},
+			{"id": "leo", "emoji": "🦁", "name": "Leo", "icons": "huge • golden mane"},
 			{"id": "bruno", "emoji": "🐼", "name": "Bruno", "icons": "huge • black & white"},
-			{"id": "pip", "emoji": "🐥", "name": "Pip", "icons": "small • feathers"},
-			{"id": "marmie", "emoji": "🐿️", "name": "Marmie", "icons": "small • fur • loves nuts"},
-			{"id": "fenny", "emoji": "🦊", "name": "Fenny", "icons": "small • fur • loves bugs"},
+			{"id": "pip", "emoji": "🐥", "name": "Pip", "icons": "small • yellow feathers"},
+			{"id": "marmie", "emoji": "🐿️", "name": "Marmie", "icons": "small • fur • eats nuts"},
+			{"id": "fenny", "emoji": "🦊", "name": "Fenny", "icons": "small • fur • eats bugs"},
+			{"id": "mimi", "emoji": "🐭", "name": "Mimi", "icons": "tiny • fur • loves cheese and nuts"},
 		],
 		"clues": [
 			{"emoji": "🪟", "at": Vector2(0.14, 0.55), "text": "The only open window is tiny. Only a small friend fits through."},
 			{"emoji": "🎂", "at": Vector2(0.38, 0.78), "text": "Soft tufts of hair are stuck on the shelf."},
-			{"emoji": "🌰", "at": Vector2(0.62, 0.42), "text": "Cracked-open nutshells are on the floor, and no bug bits."},
-			{"emoji": "🎩", "at": Vector2(0.86, 0.7), "text": "A party hat is lying on the floor."},
+			{"emoji": "🌰", "at": Vector2(0.62, 0.42), "text": "Cracked-open nutshells are on the floor."},
+			{"emoji": "🧀", "at": Vector2(0.86, 0.7), "text": "A big block of cheese on the same shelf was not touched."},
 		],
 		"culprit": "marmie",
 		"alibis": {
 			"leo": "Leo is much too big for the tiny window!",
 			"bruno": "Bruno is much too big for the tiny window!",
 			"pip": "Pip has feathers, but hair was stuck on the shelf!",
-			"fenny": "Fenny loves bugs, but there are only nutshells!",
+			"fenny": "Fenny eats bugs, but only nutshells were found!",
+			"mimi": "Mimi loves cheese, but the cheese was left alone!",
 		},
 		"confession": "Squeak! The cake smelled like nuts. Sorry!",
 	},
 	{
 		"id": "crown", "emoji": "👑", "title": "The Sparkly Crown",
 		"bg": "res://Sprites/mystery/bg_library.jpg",
-		"story": "👑 Oh no! The sparkly crown vanished in a flash!",
+		"story": "👑 Oh no! The sparkly crown vanished in a flash! Careful: one clue is not enough!",
 		"suspects": [
 			{"id": "tilly", "emoji": "🐢", "name": "Tilly", "icons": "a slow, slow turtle"},
 			{"id": "sid", "emoji": "🐌", "name": "Sid", "icons": "an even slower snail"},
-			{"id": "clover", "emoji": "🐂", "name": "Clover", "icons": "eats grass • no wings"},
-			{"id": "hoofy", "emoji": "🐴", "name": "Hoofy", "icons": "very fast • no wings"},
-			{"id": "batty", "emoji": "🦇", "name": "Batty", "icons": "very fast • wings • loves shiny things"},
+			{"id": "clover", "emoji": "🐂", "name": "Clover", "icons": "eats grass • stays on the ground"},
+			{"id": "hoofy", "emoji": "🐴", "name": "Hoofy", "icons": "very fast • stays on the ground"},
+			{"id": "batty", "emoji": "🦇", "name": "Batty", "icons": "very fast • flies • loves shiny things"},
+			{"id": "fossy", "emoji": "🐆", "name": "Fossy", "icons": "very fast • sharp claws • climbs"},
 		],
 		"clues": [
 			{"emoji": "⚡", "at": Vector2(0.14, 0.55), "text": "The crown was gone before the clock could tick twice."},
-			{"emoji": "🪟", "at": Vector2(0.38, 0.78), "text": "There are wing-shaped smudges on the windowsill."},
-			{"emoji": "🪺", "at": Vector2(0.62, 0.42), "text": "A cosy nook high up is full of sparkly things."},
+			{"emoji": "🗼", "at": Vector2(0.38, 0.78), "text": "It was taken from a window high up on the tower."},
+			{"emoji": "🧱", "at": Vector2(0.62, 0.42), "text": "The tower wall below has no scratch marks at all."},
 			{"emoji": "🎀", "at": Vector2(0.86, 0.7), "text": "The curtains are blue."},
 		],
 		"culprit": "batty",
 		"alibis": {
 			"tilly": "Tilly is far too slow to be gone in a flash!",
 			"sid": "Sid is much too slow. It would take him a whole week!",
-			"clover": "Bulls have no wings, but wing marks were on the sill!",
-			"hoofy": "Hoofy is fast, but has no wings to leave wing marks!",
+			"clover": "Clover stays on the ground, but the window is high up!",
+			"hoofy": "Hoofy stays on the ground, but the window is high up!",
+			"fossy": "Fossy climbs with sharp claws, but the wall has no scratches!",
 		},
 		"confession": "Squeak! It was so SHINY. I'll give it back!",
 	},
@@ -208,12 +220,13 @@ var case_data: Dictionary = {}
 var found: Array = []
 var picked := ""
 var solved_now := false
+var wrong_guesses := 0
 
 var title_label: Label
 var story_label: Label
 var clue_row: HBoxContainer
 var notebook_label: Label
-var suspect_row: HBoxContainer
+var suspect_row: HFlowContainer
 var accuse_button: Button
 var next_button: Button
 var bubble: Label
@@ -289,7 +302,7 @@ func _build() -> void:
 
 	who_label = _label(16, Color(0.4, 0.4, 0.6))
 	box.add_child(who_label)
-	suspect_row = HBoxContainer.new()
+	suspect_row = HFlowContainer.new()
 	suspect_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	suspect_row.add_theme_constant_override("separation", 10)
 	box.add_child(suspect_row)
@@ -330,6 +343,7 @@ func _start_case(index: int) -> void:
 	found = []
 	picked = ""
 	solved_now = false
+	wrong_guesses = 0
 	title_label.text = "%s  %s" % [case_data["emoji"], case_data["title"]]
 	story_label.text = case_data["story"]
 
@@ -377,7 +391,7 @@ func _start_case(index: int) -> void:
 	for suspect in case_data["suspects"]:
 		var button := Button.new()
 		button.toggle_mode = true
-		button.custom_minimum_size = Vector2(220, 200 if suspect.has("says") else 150)
+		button.custom_minimum_size = Vector2(200, 200 if suspect.has("says") else 150)
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.add_theme_font_size_override("font_size", 18)
 		var detail := "“%s”" % suspect["says"] if suspect.has("says") else String(suspect["icons"])
@@ -451,14 +465,17 @@ func _on_accuse() -> void:
 	for suspect in case_data["suspects"]:
 		if suspect["id"] == picked:
 			suspect_name = suspect["name"]
-	_say("Hmm, not %s! %s" % [suspect_name, case_data["alibis"][picked]])
-	suspect_buttons[picked].disabled = true
+	wrong_guesses += 1
+	if wrong_guesses < 2:
+		_say("Hmm, not %s! Read ALL the clues again. Guessing costs coins!" % suspect_name)
+	else:
+		_say("Not %s! Hint: %s" % [suspect_name, case_data["alibis"][picked]])
 	picked = ""
 	_refresh()
 
 func _solve() -> void:
 	solved_now = true
-	PetalState.solve_case(String(case_data["id"]), int(case_data.get("prize", 5)))
+	PetalState.solve_case(String(case_data["id"]), maxi(1, int(case_data.get("prize", 5)) - 2 * wrong_guesses))
 	_say("🎉 %s You solved it!" % case_data["confession"])
 	_refresh()
 	next_button.visible = true

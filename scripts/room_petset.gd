@@ -3,7 +3,9 @@ extends Control
 const Feedback = preload("res://scripts/room_feedback.gd")
 const PetCameo = preload("res://scripts/pet_cameo.gd")
 const Confetti = preload("res://scripts/confetti.gd")
+const Sfx = preload("res://scripts/sfx.gd")
 const SetCanvas = preload("res://scripts/pet_set_canvas.gd")
+const PlayStage = preload("res://scripts/pet_play_stage.gd")
 
 const PET_SIZE := Vector2(130, 120)
 const STAGE_SIZE := Vector2(700, 360)
@@ -23,6 +25,7 @@ const SHAPE_LABELS := {
 const INK := Color(0.4, 0.25, 0.3)
 
 var design: Dictionary = {}
+var mode := "set"   # "set" = bed & bowl, "play" = play space
 var kind := "bed"
 var pet_id := ""
 
@@ -36,6 +39,17 @@ var shape_row: HFlowContainer
 var shape_buttons := {}
 var name_button: Button
 
+var play_stage: Control
+var set_actions: HBoxContainer
+var play_actions: HBoxContainer
+var set_options: VBoxContainer
+var play_options: VBoxContainer
+var mode_buttons := {}
+var theme_buttons := {}
+var shop_buttons := {}
+var coin_label: Label
+var put_away_button: Button
+
 func _ready() -> void:
 	pet_id = PetalState.active_pet
 	var paper := ColorRect.new()
@@ -47,7 +61,11 @@ func _ready() -> void:
 	canvas.food_color = SetCanvas.FOOD_COLORS.get(PetalState.pet_species(), SetCanvas.FOOD_COLORS["cat"])
 	canvas.bed_name_default = "%s's Bed" % PetalState.pet_name
 	canvas.bowl_name_default = "%s's Bowl" % PetalState.pet_name
+	play_stage.load_space(PetalState.play_space(pet_id))
 	_refresh()
+	_refresh_shop()
+	_show_mode()
+	PetalState.coins_changed.connect(_refresh_shop)
 	petal.position = SPOT_IDLE
 	PetCameo.spawn(petal)
 
@@ -77,6 +95,11 @@ func _build() -> void:
 	canvas.size = STAGE_SIZE
 	canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stage.add_child(canvas)
+	play_stage = PlayStage.new()
+	play_stage.size = STAGE_SIZE
+	play_stage.changed.connect(_on_play_changed)
+	play_stage.selection_changed.connect(_refresh_put_away)
+	stage.add_child(play_stage)
 	petal = TextureRect.new()
 	petal.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	petal.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -84,14 +107,17 @@ func _build() -> void:
 	petal.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stage.add_child(petal)
 
-	var actions := HBoxContainer.new()
-	actions.alignment = BoxContainer.ALIGNMENT_CENTER
-	actions.add_theme_constant_override("separation", 8)
-	left.add_child(actions)
-	actions.add_child(_action_button("😴 Nap", _on_nap))
-	actions.add_child(_action_button("🍽️ Eat", _on_eat))
-	actions.add_child(_action_button("🎲 Surprise me!", _on_surprise))
-	actions.add_child(_action_button("✅ I love it!", _on_done))
+	set_actions = _action_row(left)
+	set_actions.add_child(_action_button("😴 Nap", _on_nap))
+	set_actions.add_child(_action_button("🍽️ Eat", _on_eat))
+	set_actions.add_child(_action_button("🎲 Surprise me!", _on_surprise))
+	set_actions.add_child(_action_button("✅ I love it!", _on_done))
+	play_actions = _action_row(left)
+	play_actions.add_child(_action_button("🎉 Play!", _on_play))
+	put_away_button = _action_button("🧺 Put away", _on_put_away)
+	play_actions.add_child(put_away_button)
+	play_actions.add_child(_action_button("🧹 Clear all", _on_clear))
+	play_actions.add_child(_action_button("✅ I love it!", _on_play_done))
 
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -101,9 +127,32 @@ func _build() -> void:
 	style.set_content_margin_all(12)
 	panel.add_theme_stylebox_override("panel", style)
 	columns.add_child(panel)
-	var options := VBoxContainer.new()
-	options.add_theme_constant_override("separation", 8)
-	panel.add_child(options)
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 8)
+	panel.add_child(outer)
+	var modes := HBoxContainer.new()
+	modes.add_theme_constant_override("separation", 8)
+	outer.add_child(modes)
+	var mode_group := ButtonGroup.new()
+	for entry in [["set", "🛏️ Bed & Bowl"], ["play", "🎪 Play Space"]]:
+		var tab := Button.new()
+		tab.text = entry[1]
+		tab.toggle_mode = true
+		tab.button_group = mode_group
+		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab.custom_minimum_size = Vector2(0, 50)
+		tab.add_theme_font_size_override("font_size", 22)
+		tab.pressed.connect(_on_mode.bind(String(entry[0])))
+		modes.add_child(tab)
+		mode_buttons[entry[0]] = tab
+	set_options = VBoxContainer.new()
+	set_options.add_theme_constant_override("separation", 8)
+	outer.add_child(set_options)
+	play_options = VBoxContainer.new()
+	play_options.add_theme_constant_override("separation", 8)
+	outer.add_child(play_options)
+	var options := set_options
+	_build_play_options()
 
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 8)
@@ -150,6 +199,32 @@ func _build() -> void:
 	name_button.add_theme_font_size_override("font_size", 19)
 	name_button.pressed.connect(_on_name)
 	options.add_child(name_button)
+
+func _action_row(parent: Control) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+	return row
+
+# The shop: themes and toys, each showing its price until it's bought.
+func _build_play_options() -> void:
+	coin_label = Label.new()
+	coin_label.add_theme_font_size_override("font_size", 20)
+	coin_label.add_theme_color_override("font_color", INK)
+	play_options.add_child(coin_label)
+	var themes := HFlowContainer.new()
+	play_options.add_child(_titled("🌍 Place", themes))
+	for id in PetalState.PLAY_THEMES:
+		theme_buttons[id] = _option_button(themes, "", 16, Vector2(0, 40), _on_theme.bind(id))
+	var shop := HFlowContainer.new()
+	shop.add_theme_constant_override("h_separation", 4)
+	shop.add_theme_constant_override("v_separation", 4)
+	play_options.add_child(_titled("🛍️ Toys", shop))
+	for id in PetalState.PLAY_ITEMS:
+		var button := _option_button(shop, "", 17, Vector2(82, 66), _on_shop.bind(id))
+		button.toggle_mode = false
+		shop_buttons[id] = button
 
 func _titled(title: String, content: Control) -> Control:
 	var row := HBoxContainer.new()
@@ -205,6 +280,28 @@ func _refresh() -> void:
 	var label := "bed" if kind == "bed" else "bowl"
 	name_button.text = "✏️ Name the %s: %s" % [label, canvas.bed_name.text if kind == "bed" else canvas.bowl_name.text]
 
+func _price_text(id: String) -> String:
+	if PetalState.play_cost(id) == 0:
+		return "free"
+	return "✓" if PetalState.play_unlocked(id) else "🪙 %d" % PetalState.play_cost(id)
+
+func _refresh_shop() -> void:
+	coin_label.text = "🪙 You have %d Treat Coin%s" % [PetalState.coins, "" if PetalState.coins == 1 else "s"]
+	for id in shop_buttons:
+		var data: Dictionary = PetalState.PLAY_ITEMS[id]
+		var button: Button = shop_buttons[id]
+		button.text = "%s\n%s" % [data["emoji"], _price_text(id)]
+		button.tooltip_text = String(data["label"])
+		button.modulate = Color.WHITE if PetalState.play_unlocked(id) or PetalState.coins >= PetalState.play_cost(id) else Color(0.6, 0.6, 0.6)
+	for id in theme_buttons:
+		var data: Dictionary = PetalState.PLAY_THEMES[id]
+		theme_buttons[id].text = "%s %s %s" % [data["emoji"], data["label"], "" if PetalState.play_cost(id) == 0 and id == "cosy" else _price_text(id)]
+		theme_buttons[id].set_pressed_no_signal(id == play_stage.theme)
+		theme_buttons[id].modulate = Color.WHITE if PetalState.play_unlocked(id) or PetalState.coins >= PetalState.play_cost(id) else Color(0.6, 0.6, 0.6)
+
+func _refresh_put_away() -> void:
+	put_away_button.disabled = play_stage.selected == null
+
 func _swatch_style(index: int, selected: bool) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = PetalState.SET_COLORS[index]
@@ -227,6 +324,110 @@ func _rebuild_shapes() -> void:
 func _changed() -> void:
 	PetalState.save_pet_set(pet_id, design)
 	_refresh()
+	_boing(canvas)
+
+# A little squash-and-bounce so every tap feels alive.
+func _boing(node: Control) -> void:
+	Sfx.pop(self)
+	node.pivot_offset = node.size / 2.0
+	node.scale = Vector2(1.025, 0.975)
+	var tween := create_tween()
+	tween.tween_property(node, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+# --- Bed & Bowl or Play Space ------------------------------------------------
+
+func _on_mode(which: String) -> void:
+	mode = which
+	_show_mode()
+
+func _show_mode() -> void:
+	var playing := mode == "play"
+	canvas.visible = not playing
+	play_stage.visible = playing
+	set_actions.visible = not playing
+	play_actions.visible = playing
+	set_options.visible = not playing
+	play_options.visible = playing
+	for id in mode_buttons:
+		mode_buttons[id].set_pressed_no_signal(id == mode)
+	_refresh_put_away()
+	_refresh_shop()
+
+func _on_shop(id: String) -> void:
+	if not _buy(id, shop_buttons[id]):
+		return
+	if play_stage.is_full():
+		_pop("🧺 full! put one away", shop_buttons[id])
+		return
+	play_stage.add_item(id)
+	Sfx.pop(self)
+
+func _on_theme(id: String) -> void:
+	if not _buy(id, theme_buttons[id]):
+		theme_buttons[id].set_pressed_no_signal(id == play_stage.theme)
+		return
+	play_stage.set_theme_id(id)
+	Sfx.chime(self)
+
+# Spends coins the first time; shows how many more are needed if short.
+func _buy(id: String, button: Control) -> bool:
+	if PetalState.play_unlocked(id):
+		return true
+	var short := PetalState.play_cost(id) - PetalState.coins
+	if not PetalState.try_buy_play(id):
+		_pop("🔒 need %d more coins" % short, button)
+		return false
+	_pop("🔓 bought! ✨", button)
+	Sfx.chime(self)
+	_refresh_shop()
+	return true
+
+func _on_play_changed() -> void:
+	PetalState.save_play_space(pet_id, play_stage.to_space())
+	_refresh_shop()
+
+func _on_put_away() -> void:
+	play_stage.remove_selected()
+	Sfx.pop(self)
+
+func _on_clear() -> void:
+	play_stage.clear_all()
+
+# The pet runs round her toys one by one, so the space comes alive.
+var playing_now := false
+
+func _on_play() -> void:
+	if playing_now:
+		return
+	if play_stage.items.is_empty():
+		_pop("buy a toy first! 🛍️", petal)
+		return
+	playing_now = true
+	var order: Array = play_stage.items.duplicate()
+	order.shuffle()
+	for item in order.slice(0, 5):
+		if not is_instance_valid(item) or not is_instance_valid(petal):
+			break
+		var center: Vector2 = item.position + item.size / 2.0
+		var spot := (center - PET_SIZE / 2.0 + Vector2(-50, 10)).clamp(Vector2.ZERO, STAGE_SIZE - PET_SIZE)
+		var tween := create_tween()
+		tween.tween_property(petal, "position", spot, 0.5).set_trans(Tween.TRANS_SINE)
+		await tween.finished
+		if not is_instance_valid(petal):
+			break
+		play_stage.bounce(item)
+		Sfx.pop(self)
+		_pop(["wheee!", "yay!", "fun!", "🥰", "again!"].pick_random(), petal)
+		await PetCameo.jump_for_joy(petal)
+	playing_now = false
+
+func _on_play_done() -> void:
+	PetalState.finish_play_space(pet_id, play_stage.to_space())
+	var at := petal.global_position + petal.size / 2.0
+	Confetti.burst(self, at, 24)
+	Sfx.fanfare(self)
+	_pop("🎉 What a play space!", petal)
+	PetCameo.jump_for_joy(petal)
 
 # --- Choosing things ---------------------------------------------------------
 
@@ -245,6 +446,8 @@ func _on_pattern(id: String) -> void:
 func _on_stamp(id: String) -> void:
 	_piece()["stamp"] = id
 	_changed()
+	if id != "":
+		Confetti.burst(self, canvas.bed_stamp.global_position + canvas.bed_stamp.size / 2.0 if kind == "bed" else canvas.bowl_stamp.global_position + canvas.bowl_stamp.size / 2.0, 8)
 
 func _on_shape(id: String) -> void:
 	_piece()["shape"] = id
@@ -289,6 +492,7 @@ func _walk_pet(spot: Vector2, text: String) -> void:
 
 func _on_done() -> void:
 	PetalState.finish_pet_set(pet_id, design)
+	Sfx.fanfare(self)
 	var at := petal.global_position + petal.size / 2.0
 	Confetti.burst(self, at, 24)
 	_pop("🎉 Beautiful set!", petal)
