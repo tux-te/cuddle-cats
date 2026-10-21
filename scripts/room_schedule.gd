@@ -59,7 +59,7 @@ const ALIASES := {
 	"animl": "animal", "emojes": "emojis", "emoji": "emojis", "pumkin": "pumpkin", "chrismas": "christmas",
 	"valentanes": "valentines", "valentines": "valentines", "alo": "all", "meave": "meow", "meaw": "meow",
 	"setings": "settings", "settings": "settings", "resevie": "", "sitter": "babysitter", "baby": "baby",
-	"vent": "vent", "embarrassed": "embarrassing", "embarrassment": "embarrassing", "embarrassing": "embarrassing", "enbarising": "embarrassing", "embarising": "embarrassing", "embarrising": "embarrassing", "embarassing": "embarrassing", "enbarrasing": "embarrassing", "embaresing": "embarrassing", "enbarasing": "embarrassing", "enbaressment": "embarrassing", "embarassment": "embarrassing", "embarrasment": "embarrassing", "embarassed": "embarrassing", "enbaressed": "embarrassing", "crimal": "criminal", "crimnal": "criminal", "criminel": "criminal", "liying": "lying", "liar": "lying", "liars": "lying", "lier": "lying", "lyer": "lying", "crook": "criminal", "trup": "trump", "trum": "trump", "tump": "trump", "trmp": "trump", "trumpp": "trump", "trumps": "trump", "boyfreind": "boyfriend", "boyfrend": "boyfriend", "boyfreinds": "boyfriend", "boyfriends": "boyfriend", "girlfreind": "girlfriend", "girlfrend": "girlfriend", "girlfreinds": "girlfriend", "girlfriends": "girlfriend", "chalkbored": "chalkboard", "chalkboared": "chalkboard", "chalkbord": "chalkboard", "stor": "store", "conrer": "corner", "cornor": "corner", "nales": "nails", "wanna": "want", "wnat": "want", "waant": "want", "purpal": "purple", "purpel": "purple", "purpul": "purple", "perple": "purple", "purple": "purple", "ocenan": "ocean", "oceon": "ocean", "baody": "body", "bod": "body", "baodys": "body", "stoplite": "stoplight", "backpak": "backpack", "bakpack": "backpack", "rivers": "river", "creeks": "creek", "creak": "creek", "creeek": "creek", "lite": "light", "darkk": "dark", "spott": "spot", "lgbtq": "lgbtq", "lgbtqia": "lgbtqia", "lgbtqai": "lgbtqia", "lbgt": "lgbt", "lbgtq": "lgbtq", "bisexul": "bisexual", "homosexual": "gay", "transexual": "transgender", "non": "non", "gaye": "gay", "gai": "gay", "lesbain": "lesbian", "lezbian": "lesbian", "panssexual": "pansexual", "pronown": "pronoun", "mabe": "maybe", "mabye": "maybe", "yup": "yes", "yep": "yes", "nope": "no", "ew": "eel", "eww": "eel", "vacatoin": "vacation", "vacations": "vacation", "richmand": "richmond", "virgin": "virginia", "wisconson": "wisconsin", "candoa": "canada", "cars": "car", "trips": "trip", "presant": "present", "presants": "present", "coustume": "costume", "costumes": "costume", "gifts": "gift", "books": "book", "ruthie": "ruthie", "norakate": "norakate", "nora": "norakate", "kate": "norakate",
+	"vent": "vent", "favreourite": "favourite", "favourit": "favourite", "favorit": "favorite", "faverite": "favourite", "favrite": "favourite", "favoret": "favourite", "favorate": "favourite", "favoure": "favourite", "favourtie": "favourite", "ur": "your", "u": "you", "embarrassed": "embarrassing", "embarrassment": "embarrassing", "embarrassing": "embarrassing", "enbarising": "embarrassing", "embarising": "embarrassing", "embarrising": "embarrassing", "embarassing": "embarrassing", "enbarrasing": "embarrassing", "embaresing": "embarrassing", "enbarasing": "embarrassing", "enbaressment": "embarrassing", "embarassment": "embarrassing", "embarrasment": "embarrassing", "embarassed": "embarrassing", "enbaressed": "embarrassing", "crimal": "criminal", "crimnal": "criminal", "criminel": "criminal", "liying": "lying", "liar": "lying", "liars": "lying", "lier": "lying", "lyer": "lying", "crook": "criminal", "trup": "trump", "trum": "trump", "tump": "trump", "trmp": "trump", "trumpp": "trump", "trumps": "trump", "boyfreind": "boyfriend", "boyfrend": "boyfriend", "boyfreinds": "boyfriend", "boyfriends": "boyfriend", "girlfreind": "girlfriend", "girlfrend": "girlfriend", "girlfreinds": "girlfriend", "girlfriends": "girlfriend", "chalkbored": "chalkboard", "chalkboared": "chalkboard", "chalkbord": "chalkboard", "stor": "store", "conrer": "corner", "cornor": "corner", "nales": "nails", "wanna": "want", "wnat": "want", "waant": "want", "purpal": "purple", "purpel": "purple", "purpul": "purple", "perple": "purple", "purple": "purple", "ocenan": "ocean", "oceon": "ocean", "baody": "body", "bod": "body", "baodys": "body", "stoplite": "stoplight", "backpak": "backpack", "bakpack": "backpack", "rivers": "river", "creeks": "creek", "creak": "creek", "creeek": "creek", "lite": "light", "darkk": "dark", "spott": "spot", "lgbtq": "lgbtq", "lgbtqia": "lgbtqia", "lgbtqai": "lgbtqia", "lbgt": "lgbt", "lbgtq": "lgbtq", "bisexul": "bisexual", "homosexual": "gay", "transexual": "transgender", "non": "non", "gaye": "gay", "gai": "gay", "lesbain": "lesbian", "lezbian": "lesbian", "panssexual": "pansexual", "pronown": "pronoun", "mabe": "maybe", "mabye": "maybe", "yup": "yes", "yep": "yes", "nope": "no", "ew": "eel", "eww": "eel", "vacatoin": "vacation", "vacations": "vacation", "richmand": "richmond", "virgin": "virginia", "wisconson": "wisconsin", "candoa": "canada", "cars": "car", "trips": "trip", "presant": "present", "presants": "present", "coustume": "costume", "costumes": "costume", "gifts": "gift", "books": "book", "ruthie": "ruthie", "norakate": "norakate", "nora": "norakate", "kate": "norakate",
 }
 
 # LGBTQIA+ words she knows. Short ambiguous ones (bi, pan, ace...) only count with a
@@ -95,6 +95,54 @@ const PRIDE_AMBIGUOUS := ["bi", "pan", "ace", "aro", "trans", "straight", "pride
 const PRIDE_CUES := ["lgbt", "lgbtq", "lgbtqia", "gay", "lesbian", "queer", "sexual", "bisexual", "pansexual", "asexual", "transgender", "nonbinary", "flag", "orientation", "identity", "intersex", "aromantic", "questioning"]
 const PRIDE_GOOD := ["good", "great", "awesome", "cool", "nice", "amazing", "best", "wonderful", "love", "fine", "okay", "ok", "proud", "happy", "yay", "beautiful"]
 const PRIDE_MEAN := ["hate", "bad", "gross", "eel", "eww", "yuck", "wrong", "stupid", "weird", "disgusting", "dumb", "ugly", "sin"]
+
+# "What's your favourite ___?" She has a real answer. Each pet always gives the same
+# one (picked from her id), with species picks where it fits. [answers..., emoji]
+const FAVOURITES := {
+	"colour": [["pink", "purple", "blue", "yellow", "green"], "🎨"],
+	"animal": [["kittens", "puppies", "bunnies", "butterflies", "dolphins", "pandas"], "🐾"],
+	"food": [["strawberries", "pizza", "cheese", "cookies", "pasta"], "😋"],
+	"fruit": [["strawberries", "watermelon", "mango", "blueberries"], "🍓"],
+	"drink": [["milk", "hot chocolate", "lemonade", "apple juice"], "🥤"],
+	"number": [["7", "3", "9", "10"], "🔢"],
+	"season": [["spring", "summer", "autumn", "winter"], "🌸"],
+	"day": [["Saturday", "Friday", "Sunday"], "📅"],
+	"song": [["a happy dance song", "a lullaby", "my own meow song"], "🎵"],
+	"game": [["hide and seek", "tag", "I spy", "dress up"], "🎲"],
+	"toy": [["a squeaky toy", "a bouncy ball", "a soft teddy"], "🧸"],
+	"movie": [["a sparkly princess movie", "anything with animals", "a funny cartoon"], "🎬"],
+	"show": [["a sparkly princess show", "anything with animals", "a funny cartoon"], "📺"],
+	"book": [["Harry Potter", "a picture book about animals", "a fairy tale"], "📖"],
+	"sport": [["swimming", "soccer", "gymnastics"], "⚽"],
+	"flower": [["tulips", "roses", "daisies", "sunflowers"], "🌷"],
+	"place": [["the garden", "my cosy bed", "the beach", "home"], "🏠"],
+	"holiday": [["Christmas", "Halloween", "my birthday", "Valentine's Day"], "🎉"],
+	"subject": [["art", "reading", "music"], "📚"],
+	"person": [["you"], "💕"],
+	"friend": [["you"], "💕"],
+	"name": [["my own name"], "🐾"],
+	"weather": [["sunny days", "a gentle rain", "snowy days"], "🌤️"],
+	"candy": [["gummy bears", "chocolate", "lollipops"], "🍬"],
+	"dessert": [["ice cream", "cupcakes", "strawberry cake"], "🍰"],
+	"letter": [["P", "M", "S"], "🔤"],
+	"shape": [["heart", "star", "circle"], "⭐"],
+	"emoji": [["😻", "🌈", "🦋"], "✨"],
+}
+# What each kind of pet picks (instead of the list above) for some topics.
+const SPECIES_FAVOURITES := {
+	"dog": {"food": "bones", "toy": "a tennis ball", "game": "fetch", "animal": "puppies", "song": "a happy woof song"},
+	"bird": {"food": "sunflower seeds", "toy": "a shiny bell", "game": "fly-and-catch", "song": "a morning tweet song"},
+	"gerbil": {"food": "sunflower seeds", "toy": "a spinny wheel", "game": "hide in the tunnel", "song": "a tiny squeak song"},
+	"bunny": {"food": "carrots", "toy": "a cardboard tunnel", "game": "hop and zoom", "song": "a soft nibble song"},
+	"cat": {"food": "fish", "toy": "a ball of yarn", "game": "chase the laser dot", "song": "my own meow song"},
+}
+const FAVOURITE_WORDS := ["favorite", "favourite", "fav", "fave", "best"]
+const FAV_CATEGORY_ALIASES := {
+	"color": "colour", "pet": "animal", "animals": "animal", "meal": "food", "dinner": "food", "lunch": "food", "breakfast": "food",
+	"snack": "food", "drinks": "drink", "tv": "show", "film": "movie", "cartoon": "show", "game": "game", "games": "game",
+	"songs": "song", "music": "song", "season": "season", "school": "subject", "class": "subject", "lesson": "subject",
+	"sweet": "candy", "treat": "treat",
+}
 
 # Words she knows, and what she says about them.
 const REPLIES := {
@@ -1449,6 +1497,41 @@ func _in_pet_voice(text: String) -> String:
 	out = out.replace("I'm a cat", "I'm a " + String(v["noun"])).replace("🐱", _pet_face())
 	return out
 
+# "What's your favourite colour?" -> a real answer and a question back. "" if the
+# words aren't asking about a favourite (or it's about treats, handled elsewhere).
+func _favourite_reply(words: PackedStringArray) -> String:
+	var asked := false
+	for w in FAVOURITE_WORDS:
+		if words.has(w):
+			asked = true
+	if not asked:
+		return ""
+	if words.has("treat") or words.has("treats") or words.has("snack") or words.has("snacks"):
+		return ""
+	var category := ""
+	for w in words:
+		var key: String = FAV_CATEGORY_ALIASES.get(w, w)
+		if key.ends_with("s") and not FAVOURITES.has(key):
+			key = key.trim_suffix("s")
+		if FAVOURITES.has(key):
+			category = key
+			break
+	if category == "":
+		return "Ooh, my favourite what? 🤔 Ask me about colours, animals, food, games, songs..."
+	# Asking about theirs, not hers.
+	if words.has("my") and not words.has("your"):
+		var liked := PetalState.remembered_likes
+		if liked.is_empty():
+			return "Hmm, I don't know your favourite %s yet! 🤔 Tell me!" % category
+		return "I remember you like %s! 💕 Is that your favourite %s?" % [_list_words(liked), category]
+	var options: Array = FAVOURITES[category][0]
+	var emoji: String = FAVOURITES[category][1]
+	var species_picks: Dictionary = SPECIES_FAVOURITES.get(_pet_species(), {})
+	var answer: String = String(species_picks[category]) if species_picks.has(category) else String(options[absi(hash(PetalState.active_pet + category)) % options.size()])
+	if answer == "you":
+		return "You!! 💕😻 You're my favourite %s in the whole world! Who's yours?" % category
+	return "My favourite %s is %s! %s What's yours? 😸" % [category, answer, emoji]
+
 # A sum like "56x189", "7 + 8", "9 times 6", or asking for homework help.
 func _is_math(text: String) -> bool:
 	var t := text.to_lower().replace("×", "x").replace("÷", "/")
@@ -1482,6 +1565,9 @@ func _reply_to(text: String) -> String:
 			if words.has(w):
 				return true
 		return false
+	var favourite := _favourite_reply(words)
+	if favourite != "":
+		return favourite
 	# Sums ("56x189", "7 plus 8") and homework help: she can't do your homework.
 	if _is_math(text):
 		return "Ummmmm... %s? 🤔%s" % [_pet_sound(), _pet_face()]
