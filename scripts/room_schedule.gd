@@ -219,6 +219,27 @@ const FILLER := ["a", "i", "but", "as", "it", "them", "she", "him", "all", "on",
 const LIKE_WORDS := ["like", "love", "luv", "heart", "enjoy", "favorite", "favourite"]
 const THINGS := ["book", "tv", "video", "toy", "ball", "gift", "present", "costume", "harry", "potter", "flower", "garden", "muffin", "food", "soup", "pumpkin", "christmas", "halloween", "valentines", "cat", "dog", "bird", "mouse", "lion", "kitten", "chicken", "tree", "pillow", "bed", "box", "rap", "dance", "sports", "school", "bath", "emojis", "animal", "learn", "travel", "cart", "car", "trip", "vacation", "richmond", "virginia", "wisconsin", "canada", "house", "pink", "purple", "ocean", "creek", "river", "lake", "backpack"]
 
+# Foods she knows: name -> [emoji, eating sound].
+const FOODS := {
+	"pizza": ["🍕", "*nom nom nom*"], "burger": ["🍔", "*chomp chomp*"], "hotdog": ["🌭", "*chomp chomp*"], "fries": ["🍟", "*crunch crunch*"],
+	"taco": ["🌮", "*crunch crunch*"], "burrito": ["🌯", "*nom nom nom*"], "sandwich": ["🥪", "*chomp chomp*"], "sushi": ["🍣", "*nom nom nom*"],
+	"rice": ["🍚", "*nom nom nom*"], "pasta": ["🍝", "*slurp slurp*"], "spaghetti": ["🍝", "*slurp slurp*"], "noodle": ["🍜", "*slurp slurp*"],
+	"soup": ["🍲", "*slurp slurp*"], "salad": ["🥗", "*crunch crunch*"], "egg": ["🥚", "*nom nom nom*"], "cheese": ["🧀", "*nom nom nom*"],
+	"bread": ["🍞", "*nom nom nom*"], "toast": ["🍞", "*crunch crunch*"], "pancake": ["🥞", "*nom nom nom*"], "waffle": ["🧇", "*nom nom nom*"],
+	"bacon": ["🥓", "*chomp chomp*"], "cookie": ["🍪", "*crunch crunch*"], "cake": ["🍰", "*nom nom nom*"], "cupcake": ["🧁", "*nom nom nom*"],
+	"donut": ["🍩", "*nom nom nom*"], "doughnut": ["🍩", "*nom nom nom*"], "icecream": ["🍦", "*lick lick*"], "chocolate": ["🍫", "*lick lick*"],
+	"candy": ["🍬", "*lick lick*"], "lollipop": ["🍭", "*lick lick*"], "popcorn": ["🍿", "*crunch crunch*"], "pretzel": ["🥨", "*crunch crunch*"],
+	"banana": ["🍌", "*nom nom nom*"], "lemon": ["🍋", "*slurp slurp*"], "watermelon": ["🍉", "*nom nom nom*"],
+	"peach": ["🍑", "*nom nom nom*"], "pear": ["🍐", "*crunch crunch*"], "cherry": ["🍒", "*nom nom nom*"], "pineapple": ["🍍", "*nom nom nom*"],
+	"mango": ["🥭", "*nom nom nom*"], "potato": ["🥔", "*nom nom nom*"], "tomato": ["🍅", "*nom nom nom*"], "cucumber": ["🥒", "*crunch crunch*"],
+	"mushroom": ["🍄", "*nom nom nom*"], "pumpkin": ["🎃", "*nom nom nom*"], "honey": ["🍯", "*lick lick*"], "juice": ["🧃", "*slurp slurp*"],
+	"smoothie": ["🥤", "*slurp slurp*"], "cocoa": ["☕", "*slurp slurp*"], "lemonade": ["🍋", "*slurp slurp*"],
+}
+
+# First names she knows (none that are also everyday words).
+const NAMES := ["emma", "olivia", "ava", "sophia", "mia", "isabella", "charlotte", "amelia", "harper", "evelyn", "abigail", "emily", "ella", "elizabeth", "sofia", "avery", "scarlett", "victoria", "madison", "luna", "chloe", "layla", "riley", "zoe", "nora", "lily", "hannah", "lucy", "stella", "aurora", "natalie", "leah", "ellie", "paisley", "audrey", "skylar", "savannah", "anna", "maya", "sarah", "emilia", "molly", "sadie", "ivy", "piper", "clara", "alice", "jessica", "megan", "katie", "lauren", "bella", "ruby", "daisy", "poppy", "freya", "ruthie", "norakate",
+	"liam", "noah", "oliver", "james", "elijah", "william", "henry", "lucas", "benjamin", "theodore", "jack", "levi", "alexander", "mason", "ethan", "jacob", "michael", "daniel", "logan", "jackson", "sebastian", "aiden", "matthew", "samuel", "david", "joseph", "carter", "owen", "wyatt", "john", "luke", "gabriel", "anthony", "isaac", "grayson", "dylan", "leo", "jayden", "julian", "lincoln", "joshua", "andrew", "nathan", "adam", "tyler", "ryan", "connor", "caleb", "thomas", "charlie", "oscar", "finn", "eli", "max", "sam", "ben", "tom", "pj"]
+
 # Animal names she knows: name -> emoji.
 const ANIMALS := {
 	"horse": "🐴", "cow": "🐮", "pig": "🐷", "sheep": "🐑", "duck": "🦆", "fish": "🐟", "frog": "🐸", "bear": "🐻",
@@ -641,7 +662,7 @@ func _canon(w: String) -> String:
 		return ALIASES[w] if ALIASES[w] != "" else w
 	if w.ends_with("s") and (ANIMALS.has(w.trim_suffix("s")) or REPLIES.has(w.trim_suffix("s"))) and not REPLIES.has(w):
 		return w.trim_suffix("s")
-	if REPLIES.has(w) or ANIMALS.has(w) or FILLER.has(w) or _is_food_word(w) or w.length() < 5 or not (w[0] >= "a" and w[0] <= "z"):
+	if REPLIES.has(w) or ANIMALS.has(w) or FILLER.has(w) or NAMES.has(w) or _is_food_word(w) or w.length() < 5 or not (w[0] >= "a" and w[0] <= "z"):
 		return w
 	for known in ANIMALS:
 		if absi(known.length() - w.length()) <= 1 and _edit_distance(w, known) <= 1:
@@ -1571,6 +1592,17 @@ func _eat_sound(text: String, words: PackedStringArray) -> String:
 		for food in EAT_SOUNDS[sound]:
 			if words.has(food) or words.has(food + "s") or words.has(food + "es"):
 				return sound
+	for w in words:
+		var food := _food_word(w)
+		if food != "":
+			return String(FOODS[food][1])
+	return ""
+
+# The food she knows for this word ("pizzas" -> "pizza"), or "".
+func _food_word(w: String) -> String:
+	for base in [w, w.trim_suffix("s"), w.trim_suffix("es")]:
+		if FOODS.has(base):
+			return base
 	return ""
 
 # True for foods she knows by name, so "carrot" is never "fixed" into "parrot".
@@ -1580,6 +1612,9 @@ func _is_food_word(w: String) -> bool:
 		for b in bases:
 			if EAT_SOUNDS[sound].has(b):
 				return true
+	for b in bases:
+		if FOODS.has(b):
+			return true
 	for emoji in PetalState.TREAT_WORDS:
 		for b in bases:
 			if PetalState.TREAT_WORDS[emoji].has(b):
@@ -1743,6 +1778,16 @@ func _reply_to(text: String) -> String:
 		return "Your name is %s! 💖 I know you!" % PetalState.player_name
 	if mine != "" and words.has(mine):
 		return "%s! 💖 That's you! Hi %s! 🐾" % [PetalState.player_name, PetalState.player_name]
+	# A first name: she says hi to them.
+	for w in words:
+		if NAMES.has(w) and w != "pj" and w != "ruthie" and w != "norakate":
+			if w == PetalState.pet_name.to_lower():
+				return "That's MY name! 😸 %s is me!" % PetalState.pet_name
+			var intro := has.call(["my", "name", "called", "im", "am"])
+			var cap := w.capitalize()
+			if intro:
+				return String(["%s! 💖 What a pretty name! Hi %s! 🐾" % [cap, cap], "Hi %s! 😻 I'm %s! Nice to meet you!" % [cap, PetalState.pet_name]].pick_random())
+			return String(["%s! 💖 I know a %s! Hi %s! 🐾" % [cap, cap, cap], "Ooh, %s! 😸 What a nice name!" % cap, "Hi %s! 👋💕 Is %s your friend?" % [cap, cap]].pick_random())
 	# LGBTQIA+ words: warm and simple, never mean, and what she hears stays between us.
 	var pride := _pride_reply(words)
 	if pride != "":
@@ -1900,6 +1945,11 @@ func _reply_to(text: String) -> String:
 	for w in words:
 		if REPLIES.has(w):
 			return String(REPLIES[w]).replace("%NAME%", PetalState.pet_name).replace("%YOU%", _you()).replace("%TODAY%", _summary_for(_today_key()))
+	for w in words:
+		var food := _food_word(w)
+		if food != "":
+			var comment: String = String(["Yummy!", "That sounds so good!", "Can I have some?", "Share with me?"].pick_random())
+			return "%s%s! %s 😋" % [food.capitalize(), FOODS[food][0], comment]
 	for w in words:
 		if ANIMALS.has(w):
 			var fact: String = ANIMAL_FACTS.get(w, "")
