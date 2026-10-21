@@ -144,6 +144,29 @@ const FAV_CATEGORY_ALIASES := {
 	"sweet": "candy", "treat": "treat",
 }
 
+# Eating sounds by food, and what each kind of pet does when it is delighted.
+const EAT_SOUNDS := {
+	"*crunch crunch*": ["carrot", "apple", "cookie", "cracker", "chip", "popcorn", "pretzel", "nut", "peanut", "seed", "cereal", "toast", "cucumber", "celery", "bone", "corn", "lettuce", "broccoli", "grape", "blueberry", "sunflower", "wheat", "chestnut"],
+	"*slurp slurp*": ["milk", "juice", "water", "soup", "tea", "smoothie", "lemonade", "cocoa"],
+	"*chomp chomp*": ["meat", "fish", "tuna", "chicken", "steak", "burger", "bacon", "sausage", "sandwich", "shrimp", "drumstick"],
+	"*nom nom nom*": ["cake", "muffin", "cupcake", "pie", "bread", "pizza", "pasta", "pancake", "waffle", "noodle", "strawberry", "fruit", "food", "dinner", "lunch", "breakfast"],
+	"*lick lick*": ["candy", "chocolate", "honey", "lollipop", "ice", "cream", "dessert"],
+}
+const EAT_EMOJI_SOUNDS := {
+	"*crunch crunch*": ["🥕", "🍎", "🌽", "🥬", "🥦", "🌰", "🥜", "🌻", "🌾", "🍇", "🫐", "🦴"],
+	"*chomp chomp*": ["🐟", "🐠", "🍤", "🍖", "🥩", "🍗"],
+	"*slurp slurp*": ["🥛"],
+	"*nom nom nom*": ["🍓"],
+}
+const DELIGHT := {
+	"cat": ["*purrs and rubs against you*", "*does a happy tail swish*"],
+	"dog": ["*rolls over and wags the whole body*", "*spins in a circle and loves it*"],
+	"bird": ["*flaps wings and chirps happily*", "*hops from foot to foot*"],
+	"gerbil": ["*zooms around the wheel*", "*stuffs it in cheeks and squeaks*"],
+	"bunny": ["*binkies with joy*", "*does a happy flop*"],
+}
+const GIVE_WORDS := ["give", "gave", "gives", "giving", "here", "take", "feed", "fed", "offer", "have", "hand", "share", "serve", "bring", "brought", "eat", "ate", "yummy", "tasty", "dinner", "lunch", "breakfast"]
+
 # Words she knows, and what she says about them.
 const REPLIES := {
 	"name": "I'm %NAME%! 🐱", "activities": "I love activities! 📅 School, sports, music...",
@@ -263,6 +286,7 @@ var side_cats: Array[Button] = []
 var emoji_buttons: Array[Button] = []
 var picked_emoji := ""
 var riddle_answer: Array = []
+var asked_house_category := "" # house question she texted and is waiting on
 var riddle_reveal := ""
 var chat_input: LineEdit = null
 var run_id := 0
@@ -595,7 +619,7 @@ func _canon(w: String) -> String:
 		return ALIASES[w] if ALIASES[w] != "" else w
 	if w.ends_with("s") and (ANIMALS.has(w.trim_suffix("s")) or REPLIES.has(w.trim_suffix("s"))) and not REPLIES.has(w):
 		return w.trim_suffix("s")
-	if REPLIES.has(w) or ANIMALS.has(w) or FILLER.has(w) or w.length() < 5 or not (w[0] >= "a" and w[0] <= "z"):
+	if REPLIES.has(w) or ANIMALS.has(w) or FILLER.has(w) or _is_food_word(w) or w.length() < 5 or not (w[0] >= "a" and w[0] <= "z"):
 		return w
 	for known in ANIMALS:
 		if absi(known.length() - w.length()) <= 1 and _edit_distance(w, known) <= 1:
@@ -1288,7 +1312,14 @@ func _random_text() -> void:
 	if stage.visible:
 		return
 	var text: String
-	match randi() % 3:
+	match randi() % 5:
+		3:
+			text = _house_memory_line()
+			if text == "":
+				text = EMOJI_TEXTS.pick_random()
+		4:
+			asked_house_category = PetalState.HOUSE_CHOICES.keys().pick_random()
+			text = "What %s would you pick for my house? 🏡" % {"color": "colour", "pattern": "pattern", "height": "height", "post": "scratching post"}[asked_house_category]
 		0:
 			var treats: Array = PetalState.treat_emojis()
 			text = ["I'm hungry! Can I have a %s? 🥺", "Yum, I'm thinking about %s 😋", "Snack time? %s please!"].pick_random() % treats.pick_random()
@@ -1319,7 +1350,10 @@ func _open_phone() -> void:
 		PetSafety.grownup_overlay(self, false)
 	if chat_box.get_child_count() == 0:
 		var memory := ""
-		if not PetalState.remembered_likes.is_empty() and randf() < 0.5:
+		var house_line := _house_memory_line()
+		if house_line != "" and randf() < 0.3:
+			memory = " " + house_line
+		elif not PetalState.remembered_likes.is_empty() and randf() < 0.5:
 			memory = " I remember you like %s! 💕" % String(PetalState.remembered_likes.pick_random())
 		_text_from_pet("Hi %s! 🐾%s Today: %s" % [_you(), memory, _summary_for(_today_key())])
 
@@ -1532,6 +1566,56 @@ func _favourite_reply(words: PackedStringArray) -> String:
 		return "You!! 💕😻 You're my favourite %s in the whole world! Who's yours?" % category
 	return "My favourite %s is %s! %s What's yours? 😸" % [category, answer, emoji]
 
+func _delight() -> String:
+	var options: Array = DELIGHT.get(_pet_species(), DELIGHT["cat"])
+	return String(options.pick_random())
+
+# The sound of eating this food ("*crunch crunch*"), found from an emoji or a word.
+func _eat_sound(text: String, words: PackedStringArray) -> String:
+	for sound in EAT_EMOJI_SOUNDS:
+		for e in EAT_EMOJI_SOUNDS[sound]:
+			if text.contains(e):
+				return sound
+	for sound in EAT_SOUNDS:
+		for food in EAT_SOUNDS[sound]:
+			if words.has(food) or words.has(food + "s") or words.has(food + "es"):
+				return sound
+	return ""
+
+# True for foods she knows by name, so "carrot" is never "fixed" into "parrot".
+func _is_food_word(w: String) -> bool:
+	var bases := [w, w.trim_suffix("s"), w.trim_suffix("es")]
+	for sound in EAT_SOUNDS:
+		for b in bases:
+			if EAT_SOUNDS[sound].has(b):
+				return true
+	for emoji in PetalState.TREAT_WORDS:
+		for b in bases:
+			if PetalState.TREAT_WORDS[emoji].has(b):
+				return true
+	return false
+
+# Giving her food that isn't one of her treats: she eats it and loves it.
+func _give_food_reply(text: String, words: PackedStringArray) -> String:
+	var sound := _eat_sound(text, words)
+	if sound == "":
+		return ""
+	# "Do you want a cookie?" - yes please!
+	if words.has("want") and words.has("you") and not words.has("i"):
+		return "Yes please!! 🤤 %s Yummy! 😋 %s" % [sound, _delight()]
+	var gave := text.strip_edges().begins_with("*")
+	for w in GIVE_WORDS:
+		if words.has(w):
+			gave = true
+	if words.size() <= 2:
+		gave = true
+	for no in LIKE_WORDS + ["want", "hate", "dislike", "favorite", "favourite", "fav", "what", "why", "how", "when", "where", "do", "does", "can"]:
+		if words.has(no):
+			gave = false
+	if not gave:
+		return ""
+	return "%s Yummy! 😋 %s" % [sound, _delight()]
+
 # A sum like "56x189", "7 + 8", "9 times 6", or asking for homework help.
 func _is_math(text: String) -> bool:
 	var t := text.to_lower().replace("×", "x").replace("÷", "/")
@@ -1541,6 +1625,34 @@ func _is_math(text: String) -> bool:
 		return true
 	var words := _words(text)
 	return (words.has("homework") and (words.has("do") or words.has("help") or words.has("answer"))) or (words.has("answer") and words.has("to") and words.has("what"))
+
+# What the survey has already found out, said as a memory ("" if nothing yet).
+func _house_memory_line() -> String:
+	var known := PetalState.house_known_for_pet()
+	var wants := PetalState.house_wants_for_pet()
+	var found: Array[String] = []
+	for category in PetalState.HOUSE_CHOICES:
+		if known.get(category, false):
+			found.append(String(wants[category]))
+	if found.is_empty():
+		return ""
+	return "Remember, I want a house that's %s! 🏡💕" % ", ".join(found)
+
+# Her question was "what would you pick for my house?"; remember their pick.
+func _house_answer(words: Array) -> String:
+	var category := asked_house_category
+	for choice in PetalState.HOUSE_CHOICES[category]:
+		if not words.has(choice):
+			continue
+		asked_house_category = ""
+		var label: String = {"height": "%s houses" % choice, "post": "%s posts" % choice}.get(category, choice)
+		PetalState.remember_like(label)
+		if PetalState.house_wants_for_pet()[category] == choice:
+			PetalState.house_known_for_pet()[category] = true
+			PetalState.save_game()
+			return "Ooh, %s! 😻 That's what I want too!! I'll remember you like %s! 💕" % [choice, label]
+		return "Ooh, %s! 😺 I'll remember you like %s! 💕" % [choice, label]
+	return ""
 
 # Does she love this house choice? Telling you also fills in her wish list.
 func _house_survey_reply(words: Array) -> String:
@@ -1568,6 +1680,9 @@ func _reply_to(text: String) -> String:
 	var favourite := _favourite_reply(words)
 	if favourite != "":
 		return favourite
+	var fed := _give_food_reply(text, words) if _treat_shown(text, words) == "" else ""
+	if fed != "":
+		return fed
 	# Sums ("56x189", "7 plus 8") and homework help: she can't do your homework.
 	if _is_math(text):
 		return "Ummmmm... %s? 🤔%s" % [_pet_sound(), _pet_face()]
@@ -1586,6 +1701,10 @@ func _reply_to(text: String) -> String:
 		riddle_answer = []
 		if not has.call(["joke", "riddle", "bored", "boring"]):
 			return ("Yes!! You got it! 🎉😻 It's %s!" % answer) if solved else ("Nope! 😹 It's %s!" % answer)
+	if asked_house_category != "":
+		var picked := _house_answer(words)
+		if picked != "":
+			return picked
 	var mine := PetalState.player_name.to_lower()
 	if has.call(["name", "who"]) and has.call(["my", "me", "i", "user", "your"]) and not has.call(["pet", "her"]):
 		if mine == "":
@@ -1622,8 +1741,10 @@ func _reply_to(text: String) -> String:
 		return String(["Aww 😿 I'll protect you! *puffs up fluffy* 🐱 What's scary?", "Don't worry! 🛡️ I'm a very brave kitty. What's wrong?"].pick_random())
 	if has.call(["secret"]):
 		return "Ooooh a secret! 🤫😼 My lips are sealed! Tell me!"
-	if has.call(["hug", "hugs", "cuddle", "snuggle"]):
-		return "*hugs you tight* 🤗😻 Purrrrr!"
+	if has.call(["hug", "hugs", "hugged", "cuddle", "snuggle", "squeeze"]):
+		return String(["*hugs you back tight* 🤗 %s", "*snuggles right in* 🤗 %s"].pick_random()) % _delight()
+	if has.call(["pat", "pats", "scratch", "belly", "rub", "stroke", "tickle"]):
+		return String(["*leans into it* 🥰 %s", "*loves the attention* 🥰 %s"].pick_random()) % _delight()
 	if has.call(["kiss", "kisses"]):
 		return "Mwah! 😘😻 *blushes*"
 	if has.call(["poop", "fart", "toot", "burp"]):
@@ -1634,7 +1755,8 @@ func _reply_to(text: String) -> String:
 		var likes := PetalState.remembered_likes
 		if likes.is_empty():
 			return "Of course I remember you, %s! 💕 Tell me what you like and I'll never forget!" % _you()
-		return "Of course I remember you, %s! 💕 You like %s!" % [_you(), _list_words(likes)]
+		var house_line := _house_memory_line()
+		return "Of course I remember you, %s! 💕 You like %s!%s" % [_you(), _list_words(likes), (" " + house_line) if house_line != "" else ""]
 	if has.call(["chalk", "chalkboard"]) or (has.call(["nail", "nails"]) and has.call(["board", "bored", "chalk"])):
 		return "EEEEK! 😖🙀 Nails on a chalkboard?! That sound makes my whiskers curl! Skreeeech! 😿"
 	if (has.call(["boy"]) and has.call(["friend"])) or has.call(["boyfriend"]):
@@ -1692,10 +1814,10 @@ func _reply_to(text: String) -> String:
 	var treat := _treat_shown(text, words)
 	if treat != "":
 		if treat == PetalState.favorite_treat():
-			return "OMG!!! 😻🎉 My FAVOURITE, %s!!! I'm SO happy!!! 💖💖💖" % treat
+			return "%s OMG!!! 😻🎉 My FAVOURITE, %s!!! I'm SO happy!!! 💖💖💖 %s" % [_eat_sound(text, words) if _eat_sound(text, words) != "" else "*nom nom nom*", treat, _delight()]
 		if PetalState.treat_emojis().has(treat):
-			return "Yum! %s😋 Nice, but it's not my very favourite!" % treat
-		return "Hmm, %s isn't a treat for me 😹" % treat
+			return "%s Yum! %s😋 Nice, but it's not my very favourite!" % [_eat_sound(text, words) if _eat_sound(text, words) != "" else "*nom nom nom*", treat]
+		return "*sniff sniff* Hmm, %s isn't really a treat for me 😹 Thank you though!" % treat
 	if has.call(["stop"]) and has.call(["light", "lights"]):
 		return "A stop light! 🚦 Red means stop, yellow means slow, green means go!"
 	for w in words:
