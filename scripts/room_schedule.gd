@@ -536,18 +536,50 @@ func _cat_button(face: String) -> Button:
 	cat.focus_mode = Control.FOCUS_NONE
 	cat.custom_minimum_size = Vector2(48, 44)
 	cat.add_theme_font_size_override("font_size", 30)
+	cat.set_meta("face", face)
 	cat.pressed.connect(_cat_says.bind(cat))
 	side_cats.append(cat)
 	return cat
 
 func _cat_says(cat: Button) -> void:
+	var empties := _empty_days()
+	var no_place := _no_place_events()
 	var sound: String = ["Meow! 😺", "Purrrr... 😻", "Meow meow! 😸", "Purr purr 💖", "Mew! 🎀"].pick_random()
+	if no_place > 0:
+		sound = ["HISSSS! 😾 Where are you going?!", "Hssss! 😾 %d plans have no place!" % no_place, "MROWW! 😾 Add where you're going! 📍"].pick_random()
+		cat.text = "😾"
+	elif empties > 0:
+		sound = ["HISSS! 😾 Fill in your calendar!", "Grrr! 😾 %d days are empty!" % empties, "MROWW! 😾 Plan your week!", "Hmph! 😾 So many empty days!"].pick_random()
+		cat.text = "😾"
 	Feedback.pop(self, sound, cat.global_position + Vector2(0, -40))
 	cat.pivot_offset = cat.size / 2.0
 	var tween := create_tween()
 	tween.tween_property(cat, "rotation", 0.3, 0.07)
 	tween.tween_property(cat, "rotation", -0.3, 0.1)
 	tween.tween_property(cat, "rotation", 0.0, 0.07)
+
+# How many days of the shown week have nothing planned.
+func _empty_days() -> int:
+	var count := 0
+	for key in _week_of(selected):
+		if _events_on(key).is_empty():
+			count += 1
+	return count
+
+# How many plans in the shown week say what but not where.
+func _no_place_events() -> int:
+	var count := 0
+	for key in _week_of(selected):
+		for entry in _events_on(key):
+			if String(entry["place"]) == "":
+				count += 1
+	return count
+
+# Cats are cross while the week has empty days or plans with no place, happy once it is all filled in.
+func _update_cat_moods() -> void:
+	var mad := _empty_days() > 0 or _no_place_events() > 0
+	for cat in side_cats:
+		cat.text = "😾" if mad else String(cat.get_meta("face"))
 
 # One time like "8", "8:30", "800" or "1030" with an optional am/pm -> minutes
 # since midnight, or -1 if it is not a time.
@@ -772,9 +804,24 @@ func _build_planner() -> void:
 	grid = GridContainer.new()
 	grid.columns = 7
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 4)
 	grid.add_theme_constant_override("v_separation", 4)
-	left.add_child(grid)
+	var middle := HBoxContainer.new()
+	middle.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	middle.add_theme_constant_override("separation", 4)
+	left.add_child(middle)
+	var left_cats := VBoxContainer.new()
+	left_cats.alignment = BoxContainer.ALIGNMENT_CENTER
+	middle.add_child(left_cats)
+	for face in ["😸", "🐈", "😽"]:
+		left_cats.add_child(_cat_button(face))
+	middle.add_child(grid)
+	var right_cats := VBoxContainer.new()
+	right_cats.alignment = BoxContainer.ALIGNMENT_CENTER
+	middle.add_child(right_cats)
+	for face in ["😼", "🐱", "😺"]:
+		right_cats.add_child(_cat_button(face))
 	var cats := HBoxContainer.new()
 	cats.alignment = BoxContainer.ALIGNMENT_CENTER
 	cats.add_theme_constant_override("separation", 10)
@@ -914,6 +961,7 @@ func _refresh_calendar() -> void:
 			cell.add_theme_stylebox_override(state, style)
 		cell.pressed.connect(_select_date.bind(key))
 		grid.add_child(cell)
+	_update_cat_moods()
 	_refresh_day()
 
 func _select_date(key: String) -> void:
@@ -1715,6 +1763,44 @@ func _give_food_reply(text: String, words: PackedStringArray) -> String:
 		return ""
 	return "%s Yummy! 😋 %s" % [sound, _delight()]
 
+# Easy sums she gets right; big or tricky ones she confidently gets wrong.
+func _math_reply(text: String) -> String:
+	var t := text.to_lower().replace("×", "x").replace("÷", "/").replace(",", "")
+	var rx := RegEx.new()
+	rx.compile("(\\d+)\\s*(x|\\*|\\+|-|/|times|plus|minus|multiplied by|divided by|take away|over)\\s*(\\d+)")
+	var m := rx.search(t)
+	# Asking her to do your homework is cheating, so every answer is wrong.
+	var cheating := t.contains("homework") or t.contains("do my")
+	if m == null:
+		if cheating:
+			return "%d! 😸%s" % [randi_range(2, 99), _pet_face()]
+		return "%s! 😸%s" % [_pet_sound().capitalize(), _pet_face()]
+	var a := m.get_string(1).to_int()
+	var b := m.get_string(3).to_int()
+	var op := m.get_string(2)
+	var answer := 0
+	var simple := false
+	if ["+", "plus"].has(op):
+		answer = a + b
+		simple = a <= 20 and b <= 20
+	elif ["-", "minus", "take away"].has(op):
+		answer = a - b
+		simple = a <= 20 and b <= a
+	elif ["x", "*", "times", "multiplied by"].has(op):
+		answer = a * b
+		simple = a <= 10 and b <= 10
+	else:
+		if b == 0:
+			return "Divide by zero?! 🤯 My brain went poof! %s" % _pet_face()
+		answer = a / b
+		simple = a % b == 0 and b <= 10 and a <= 100
+	if simple and not cheating:
+		return "%d! 😸%s" % [answer, _pet_face()]
+	var wrong := answer
+	while wrong == answer:
+		wrong = answer + (randi_range(1, 9) * (1 if randf() < 0.5 else -1)) * maxi(1, str(absi(answer)).length() - 1)
+	return "%d! 😸%s" % [wrong, _pet_face()]
+
 # A sum like "56x189", "7 + 8", "9 times 6", or asking for homework help.
 func _is_math(text: String) -> bool:
 	var t := text.to_lower().replace("×", "x").replace("÷", "/")
@@ -1824,7 +1910,7 @@ func _reply_to(text: String) -> String:
 		return fed
 	# Sums ("56x189", "7 plus 8") and homework help: she can't do your homework.
 	if _is_math(text):
-		return "Ummmmm... %s? 🤔%s" % [_pet_sound(), _pet_face()]
+		return _math_reply(text)
 	# Said they like trump: she stops talking for the rest of this session.
 	if PetalState.snubbing_player:
 		return String(["Booooo! 👎", "Hisssssss! 😾", "Booooo! Hiiisssss! 😾👎", "😾😾😾 Hissssss!", "Boooooo! 😡"].pick_random())
