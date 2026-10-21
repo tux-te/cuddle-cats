@@ -410,6 +410,7 @@ func _init_pet_records() -> void:
 signal names_changed
 
 var player_name := ""
+var snubbing_player := false   # not saved: the pet stops talking until the game is closed
 var nicknames := {}
 
 var pet_name: String:

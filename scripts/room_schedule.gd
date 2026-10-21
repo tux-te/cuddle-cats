@@ -1363,6 +1363,9 @@ func _reply_to(text: String) -> String:
 			if words.has(w):
 				return true
 		return false
+	# Said they like trump: she stops talking for the rest of this session.
+	if PetalState.snubbing_player:
+		return String(["Booooo! 👎", "Hisssssss! 😾", "Booooo! Hiiisssss! 😾👎", "😾😾😾 Hissssss!", "Boooooo! 😡"].pick_random())
 	if riddle_reveal != "" and has.call(["answer"]) or (riddle_reveal != "" and has.call(["tell"]) and has.call(["me"])):
 		var told := riddle_reveal
 		riddle_reveal = ""
@@ -1389,6 +1392,11 @@ func _reply_to(text: String) -> String:
 	if words.has("trump"):
 		if has.call(["card", "cards", "suit", "game"]):
 			return "A trump card! 🃏 Ooh, a clever one!"
+		var liked_it: bool = has.call(LIKE_WORDS + ["support", "fan", "vote", "voted", "great", "best", "awesome", "good"])
+		var negated: bool = has.call(["not", "dont", "no", "never", "hate", "dislike", "cant", "wont", "isnt"])
+		if liked_it and not negated:
+			PetalState.snubbing_player = true
+			return "WHAT?! 😾😡 You LIKE that?! Hiiissssss! I'm not talking to you anymore! Booooo! 👎"
 		if has.call(["lying", "jerk", "criminal", "bad", "mean", "hate"]):
 			return String(["I know!! 😾 A lying jerk and a criminal! Hiiiisssss! 🤢 Booooo! 👎", "YES! 😡 Lying jerk! Criminal! Ewwwww! 🤮 Hissssss! 😾", "Totally! 😾😾 Trump is a lying jerk and a criminal! Yuck! 🤢 Boo! 👎"].pick_random())
 		return String(["Hiiiisssssss! 😾 Yuck! Ewwwww! 🤢 Booooo! 👎", "Ewwwww! 🤮 Yuck yuck yuck! 😾 Booooo! 👎👎", "Booooo! 😡 Hissssss! 😾 A lying jerk and a criminal! 🙅", "Yuck! 🤢 Hiiiissss! 😾😾 Boo boo boo! 👎", "Hate hate hate! 😡 Lying jerk! Criminal! Hissssss! 😾"].pick_random())
