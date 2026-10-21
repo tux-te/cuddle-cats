@@ -1211,7 +1211,7 @@ func _load_house(saved) -> void:
 			target[id] = entry
 
 # Solving a mystery case (see room_mystery.gd); coins only the first time.
-func solve_case(id: String) -> void:
+func solve_case(id: String, prize: int = 5) -> void:
 	var first := not solved_cases.has(id)
 	if first:
 		solved_cases.append(id)
@@ -1219,7 +1219,7 @@ func solve_case(id: String) -> void:
 	stats_changed.emit()
 	award_sticker("detective")
 	if first:
-		add_coins(5)
+		add_coins(prize)
 	save_game()
 
 # Finishing a whole week of the planner (see room_schedule.gd).

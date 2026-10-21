@@ -4,6 +4,11 @@ const Feedback = preload("res://scripts/room_feedback.gd")
 const PetCameo = preload("res://scripts/pet_cameo.gd")
 const Confetti = preload("res://scripts/confetti.gd")
 
+const SUSPECT_ART := {
+	"mimi": "field_mouse", "rusty": "puppy", "snowy": "bunny", "woolly": "lamb", "leo": "lion_guardian",
+	"tilly": "turtle", "sid": "snail", "fox": "fox", "pip": "chick", "henny": "chick", "bruno": "panda",
+}
+
 const PET_SIZE := Vector2(130, 120)
 
 # Each case: something goes missing, 4 suspects, and clues that rule suspects
@@ -11,6 +16,54 @@ const PET_SIZE := Vector2(130, 120)
 # unlocks after every clue is found, and a wrong guess is explained by the
 # clue that proves that suspect innocent.
 const CASES := [
+	{
+		"id": "biscuit", "emoji": "🐮", "title": "Where is Biscuit the Cow?", "prize": 15,
+		"bg": "res://Sprites/backgrounds/garden_sunny.jpg",
+		"story": "Oh no! Biscuit the cow is MISSING from the barn! Everyone says they were somewhere else that night. Explore the farm for clues. Whose story is NOT true?",
+		"suspects": [
+			{"id": "woolly", "emoji": "🐑", "name": "Woolly", "says": "I was fast asleep up in the barn loft all night."},
+			{"id": "rosie", "emoji": "🐷", "name": "Rosie", "says": "I was rolling in the mud puddle by the pond."},
+			{"id": "fox", "emoji": "🦊", "name": "Fox", "says": "I was across the river, digging for worms."},
+			{"id": "mimi", "emoji": "🐭", "name": "Mimi", "says": "I was hiding in the hay because of the storm."},
+		],
+		"clues": [
+			{"emoji": "🪜", "at": Vector2(0.14, 0.4), "text": "A loud SNORE is coming from the loft. Woolly really was asleep up there!"},
+			{"emoji": "🐾", "at": Vector2(0.38, 0.75), "text": "Wet fox prints and fresh worm holes on the far side of the river. Fox's story is TRUE!"},
+			{"emoji": "🌾", "at": Vector2(0.62, 0.45), "text": "A tiny mouse nest with a cosy blanket in the hay. Mimi's story is TRUE!"},
+			{"emoji": "💧", "at": Vector2(0.86, 0.78), "text": "The mud puddle is bone DRY! Nobody was rolling in it. Rosie's story is NOT true!"},
+		],
+		"culprit": "rosie",
+		"alibis": {
+			"woolly": "Woolly's story is TRUE. The snoring is coming from the loft!",
+			"fox": "Fox's story is TRUE. The fox prints are across the river!",
+			"mimi": "Mimi's story is TRUE. Her nest is in the hay!",
+		},
+		"confession": "Oink... Biscuit and I went to the big mud spa behind the barn. I forgot to tell anyone! Biscuit is safe. 🐮",
+	},
+	{
+		"id": "coins", "emoji": "🪙", "title": "The Missing Treat Coins", "prize": 15,
+		"bg": "res://Sprites/backgrounds/living_room.jpg",
+		"story": "Oh no! The Treat Coin jar is EMPTY! Everyone says where they were all day. Explore the house for clues. Whose story is NOT true?",
+		"suspects": [
+			{"id": "leo", "emoji": "🦁", "name": "Leo", "says": "I was snoozing on the cushion in the sunny window."},
+			{"id": "coco", "emoji": "🐵", "name": "Coco", "says": "I was swinging on the garden swing all day."},
+			{"id": "percy", "emoji": "🐧", "name": "Percy", "says": "I was sliding around on the ice pond."},
+			{"id": "tilly", "emoji": "🐢", "name": "Tilly", "says": "I was slowly walking to the kitchen for lunch."},
+		],
+		"clues": [
+			{"emoji": "☀️", "at": Vector2(0.16, 0.35), "text": "Golden mane hairs on the warm cushion, and a snore! Leo's story is TRUE!"},
+			{"emoji": "🧊", "at": Vector2(0.4, 0.78), "text": "Belly-slide marks all over the ice. Percy's story is TRUE!"},
+			{"emoji": "👣", "at": Vector2(0.64, 0.6), "text": "A slow, slow trail of turtle footprints toward the kitchen. Tilly's story is TRUE!"},
+			{"emoji": "🕸️", "at": Vector2(0.88, 0.3), "text": "Cobwebs all over the swing! Nobody has swung on it. Coco's story is NOT true!"},
+		],
+		"culprit": "coco",
+		"alibis": {
+			"leo": "Leo's story is TRUE. His mane hairs are on the cushion!",
+			"percy": "Percy's story is TRUE. The slide marks are on the ice!",
+			"tilly": "Tilly's story is TRUE. Her footprints go to the kitchen!",
+		},
+		"confession": "Ooh ooh... I wanted coins to buy a big bunch of bananas. I'll put them back!",
+	},
 	{
 		"id": "cookies", "emoji": "🍪", "title": "The Missing Cookies",
 		"story": "🫙 Oh no! The cookie jar is EMPTY! Who took the cookies?",
@@ -137,6 +190,8 @@ var accuse_button: Button
 var next_button: Button
 var bubble: Label
 var petal: TextureRect
+var scene_panel: Control
+var who_label: Label
 var clue_buttons: Array[Button] = []
 var suspect_buttons := {}
 
@@ -194,11 +249,18 @@ func _build() -> void:
 	clue_row.add_theme_constant_override("separation", 14)
 	box.add_child(clue_row)
 
+	scene_panel = Control.new()
+	scene_panel.custom_minimum_size = Vector2(0, 280)
+	scene_panel.clip_contents = true
+	scene_panel.visible = false
+	box.add_child(scene_panel)
+
 	notebook_label = _label(18, Color(0.2, 0.2, 0.3))
 	notebook_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	box.add_child(notebook_label)
 
-	box.add_child(_label(16, Color(0.4, 0.4, 0.6), "🕵️ Who did it? Think about the clues, then tap a suspect"))
+	who_label = _label(16, Color(0.4, 0.4, 0.6))
+	box.add_child(who_label)
 	suspect_row = HBoxContainer.new()
 	suspect_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	suspect_row.add_theme_constant_override("separation", 10)
@@ -245,15 +307,41 @@ func _start_case(index: int) -> void:
 
 	for child in clue_row.get_children():
 		child.queue_free()
+	for child in scene_panel.get_children():
+		child.queue_free()
 	clue_buttons.clear()
+	var has_scene := case_data.has("bg")
+	scene_panel.visible = has_scene
+	clue_row.visible = not has_scene
+	if has_scene:
+		var backdrop := TextureRect.new()
+		backdrop.texture = load(String(case_data["bg"]))
+		backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+		scene_panel.add_child(backdrop)
 	var clues: Array = case_data["clues"]
 	for i in range(clues.size()):
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(150, 56)
 		button.add_theme_font_size_override("font_size", 32)
 		button.pressed.connect(_on_clue.bind(i))
-		clue_row.add_child(button)
+		if has_scene:
+			var at: Vector2 = clues[i]["at"]
+			button.anchor_left = at.x
+			button.anchor_right = at.x
+			button.anchor_top = at.y
+			button.anchor_bottom = at.y
+			button.offset_left = -45
+			button.offset_right = 45
+			button.offset_top = -30
+			button.offset_bottom = 30
+			button.custom_minimum_size = Vector2(90, 60)
+			scene_panel.add_child(button)
+		else:
+			clue_row.add_child(button)
 		clue_buttons.append(button)
+	who_label.text = "🗣️ Everyone told a story. Which story do the clues show is NOT true?" if case_data.has("bg") else "🕵️ Who did it? Think about the clues, then tap a suspect"
 
 	for child in suspect_row.get_children():
 		child.queue_free()
@@ -261,12 +349,16 @@ func _start_case(index: int) -> void:
 	for suspect in case_data["suspects"]:
 		var button := Button.new()
 		button.toggle_mode = true
-		button.custom_minimum_size = Vector2(230, 150)
+		button.custom_minimum_size = Vector2(230, 200 if suspect.has("says") else 150)
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.add_theme_font_size_override("font_size", 18)
-		button.text = "%s\n%s\n%s" % [suspect["emoji"], suspect["name"], suspect["icons"]]
-		if suspect.has("art"):
-			button.icon = load(String(suspect["art"]))
+		var detail := "“%s”" % suspect["says"] if suspect.has("says") else String(suspect["icons"])
+		button.text = "%s\n%s\n%s" % [suspect["emoji"], suspect["name"], detail]
+		var art := String(suspect.get("art", ""))
+		if art == "" and SUSPECT_ART.has(suspect["id"]):
+			art = "res://Sprites/mystery/%s.png" % SUSPECT_ART[suspect["id"]]
+		if art != "":
+			button.icon = load(art)
 			button.expand_icon = true
 			button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
@@ -315,6 +407,9 @@ func _on_clue(index: int) -> void:
 
 func _on_suspect(id: String) -> void:
 	picked = id
+	for suspect in case_data["suspects"]:
+		if suspect["id"] == id and suspect.has("says"):
+			_say("%s says: “%s”" % [suspect["name"], suspect["says"]])
 	_refresh()
 
 func _on_accuse() -> void:
@@ -335,7 +430,7 @@ func _on_accuse() -> void:
 
 func _solve() -> void:
 	solved_now = true
-	PetalState.solve_case(String(case_data["id"]))
+	PetalState.solve_case(String(case_data["id"]), int(case_data.get("prize", 5)))
 	_say("🎉 %s You solved it!" % case_data["confession"])
 	_refresh()
 	next_button.visible = true
