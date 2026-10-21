@@ -490,6 +490,7 @@ func _reset_progress() -> void:
 	coins = 0
 	earned_stickers = {}
 	solved_cases = []
+	pet_sets = {}
 	schedule = {}
 	chat_log = []
 	safety_alerts = []
@@ -575,6 +576,7 @@ func save_game() -> void:
 	cfg.set_value("game", "stickers", earned_stickers)
 	cfg.set_value("game", "schedule", schedule)
 	cfg.set_value("game", "solved_cases", solved_cases)
+	cfg.set_value("game", "pet_sets", pet_sets)
 	cfg.set_value("game", "house", _save_house())
 	cfg.set_value("game", "treats_found", treats_found)
 	cfg.set_value("game", "pet_records", pet_records)
@@ -608,6 +610,11 @@ func _load_slot(slot: int) -> void:
 		for id in saved_cases:
 			if not solved_cases.has(String(id)):
 				solved_cases.append(String(id))
+	var saved_sets = cfg.get_value("game", "pet_sets", {})
+	if saved_sets is Dictionary:
+		for id in saved_sets:
+			if PETS.has(id) and saved_sets[id] is Dictionary:
+				pet_sets[id] = pet_set_from_save(String(id), saved_sets[id])
 	_load_house(cfg.get_value("game", "house", {}))
 	var saved_treats = cfg.get_value("game", "treats_found", {})
 	if saved_treats is Dictionary:
@@ -907,8 +914,74 @@ const STICKERS := {
 	"cathouse": {"emoji": "🏡", "label": "Dream House"},
 	"treat": {"emoji": "💝", "label": "Favourite Treat"},
 	"detective": {"emoji": "🕵️", "label": "Super Detective"},
+	"designer": {"emoji": "🛏️", "label": "Pet Designer"},
 }
 var earned_stickers := {}
+
+# Pet Set Studio (room_petset.gd): every pet's own designed bed and bowl.
+# pet id -> {"bed": piece, "bowl": piece}; a piece is {color, trim (indexes
+# into SET_COLORS), pattern, stamp, shape, name}. Pets never designed get a
+# cheerful default from default_pet_set(), so nothing is ever empty.
+const SET_COLORS := [
+	Color("ff9ec4"), Color("f25c6e"), Color("ffa95c"), Color("ffd84d"),
+	Color("b6e36b"), Color("5cc98a"), Color("4fc6c9"), Color("6cb8ff"),
+	Color("5b7fe8"), Color("a87be8"), Color("b07a52"), Color("ffffff"),
+]
+const SET_PATTERNS := ["plain", "stripes", "dots", "hearts", "stars", "checks", "paws"]
+const SET_STAMPS := ["", "🐾", "⭐", "💖", "🌸", "🦴", "🐟", "🦋", "🌈", "🍓", "👑", "🌙"]
+const SET_SHAPES := {
+	"bed": ["round", "square", "heart", "star"],
+	"bowl": ["round", "tall", "wide"],
+}
+const SET_NAME_MAX := 14
+var pet_sets := {}
+
+func default_pet_set(id: String) -> Dictionary:
+	var h := absi(id.hash())
+	var main := h % SET_COLORS.size()
+	var trim := (main + 4 + h % 3) % SET_COLORS.size()
+	return {
+		"bed": {"color": main, "trim": trim, "pattern": "hearts", "stamp": "🐾", "shape": "round", "name": ""},
+		"bowl": {"color": main, "trim": trim, "pattern": "dots", "stamp": "", "shape": "round", "name": ""},
+	}
+
+# The saved design for a pet, with anything missing filled from the default.
+func pet_set(id: String) -> Dictionary:
+	var saved = pet_sets.get(id, {})
+	return pet_set_from_save(id, saved if saved is Dictionary else {})
+
+func pet_set_from_save(id: String, saved: Dictionary) -> Dictionary:
+	var base := default_pet_set(id)
+	var result := {}
+	for kind in ["bed", "bowl"]:
+		var raw = saved.get(kind)
+		result[kind] = _clean_set_piece(kind, raw, base[kind]) if raw is Dictionary else base[kind]
+	return result
+
+func _clean_set_piece(kind: String, raw: Dictionary, fallback: Dictionary) -> Dictionary:
+	var piece := fallback.duplicate()
+	for key in ["color", "trim"]:
+		if raw.get(key) is int:
+			piece[key] = clampi(int(raw[key]), 0, SET_COLORS.size() - 1)
+	if SET_PATTERNS.has(raw.get("pattern")):
+		piece["pattern"] = raw["pattern"]
+	if SET_STAMPS.has(raw.get("stamp")):
+		piece["stamp"] = raw["stamp"]
+	if SET_SHAPES[kind].has(raw.get("shape")):
+		piece["shape"] = raw["shape"]
+	if raw.get("name") is String:
+		piece["name"] = String(raw["name"]).strip_edges().left(SET_NAME_MAX)
+	return piece
+
+func save_pet_set(id: String, design: Dictionary) -> void:
+	pet_sets[id] = design.duplicate(true)
+	save_game()
+
+# Tapping "I love it!" in the studio: sticker + coins the first time only.
+func finish_pet_set(id: String, design: Dictionary) -> void:
+	save_pet_set(id, design)
+	award_sticker("designer")
+
 # Mystery room (room_mystery.gd): ids of the cases solved so far.
 var solved_cases: Array = []
 
