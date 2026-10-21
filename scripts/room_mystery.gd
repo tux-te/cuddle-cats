@@ -8,7 +8,7 @@ const SUSPECT_ART := {
 	"mimi": "field_mouse", "rusty": "puppy", "snowy": "bunny", "woolly": "lamb", "leo": "lion_guardian",
 	"tilly": "turtle", "sid": "snail", "fox": "fox", "pip": "chick", "henny": "chick", "bruno": "panda",
 	"hop": "capybara", "axel": "axolotl", "fawny": "fawn", "marmie": "marmot", "batty": "bat", "pom": "pomeranian",
-	"frenchie": "french_bulldog", "fenny": "fennec",
+	"frenchie": "french_bulldog", "fenny": "fennec", "daisy": "cow", "clover": "bull",
 }
 
 const PET_SIZE := Vector2(130, 120)
