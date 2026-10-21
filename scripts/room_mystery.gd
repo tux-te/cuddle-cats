@@ -61,7 +61,7 @@ const CASES := [
 		"suspects": [
 			{"id": "finn", "emoji": "🐟", "name": "Finn", "icons": "🌊 🚫🦶"},
 			{"id": "rosie", "emoji": "🐷", "name": "Rosie", "icons": "🦶 🩷 🐽"},
-			{"id": "daisy", "emoji": "🐮", "name": "Daisy", "icons": "🦶 ⚫⚪"},
+			{"id": "daisy", "emoji": "🐮", "name": "Daisy", "icons": "🦶 ⚫⚪", "art": "res://Sprites/mystery/cow.png"},
 			{"id": "woolly", "emoji": "🐑", "name": "Woolly", "icons": "🦶 ⚪ ☁️"},
 		],
 		"clues": [
@@ -105,7 +105,7 @@ const CASES := [
 		"suspects": [
 			{"id": "tilly", "emoji": "🐢", "name": "Tilly", "icons": "⏳ 🐢"},
 			{"id": "sid", "emoji": "🐌", "name": "Sid", "icons": "⏳ 🐌"},
-			{"id": "clover", "emoji": "🐮", "name": "Clover", "icons": "🌿 🚫🪶"},
+			{"id": "clover", "emoji": "🐂", "name": "Clover", "icons": "🌿 🚫🪶", "art": "res://Sprites/mystery/bull.png"},
 			{"id": "maggie", "emoji": "🐦", "name": "Maggie", "icons": "⚡ 🪶 ✨"},
 		],
 		"clues": [
@@ -117,7 +117,7 @@ const CASES := [
 		"alibis": {
 			"tilly": "Tilly is far too slow to be gone in a flash!",
 			"sid": "Sid is much too slow. It would take him a whole week!",
-			"clover": "Cows have no feathers, but feathers were on the sill!",
+			"clover": "Bulls have no feathers, but feathers were on the sill!",
 		},
 		"confession": "Squawk! It was so SHINY. I'll give it back!",
 	},
@@ -257,6 +257,12 @@ func _start_case(index: int) -> void:
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.add_theme_font_size_override("font_size", 30)
 		button.text = "%s\n%s\n%s" % [suspect["emoji"], suspect["name"], suspect["icons"]]
+		if suspect.has("art"):
+			button.icon = load(String(suspect["art"]))
+			button.expand_icon = true
+			button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+			button.add_theme_constant_override("icon_max_width", 90)
 		button.pressed.connect(_on_suspect.bind(String(suspect["id"])))
 		suspect_row.add_child(button)
 		suspect_buttons[suspect["id"]] = button
