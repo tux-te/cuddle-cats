@@ -23,6 +23,7 @@ const ROOMS := {
 	"party": preload("res://scenes/rooms/party.tscn"),
 	"cathouse": preload("res://scenes/rooms/cat_house.tscn"),
 	"week": preload("res://scenes/rooms/schedule.tscn"),
+	"mystery": preload("res://scenes/rooms/mystery.tscn"),
 	"stickers": preload("res://scenes/rooms/sticker_book.tscn"),
 }
 
@@ -90,6 +91,7 @@ func _ready() -> void:
 
 	pets_button.pressed.connect(_open_pet_picker)
 	_add_header_button("❓ Help", func() -> void: HowToPlay.open(self))
+	_add_header_button("🕵️ Mystery", _show_room.bind("mystery"))
 	_add_header_button("👤 Switch", _switch_player)
 	%ClosePetPickerButton.pressed.connect(_close_pet_picker)
 

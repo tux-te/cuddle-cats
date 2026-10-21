@@ -489,6 +489,7 @@ func _reset_progress() -> void:
 	nicknames = {}
 	coins = 0
 	earned_stickers = {}
+	solved_cases = []
 	schedule = {}
 	chat_log = []
 	safety_alerts = []
@@ -573,6 +574,7 @@ func save_game() -> void:
 	cfg.set_value("game", "coins", coins)
 	cfg.set_value("game", "stickers", earned_stickers)
 	cfg.set_value("game", "schedule", schedule)
+	cfg.set_value("game", "solved_cases", solved_cases)
 	cfg.set_value("game", "house", _save_house())
 	cfg.set_value("game", "treats_found", treats_found)
 	cfg.set_value("game", "pet_records", pet_records)
@@ -601,6 +603,11 @@ func _load_slot(slot: int) -> void:
 		for id in saved_stickers:
 			if STICKERS.has(id):
 				earned_stickers[id] = bool(saved_stickers[id])
+	var saved_cases = cfg.get_value("game", "solved_cases", [])
+	if saved_cases is Array:
+		for id in saved_cases:
+			if not solved_cases.has(String(id)):
+				solved_cases.append(String(id))
 	_load_house(cfg.get_value("game", "house", {}))
 	var saved_treats = cfg.get_value("game", "treats_found", {})
 	if saved_treats is Dictionary:
@@ -899,8 +906,11 @@ const STICKERS := {
 	"week": {"emoji": "📅", "label": "Whole Week"},
 	"cathouse": {"emoji": "🏡", "label": "Dream House"},
 	"treat": {"emoji": "💝", "label": "Favourite Treat"},
+	"detective": {"emoji": "🕵️", "label": "Super Detective"},
 }
 var earned_stickers := {}
+# Mystery room (room_mystery.gd): ids of the cases solved so far.
+var solved_cases: Array = []
 
 # The princess calendar (room_schedule.gd): "YYYY-MM-DD" -> events in time
 # order, each {"name", "start" and "end" in minutes (-1 = all day), "place"}.
@@ -1199,6 +1209,18 @@ func _load_house(saved) -> void:
 				elif HOUSE_CHOICES[category].has(value):
 					entry[category] = value
 			target[id] = entry
+
+# Solving a mystery case (see room_mystery.gd); coins only the first time.
+func solve_case(id: String) -> void:
+	var first := not solved_cases.has(id)
+	if first:
+		solved_cases.append(id)
+	happiness = minf(MAX_STAT, happiness + 10.0)
+	stats_changed.emit()
+	award_sticker("detective")
+	if first:
+		add_coins(5)
+	save_game()
 
 # Finishing a whole week of the planner (see room_schedule.gd).
 func week_complete() -> void:
