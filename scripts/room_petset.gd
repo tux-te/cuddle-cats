@@ -42,6 +42,12 @@ var shape_buttons := {}
 var name_button: Button
 
 var play_stage: Control
+var room_stage: Control
+var room_options: VBoxContainer
+var wall_buttons := {}
+var floor_buttons := {}
+var room_coin_label: Label
+var weather_button: Button
 var set_actions: HBoxContainer
 var play_actions: HBoxContainer
 var set_options: VBoxContainer
@@ -64,6 +70,7 @@ func _ready() -> void:
 	canvas.bed_name_default = "%s's Bed" % PetalState.pet_name
 	canvas.bowl_name_default = "%s's Bowl" % PetalState.pet_name
 	play_stage.load_space(PetalState.play_space(pet_id))
+	room_stage.load_space(PetalState.play_room(pet_id))
 	_refresh()
 	_refresh_shop()
 	_show_mode()
@@ -102,6 +109,12 @@ func _build() -> void:
 	play_stage.changed.connect(_on_play_changed)
 	play_stage.selection_changed.connect(_refresh_put_away)
 	stage.add_child(play_stage)
+	room_stage = PlayStage.new()
+	room_stage.is_room = true
+	room_stage.size = STAGE_SIZE
+	room_stage.changed.connect(_on_play_changed)
+	room_stage.selection_changed.connect(_refresh_put_away)
+	stage.add_child(room_stage)
 	petal = TextureRect.new()
 	petal.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	petal.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -119,7 +132,8 @@ func _build() -> void:
 	play_actions.add_child(_action_button("🎉 Play!", _on_play))
 	put_away_button = _action_button("🧺 Put away", _on_put_away)
 	play_actions.add_child(put_away_button)
-	play_actions.add_child(_action_button("🌦️ Weather", _on_weather))
+	weather_button = _action_button("🌦️ Weather", _on_weather)
+	play_actions.add_child(weather_button)
 	play_actions.add_child(_action_button("🧹 Clear all", _on_clear))
 	play_actions.add_child(_action_button("✅ I love it!", _on_play_done))
 
@@ -138,14 +152,14 @@ func _build() -> void:
 	modes.add_theme_constant_override("separation", 8)
 	outer.add_child(modes)
 	var mode_group := ButtonGroup.new()
-	for entry in [["set", "🛏️ Bed & Bowl"], ["play", "🎪 Play Space"]]:
+	for entry in [["set", "🛏️ Bed & Bowl"], ["play", "🎪 Play Space"], ["room", "🏠 Play Room"]]:
 		var tab := Button.new()
 		tab.text = entry[1]
 		tab.toggle_mode = true
 		tab.button_group = mode_group
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tab.custom_minimum_size = Vector2(0, 50)
-		tab.add_theme_font_size_override("font_size", 22)
+		tab.add_theme_font_size_override("font_size", 17)
 		tab.pressed.connect(_on_mode.bind(String(entry[0])))
 		modes.add_child(tab)
 		mode_buttons[entry[0]] = tab
@@ -155,8 +169,12 @@ func _build() -> void:
 	play_options = VBoxContainer.new()
 	play_options.add_theme_constant_override("separation", 8)
 	outer.add_child(play_options)
+	room_options = VBoxContainer.new()
+	room_options.add_theme_constant_override("separation", 8)
+	outer.add_child(room_options)
 	var options := set_options
 	_build_play_options()
+	_build_room_options()
 
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 8)
@@ -236,6 +254,31 @@ func _build_play_options() -> void:
 		button.toggle_mode = false
 		shop_buttons[id] = button
 
+func _build_room_options() -> void:
+	room_coin_label = Label.new()
+	room_coin_label.add_theme_font_size_override("font_size", 20)
+	room_coin_label.add_theme_color_override("font_color", INK)
+	room_options.add_child(room_coin_label)
+	var walls := HFlowContainer.new()
+	room_options.add_child(_titled("🎨 Walls", walls))
+	for id in PetalState.ROOM_WALLS:
+		wall_buttons[id] = _option_button(walls, "", 15, Vector2(0, 38), _on_wall.bind(id))
+	var floors := HFlowContainer.new()
+	room_options.add_child(_titled("🟫 Floor", floors))
+	for id in PetalState.ROOM_FLOORS:
+		floor_buttons[id] = _option_button(floors, "", 15, Vector2(0, 38), _on_floor.bind(id))
+	var furniture := HFlowContainer.new()
+	furniture.add_theme_constant_override("h_separation", 4)
+	furniture.add_theme_constant_override("v_separation", 4)
+	room_options.add_child(_titled("🛋️ Stuff", furniture))
+	for id in PetalState.ROOM_ITEMS:
+		var button := _option_button(furniture, "", 17, Vector2(72, 62), _on_shop.bind(id))
+		button.toggle_mode = false
+		shop_buttons[id] = button
+
+func _stage() -> Control:
+	return room_stage if mode == "room" else play_stage
+
 func _titled(title: String, content: Control) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -297,8 +340,13 @@ func _price_text(id: String) -> String:
 
 func _refresh_shop() -> void:
 	coin_label.text = "🪙 You have %d Treat Coin%s" % [PetalState.coins, "" if PetalState.coins == 1 else "s"]
+	room_coin_label.text = coin_label.text
+	for id in wall_buttons:
+		_label_choice(wall_buttons[id], id, id == room_stage.wall)
+	for id in floor_buttons:
+		_label_choice(floor_buttons[id], id, id == room_stage.floor_id)
 	for id in shop_buttons:
-		var data: Dictionary = PetalState.PLAY_ITEMS[id]
+		var data: Dictionary = PetalState.play_def(id)
 		var button: Button = shop_buttons[id]
 		button.text = "%s\n%s" % [data["emoji"], _price_text(id)]
 		button.tooltip_text = String(data["label"])
@@ -309,8 +357,14 @@ func _refresh_shop() -> void:
 		theme_buttons[id].set_pressed_no_signal(id == play_stage.backdrop)
 		theme_buttons[id].modulate = Color.WHITE if PetalState.play_unlocked(id) or PetalState.coins >= PetalState.play_cost(id) else Color(0.6, 0.6, 0.6)
 
+func _label_choice(button: Button, id: String, current: bool) -> void:
+	var data: Dictionary = PetalState.play_def(id)
+	button.text = "%s %s %s" % [data["emoji"], data["label"], _price_text(id) if PetalState.play_cost(id) > 0 else ""]
+	button.set_pressed_no_signal(current)
+	button.modulate = Color.WHITE if PetalState.play_unlocked(id) or PetalState.coins >= PetalState.play_cost(id) else Color(0.6, 0.6, 0.6)
+
 func _refresh_put_away() -> void:
-	put_away_button.disabled = play_stage.selected == null
+	put_away_button.disabled = _stage().selected == null
 
 func _swatch_style(index: int, selected: bool) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -352,12 +406,16 @@ func _on_mode(which: String) -> void:
 
 func _show_mode() -> void:
 	var playing := mode == "play"
-	canvas.visible = not playing
+	var decorating := mode == "room"
+	canvas.visible = mode == "set"
 	play_stage.visible = playing
-	set_actions.visible = not playing
-	play_actions.visible = playing
-	set_options.visible = not playing
+	room_stage.visible = mode == "room"
+	set_actions.visible = mode == "set"
+	play_actions.visible = playing or decorating
+	set_options.visible = mode == "set"
 	play_options.visible = playing
+	room_options.visible = decorating
+	weather_button.visible = playing
 	for id in mode_buttons:
 		mode_buttons[id].set_pressed_no_signal(id == mode)
 	_refresh_put_away()
@@ -366,10 +424,10 @@ func _show_mode() -> void:
 func _on_shop(id: String) -> void:
 	if not _buy(id, shop_buttons[id]):
 		return
-	if play_stage.is_full():
+	if _stage().is_full():
 		_pop("🧺 full! put one away", shop_buttons[id])
 		return
-	play_stage.add_item(id)
+	_stage().add_item(id)
 	Sfx.pop(self)
 
 func _on_theme(id: String) -> void:
@@ -392,12 +450,27 @@ func _buy(id: String, button: Control) -> bool:
 	_refresh_shop()
 	return true
 
+func _on_wall(id: String) -> void:
+	if not _buy(id, wall_buttons[id]):
+		wall_buttons[id].set_pressed_no_signal(id == room_stage.wall)
+		return
+	room_stage.set_wall_id(id)
+	Sfx.chime(self)
+
+func _on_floor(id: String) -> void:
+	if not _buy(id, floor_buttons[id]):
+		floor_buttons[id].set_pressed_no_signal(id == room_stage.floor_id)
+		return
+	room_stage.set_floor_id(id)
+	Sfx.chime(self)
+
 func _on_play_changed() -> void:
 	PetalState.save_play_space(pet_id, play_stage.to_space())
+	PetalState.save_play_room(pet_id, room_stage.to_space())
 	_refresh_shop()
 
 func _on_put_away() -> void:
-	play_stage.remove_selected()
+	_stage().remove_selected()
 	Sfx.pop(self)
 
 func _on_weather() -> void:
@@ -406,7 +479,7 @@ func _on_weather() -> void:
 	_pop("%s" % (icon if icon != "" else "☀️ sunny"), petal)
 
 func _on_clear() -> void:
-	play_stage.clear_all()
+	_stage().clear_all()
 
 # The pet runs round her toys one by one, so the space comes alive.
 var playing_now := false
@@ -414,11 +487,11 @@ var playing_now := false
 func _on_play() -> void:
 	if playing_now:
 		return
-	if play_stage.items.is_empty():
-		_pop("buy a toy first! 🛍️", petal)
+	if _stage().items.is_empty():
+		_pop("buy something first! 🛍️", petal)
 		return
 	playing_now = true
-	var order: Array = play_stage.items.duplicate()
+	var order: Array = _stage().items.duplicate()
 	order.shuffle()
 	for item in order.slice(0, 5):
 		if not is_instance_valid(item) or not is_instance_valid(petal):
@@ -430,18 +503,21 @@ func _on_play() -> void:
 		await tween.finished
 		if not is_instance_valid(petal):
 			break
-		play_stage.bounce(item)
+		_stage().bounce(item)
 		Sfx.pop(self)
 		_pop(["wheee!", "yay!", "fun!", "🥰", "again!"].pick_random(), petal)
 		await PetCameo.jump_for_joy(petal)
 	playing_now = false
 
 func _on_play_done() -> void:
-	PetalState.finish_play_space(pet_id, play_stage.to_space())
+	if mode == "room":
+		PetalState.finish_play_room(pet_id, room_stage.to_space())
+	else:
+		PetalState.finish_play_space(pet_id, play_stage.to_space())
 	var at := petal.global_position + petal.size / 2.0
 	Confetti.burst(self, at, 24)
 	Sfx.fanfare(self)
-	_pop("🎉 What a play space!", petal)
+	_pop("🎉 What a lovely room!" if mode == "room" else "🎉 What a play space!", petal)
 	PetCameo.jump_for_joy(petal)
 
 # --- Choosing things ---------------------------------------------------------

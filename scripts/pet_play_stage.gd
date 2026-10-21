@@ -11,7 +11,10 @@ const ITEM_SIZE := Vector2(72, 72)
 const ITEM_FONT := 54
 const EDGE := Vector2(36, 44)
 
+var is_room := false   # true: an indoor Play Room (wall + floor); false: outdoor Play Space
 var backdrop := "cosy"
+var wall := "pinkwall"
+var floor_id := "wood"
 var selected: Label = null
 var items: Array[Label] = []
 var dragging: Label = null
@@ -38,7 +41,7 @@ func next_weather() -> String:
 	return WEATHER[weather]
 
 func _spawn_weather() -> void:
-	if weather == 0 or not is_visible_in_tree():
+	if weather == 0 or is_room or not is_visible_in_tree():
 		return
 	var drop := Label.new()
 	drop.text = WEATHER[weather]
@@ -60,7 +63,11 @@ func load_space(space: Dictionary) -> void:
 		item.queue_free()
 	items.clear()
 	selected = null
-	backdrop = String(space["theme"])
+	if is_room:
+		wall = String(space["wall"])
+		floor_id = String(space["floor"])
+	else:
+		backdrop = String(space["theme"])
 	for entry in space["items"]:
 		_make_item(String(entry["id"]), Vector2(float(entry["x"]), float(entry["y"])))
 	queue_redraw()
@@ -71,6 +78,8 @@ func to_space() -> Dictionary:
 	for item in items:
 		var center := item.position + item.size / 2.0
 		list.append({"id": String(item.get_meta("id")), "x": center.x, "y": center.y})
+	if is_room:
+		return {"wall": wall, "floor": floor_id, "items": list}
 	return {"theme": backdrop, "items": list}
 
 func is_full() -> bool:
@@ -103,6 +112,16 @@ func clear_all() -> void:
 	select(null)
 	changed.emit()
 
+func set_wall_id(id: String) -> void:
+	wall = id
+	queue_redraw()
+	changed.emit()
+
+func set_floor_id(id: String) -> void:
+	floor_id = id
+	queue_redraw()
+	changed.emit()
+
 func set_theme_id(id: String) -> void:
 	backdrop = id
 	queue_redraw()
@@ -115,7 +134,7 @@ func select(item: Label) -> void:
 
 func _make_item(id: String, center: Vector2) -> Label:
 	var label := Label.new()
-	label.text = String(PetalState.PLAY_ITEMS[id]["emoji"])
+	label.text = String(PetalState.play_def(id)["emoji"])
 	label.set_meta("id", id)
 	label.size = ITEM_SIZE
 	label.pivot_offset = ITEM_SIZE / 2.0
@@ -194,6 +213,11 @@ func _gui_input(event: InputEvent) -> void:
 func _draw() -> void:
 	var w := size.x
 	var h := size.y
+	if is_room:
+		_draw_room(w, h)
+		if selected and is_instance_valid(selected):
+			draw_arc(selected.position + selected.size / 2.0, 42, 0, TAU, 32, Color(0.72, 0.31, 0.47), 4.0)
+		return
 	match backdrop:
 		"meadow":
 			draw_rect(Rect2(0, 0, w, h), Color("9edcff"))
@@ -234,6 +258,62 @@ func _draw() -> void:
 			draw_colored_polygon(PackedVector2Array(_oval(Vector2(w * 0.5, h * 0.82), 250, 52)), Color("ffc2d8"))
 	if selected and is_instance_valid(selected):
 		draw_arc(selected.position + selected.size / 2.0, 42, 0, TAU, 32, Color(0.72, 0.31, 0.47), 4.0)
+
+# Indoor room: patterned wallpaper on top, flooring below, a skirting board between.
+func _draw_room(w: float, h: float) -> void:
+	var split := h * 0.6
+	var wall_def: Dictionary = PetalState.ROOM_WALLS[wall]
+	var base: Color = wall_def["color"]
+	var ink := base.darkened(0.12) if base.get_luminance() > 0.4 else base.lightened(0.25)
+	draw_rect(Rect2(0, 0, w, split), base)
+	match String(wall_def["pattern"]):
+		"stripes":
+			for i in range(0, int(w / 50.0) + 1):
+				draw_rect(Rect2(i * 50.0, 0, 25, split), ink)
+		"dots":
+			for row in range(5):
+				for col in range(16):
+					draw_circle(Vector2(col * 48.0 + (24.0 if row % 2 == 1 else 0.0), 20 + row * 44.0), 8, ink)
+		"hearts":
+			for row in range(5):
+				for col in range(14):
+					_heart(Vector2(col * 54.0 + (27.0 if row % 2 == 1 else 0.0), 24 + row * 44.0), 9, ink)
+		"stars":
+			for row in range(5):
+				for col in range(14):
+					_star(Vector2(col * 54.0 + (27.0 if row % 2 == 1 else 0.0), 24 + row * 44.0), 10, Color("ffe066"))
+	draw_rect(Rect2(0, split - 8, w, 10), base.darkened(0.3))
+	var floor_def: Dictionary = PetalState.ROOM_FLOORS[floor_id]
+	var f: Color = floor_def["color"]
+	draw_rect(Rect2(0, split + 2, w, h), f)
+	match String(floor_def["pattern"]):
+		"planks":
+			for i in range(0, int(w / 90.0) + 1):
+				draw_line(Vector2(i * 90.0, split + 2), Vector2(i * 90.0 - 30, h), f.darkened(0.2), 2.0)
+			for y in [split + 60, split + 120]:
+				draw_line(Vector2(0, y), Vector2(w, y), f.darkened(0.2), 2.0)
+		"checks":
+			for row in range(6):
+				for col in range(int(w / 50.0) + 1):
+					if (row + col) % 2 == 0:
+						draw_rect(Rect2(col * 50.0, split + 2 + row * 50.0, 50, 50), Color("ff9ec4"))
+		"tiles":
+			for i in range(0, int(w / 60.0) + 1):
+				draw_line(Vector2(i * 60.0, split + 2), Vector2(i * 60.0, h), f.darkened(0.2), 2.0)
+			for y in range(int(split) + 62, int(h), 60):
+				draw_line(Vector2(0, y), Vector2(w, y), f.darkened(0.2), 2.0)
+
+func _heart(c: Vector2, r: float, color: Color) -> void:
+	draw_circle(c + Vector2(-r * 0.5, -r * 0.3), r * 0.55, color)
+	draw_circle(c + Vector2(r * 0.5, -r * 0.3), r * 0.55, color)
+	draw_colored_polygon(PackedVector2Array([c + Vector2(-r * 1.02, -r * 0.1), c + Vector2(r * 1.02, -r * 0.1), c + Vector2(0, r * 1.05)]), color)
+
+func _star(c: Vector2, r: float, color: Color) -> void:
+	var pts := PackedVector2Array()
+	for i in range(10):
+		var a := -PI / 2.0 + TAU * i / 10.0
+		pts.append(c + Vector2(cos(a), sin(a)) * (r if i % 2 == 0 else r * 0.45))
+	draw_colored_polygon(pts, color)
 
 func _cloud(at: Vector2) -> void:
 	for offset in [Vector2(0, 0), Vector2(30, -12), Vector2(60, 0), Vector2(28, 8)]:

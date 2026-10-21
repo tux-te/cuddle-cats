@@ -493,6 +493,7 @@ func _reset_progress() -> void:
 	pet_sets = {}
 	play_owned = []
 	play_spaces = {}
+	play_rooms = {}
 	schedule = {}
 	chat_log = []
 	safety_alerts = []
@@ -581,6 +582,7 @@ func save_game() -> void:
 	cfg.set_value("game", "pet_sets", pet_sets)
 	cfg.set_value("game", "play_owned", play_owned)
 	cfg.set_value("game", "play_spaces", play_spaces)
+	cfg.set_value("game", "play_rooms", play_rooms)
 	cfg.set_value("game", "house", _save_house())
 	cfg.set_value("game", "treats_found", treats_found)
 	cfg.set_value("game", "pet_records", pet_records)
@@ -622,13 +624,18 @@ func _load_slot(slot: int) -> void:
 	var saved_owned = cfg.get_value("game", "play_owned", [])
 	if saved_owned is Array:
 		for id in saved_owned:
-			if (PLAY_ITEMS.has(id) or PLAY_THEMES.has(id)) and not play_owned.has(String(id)):
+			if not play_def(String(id)).is_empty() and not play_owned.has(String(id)):
 				play_owned.append(String(id))
 	var saved_spaces = cfg.get_value("game", "play_spaces", {})
 	if saved_spaces is Dictionary:
 		for id in saved_spaces:
 			if PETS.has(id) and saved_spaces[id] is Dictionary:
 				play_spaces[id] = play_space_from_save(saved_spaces[id])
+	var saved_rooms = cfg.get_value("game", "play_rooms", {})
+	if saved_rooms is Dictionary:
+		for id in saved_rooms:
+			if PETS.has(id) and saved_rooms[id] is Dictionary:
+				play_rooms[id] = play_room_from_save(saved_rooms[id])
 	_load_house(cfg.get_value("game", "house", {}))
 	var saved_treats = cfg.get_value("game", "treats_found", {})
 	if saved_treats is Dictionary:
@@ -930,6 +937,7 @@ const STICKERS := {
 	"detective": {"emoji": "🕵️", "label": "Super Detective"},
 	"designer": {"emoji": "🛏️", "label": "Pet Designer"},
 	"playspace": {"emoji": "🎪", "label": "Play Space Pro"},
+	"playroom": {"emoji": "🏠", "label": "Room Decorator"},
 }
 var earned_stickers := {}
 
@@ -1038,12 +1046,56 @@ const PLAY_THEMES := {
 	"night": {"emoji": "🌙", "label": "Starry Night", "cost": 25},
 	"candy": {"emoji": "🍭", "label": "Candy Land", "cost": 35},
 }
+# The Play Room: an indoor room with bought wallpaper, flooring and furniture.
+# Ids are unique across every play catalog so one "owned" list covers them all.
+const ROOM_ITEMS := {
+	"basket": {"emoji": "🧺", "label": "Basket", "cost": 0},
+	"present": {"emoji": "🎁", "label": "Present", "cost": 3},
+	"chair": {"emoji": "🪑", "label": "Chair", "cost": 5},
+	"lamp": {"emoji": "💡", "label": "Lamp", "cost": 5},
+	"books": {"emoji": "📚", "label": "Books", "cost": 5},
+	"picture": {"emoji": "🖼️", "label": "Picture", "cost": 6},
+	"candle": {"emoji": "🕯️", "label": "Candle", "cost": 6},
+	"clock": {"emoji": "🕰️", "label": "Clock", "cost": 8},
+	"sofa": {"emoji": "🛋️", "label": "Sofa", "cost": 12},
+	"cake": {"emoji": "🎂", "label": "Cake", "cost": 12},
+	"tv": {"emoji": "📺", "label": "TV", "cost": 15},
+	"bath": {"emoji": "🛁", "label": "Bath", "cost": 15},
+	"xmas": {"emoji": "🎄", "label": "Tree", "cost": 18},
+	"games": {"emoji": "🎮", "label": "Games", "cost": 20},
+	"trophy": {"emoji": "🏆", "label": "Trophy", "cost": 25},
+	"crown": {"emoji": "👑", "label": "Crown", "cost": 30},
+	"globe": {"emoji": "🌍", "label": "Globe", "cost": 40},
+}
+const ROOM_WALLS := {
+	"pinkwall": {"emoji": "🌸", "label": "Pink", "cost": 0, "color": Color("ffd6e6"), "pattern": "plain"},
+	"skywall": {"emoji": "☁️", "label": "Sky", "cost": 0, "color": Color("cfe8ff"), "pattern": "plain"},
+	"mintwall": {"emoji": "🌿", "label": "Mint Stripes", "cost": 5, "color": Color("c9f0dc"), "pattern": "stripes"},
+	"sunwall": {"emoji": "☀️", "label": "Sunny Dots", "cost": 8, "color": Color("fff0b3"), "pattern": "dots"},
+	"lilacwall": {"emoji": "💜", "label": "Lilac Hearts", "cost": 10, "color": Color("e6d6ff"), "pattern": "hearts"},
+	"starwall": {"emoji": "⭐", "label": "Starry", "cost": 15, "color": Color("2b2f6b"), "pattern": "stars"},
+}
+const ROOM_FLOORS := {
+	"wood": {"emoji": "🪵", "label": "Wood", "cost": 0, "color": Color("e8c39a"), "pattern": "planks"},
+	"carpet": {"emoji": "🧶", "label": "Carpet", "cost": 6, "color": Color("ff9ec4"), "pattern": "plain"},
+	"checker": {"emoji": "🏁", "label": "Checkers", "cost": 10, "color": Color("ffffff"), "pattern": "checks"},
+	"grass": {"emoji": "🌱", "label": "Grass Rug", "cost": 12, "color": Color("8fd46b"), "pattern": "plain"},
+	"tile": {"emoji": "🟦", "label": "Blue Tiles", "cost": 15, "color": Color("8cc4f5"), "pattern": "tiles"},
+}
 const PLAY_MAX_ITEMS := 14
 var play_owned: Array = []        # ids of bought items and themes
 var play_spaces := {}             # pet id -> {"theme": id, "items": [{"id", "x", "y"}]}
+var play_rooms := {}              # pet id -> {"wall": id, "floor": id, "items": [...]}
+
+# The catalog entry for any play item, theme, wall or floor ({} if unknown).
+func play_def(id: String) -> Dictionary:
+	for catalog in [PLAY_ITEMS, PLAY_THEMES, ROOM_ITEMS, ROOM_WALLS, ROOM_FLOORS]:
+		if catalog.has(id):
+			return catalog[id]
+	return {}
 
 func play_cost(id: String) -> int:
-	return int(PLAY_ITEMS.get(id, PLAY_THEMES.get(id, {})).get("cost", 0))
+	return int(play_def(id).get("cost", 0))
 
 func play_unlocked(id: String) -> bool:
 	return play_cost(id) == 0 or play_owned.has(id)
@@ -1069,15 +1121,39 @@ func play_space_from_save(saved: Dictionary) -> Dictionary:
 	var theme := String(saved.get("theme", "cosy"))
 	if not PLAY_THEMES.has(theme):
 		theme = "cosy"
+	return {"theme": theme, "items": _clean_play_items(saved.get("items", []), PLAY_ITEMS)}
+
+func play_room(id: String) -> Dictionary:
+	var saved = play_rooms.get(id, {})
+	return play_room_from_save(saved if saved is Dictionary else {})
+
+func play_room_from_save(saved: Dictionary) -> Dictionary:
+	var wall := String(saved.get("wall", "pinkwall"))
+	var floor_id := String(saved.get("floor", "wood"))
+	return {
+		"wall": wall if ROOM_WALLS.has(wall) else "pinkwall",
+		"floor": floor_id if ROOM_FLOORS.has(floor_id) else "wood",
+		"items": _clean_play_items(saved.get("items", []), ROOM_ITEMS),
+	}
+
+func save_play_room(id: String, room: Dictionary) -> void:
+	play_rooms[id] = room.duplicate(true)
+	save_game()
+
+func finish_play_room(id: String, room: Dictionary) -> void:
+	save_play_room(id, room)
+	if room["items"].size() >= 3:
+		award_sticker("playroom")
+
+func _clean_play_items(raw, catalog: Dictionary) -> Array:
 	var items: Array = []
-	var raw = saved.get("items", [])
 	if raw is Array:
 		for entry in raw:
 			if items.size() >= PLAY_MAX_ITEMS:
 				break
-			if entry is Dictionary and PLAY_ITEMS.has(entry.get("id")) and (entry.get("x") is float or entry.get("x") is int) and (entry.get("y") is float or entry.get("y") is int):
+			if entry is Dictionary and catalog.has(entry.get("id")) and (entry.get("x") is float or entry.get("x") is int) and (entry.get("y") is float or entry.get("y") is int):
 				items.append({"id": String(entry["id"]), "x": float(entry["x"]), "y": float(entry["y"])})
-	return {"theme": theme, "items": items}
+	return items
 
 func save_play_space(id: String, space: Dictionary) -> void:
 	play_spaces[id] = space.duplicate(true)
