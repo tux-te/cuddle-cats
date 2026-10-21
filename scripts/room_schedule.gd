@@ -760,7 +760,7 @@ func _build_planner() -> void:
 	columns.add_child(left)
 	var head := HBoxContainer.new()
 	left.add_child(head)
-	head.add_child(_button("◀", 22, Vector2(56, 44), _change_month.bind(-1)))
+	head.add_child(_button("◀", 22, Vector2(56, 44), _change_week.bind(-1)))
 	head.add_child(_cat_button("😺"))
 	month_label = Label.new()
 	month_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -768,7 +768,7 @@ func _build_planner() -> void:
 	_style_label(month_label, 30, Color(0.78, 0.25, 0.55))
 	head.add_child(month_label)
 	head.add_child(_cat_button("😻"))
-	head.add_child(_button("▶", 22, Vector2(56, 44), _change_month.bind(1)))
+	head.add_child(_button("▶", 22, Vector2(56, 44), _change_week.bind(1)))
 	grid = GridContainer.new()
 	grid.columns = 7
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -868,18 +868,16 @@ func _field(parent: Control, hint: String) -> LineEdit:
 	parent.add_child(field)
 	return field
 
-func _change_month(delta: int) -> void:
-	view_month += delta
-	if view_month < 1:
-		view_month = 12
-		view_year -= 1
-	elif view_month > 12:
-		view_month = 1
-		view_year += 1
-	_refresh_calendar()
+func _change_week(delta: int) -> void:
+	var parts := selected.split("-")
+	var date := _normalize(int(parts[0]), int(parts[1]), int(parts[2]) + 7 * delta)
+	_select_date(_key(date[0], date[1], date[2]))
 
 func _refresh_calendar() -> void:
-	month_label.text = "👑 %s %d 👑" % [MONTHS[view_month - 1], view_year]
+	var week := _week_of(selected)
+	var first := String(week[0]).split("-")
+	var last := String(week[6]).split("-")
+	month_label.text = "👑 %s %d – %s %d 👑" % [MONTHS[int(first[1]) - 1].substr(0, 3), int(first[2]), MONTHS[int(last[1]) - 1].substr(0, 3), int(last[2])]
 	for child in grid.get_children():
 		grid.remove_child(child)
 		child.queue_free()
@@ -890,16 +888,11 @@ func _refresh_calendar() -> void:
 		label.add_theme_font_size_override("font_size", 16)
 		label.add_theme_color_override("font_color", Color(0.78, 0.25, 0.55))
 		grid.add_child(label)
-	var blanks := _weekday_of(view_year, view_month, 1)
-	var rows := ceili(float(blanks + _days_in_month(view_year, view_month)) / 7.0)
 	var today := _today_key()
-	# Days of the neighbouring months fill the gaps, so no box is ever empty.
-	for i in range(rows * 7):
-		var date := _normalize(view_year, view_month, i - blanks + 1)
-		var key := _key(date[0], date[1], date[2])
-		var in_month: bool = date[1] == view_month
+	for key in week:
+		var date := String(key).split("-")
 		var events := _events_on(key)
-		var text := str(date[2])
+		var text := str(int(date[2]))
 		if key == today:
 			text += " ⭐"
 		for e in range(mini(events.size(), 2)):
@@ -913,8 +906,8 @@ func _refresh_calendar() -> void:
 		cell.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		cell.custom_minimum_size = Vector2(0, 50)
 		cell.add_theme_font_size_override("font_size", 14)
-		cell.add_theme_color_override("font_color", Color(0.3, 0.15, 0.35) if in_month else Color(0.6, 0.5, 0.65))
-		var fill := Color(1, 0.97, 0.88) if key == selected else (Color(1.0, 0.8, 0.9) if key == today else (Color(1.0, 0.95, 0.98) if in_month else Color(0.98, 0.93, 0.96)))
+		cell.add_theme_color_override("font_color", Color(0.3, 0.15, 0.35))
+		var fill := Color(1, 0.97, 0.88) if key == selected else (Color(1.0, 0.8, 0.9) if key == today else Color(1.0, 0.95, 0.98))
 		var border := Color(0.95, 0.72, 0.15) if key == selected else Color(0.95, 0.5, 0.72)
 		var style := _cell_style(fill, border, 4 if key == selected else 2)
 		for state in ["normal", "hover", "pressed", "focus"]:
