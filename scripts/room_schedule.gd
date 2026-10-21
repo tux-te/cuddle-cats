@@ -55,6 +55,7 @@ const WORDS := {
 
 # Misspellings she has learned.
 const ALIASES := {
+	"envirment": "environment", "enviroment": "environment", "envionment": "environment", "enviornment": "environment", "coarl": "coral", "corral": "coral", "globle": "global", "globel": "global", "gobal": "global", "warmin": "warming", "waming": "warming", "histroy": "history", "histry": "history", "yumm": "yummy", "yumy": "yummy", "yumyum": "yummy", "yum": "yummy", "yumi": "yummy", "latinex": "latinx", "latnix": "latinx", "latinix": "latinx", "latinx": "latinx", "espanol": "spanish", "spainish": "spanish", "spanich": "spanish", "pea": "pee", "peeing": "pee", "pooping": "poop", "poo": "poop", "movies": "movie", "moive": "movie", "mooie": "movie",
 	"oroenge": "orange", "orenge": "orange", "orang": "orange", "violotet": "violet", "violette": "violet", "voilet": "violet", "viollet": "violet", "lavendar": "lavender", "lavander": "lavender", "tael": "teal", "teel": "teal", "gren": "green", "grean": "green", "bleu": "blue", "pnk": "pink", "yelow": "yellow", "yelllow": "yellow", "rd": "red", "colors": "colour", "colours": "colour", "colour": "colour",
 	"shcool": "school", "actividys": "activities", "activitys": "activities", "activity": "activities",
 	"animl": "animal", "emojes": "emojis", "emoji": "emojis", "pumkin": "pumpkin", "chrismas": "christmas",
@@ -170,6 +171,12 @@ const GIVE_WORDS := ["give", "gave", "gives", "giving", "here", "take", "feed", 
 
 # Words she knows, and what she says about them.
 const REPLIES := {
+	"environment": "The environment is our home! 🌍💚 Let's keep it clean for animals!", "coral": "Coral reefs! 🪸🐠 They're homes for lots of fish, and we need to protect them!",
+	"global": "Global means the whole world! 🌎", "warming": "Global warming is when the Earth gets too hot 🌡️🌍 It's hurting animals' homes. We can help by saving energy and planting trees! 🌳",
+	"history": "History is stories about the past! 📜🏛️ I like learning how things used to be!", "movie": "A movie! 🎬🍿 Can we watch it together?",
+	"latinx": "Latinx is a word for people with roots in Latin America, for everyone, not just boys or girls! 💖🌎", "spanish": "Spanish! 🇪🇸 It's a language, and \"hola\" means hello! 👋 People speak it all over the world, and Latinx and Latino/a people often do too! 💖",
+	"yummy": "Yummy!! 😋🍓 What are we eating?", "pee": "Hehe, the potty! 🚽😹 Wash your paws after!", "eat": "Eat? Yes please!! 🍽️😋", "cake": "Cake! 🍰 Yummy! Can I have a bite? 😋",
+	"snow": "Snow! ❄️ So cold and fluffy!",
 	"name": "I'm %NAME%! 🐱", "activities": "I love activities! 📅 School, sports, music...",
 	"school": "School is fun! 📚👓", "sports": "Sports! ⚽ Kick kick!", "happy": "I'm so happy! 😸✨",
 	"dance": "Let's dance! 💃🎵", "video": "Ooh, a video! 🎬", "times": "Check the planner for times! ⏰",
@@ -240,6 +247,27 @@ const FOODS := {
 const NAMES := ["emma", "olivia", "ava", "sophia", "mia", "isabella", "charlotte", "amelia", "harper", "evelyn", "abigail", "emily", "ella", "elizabeth", "sofia", "avery", "scarlett", "victoria", "madison", "luna", "chloe", "layla", "riley", "zoe", "nora", "lily", "hannah", "lucy", "stella", "aurora", "natalie", "leah", "ellie", "paisley", "audrey", "skylar", "savannah", "anna", "maya", "sarah", "emilia", "molly", "sadie", "ivy", "piper", "clara", "alice", "jessica", "megan", "katie", "lauren", "bella", "ruby", "daisy", "poppy", "freya", "ruthie", "norakate",
 	"liam", "noah", "oliver", "james", "elijah", "william", "henry", "lucas", "benjamin", "theodore", "jack", "levi", "alexander", "mason", "ethan", "jacob", "michael", "daniel", "logan", "jackson", "sebastian", "aiden", "matthew", "samuel", "david", "joseph", "carter", "owen", "wyatt", "john", "luke", "gabriel", "anthony", "isaac", "grayson", "dylan", "leo", "jayden", "julian", "lincoln", "joshua", "andrew", "nathan", "adam", "tyler", "ryan", "connor", "caleb", "thomas", "charlie", "oscar", "finn", "eli", "max", "sam", "ben", "tom", "pj"]
 
+# Little words, answered when they're all you say.
+const SHORT_WORDS := {
+	"if": "If? 🤔 If what? Tell me more!", "can": "Can I? Can you? 🥺 Can what?", "i": "You! 💕 Tell me about you!",
+}
+
+# Places she knows: name -> [emoji, what she says].
+const PLACES := {
+	"home": ["🏡", "Home is my favourite place!"], "house": ["🏠", "A house! So cosy!"], "park": ["🌳", "The park! Can we play there?"], "beach": ["🏖️", "The beach! Sand and waves!"],
+	"zoo": ["🦁", "The zoo! So many animals!"], "farm": ["🚜", "A farm! Cows and pigs and chickens!"], "forest": ["🌲", "A forest! Trees everywhere!"], "mountain": ["⛰️", "A mountain! So high!"],
+	"ocean": ["🌊", "The ocean is deep and full of fish!"], "river": ["🏞️", "A river! Splash!"], "lake": ["🏞️", "A lake! Ducks live there!"], "city": ["🏙️", "A big city! So many people!"],
+	"town": ["🏘️", "My town! I know all the good spots!"], "library": ["📚", "The library! Shhh, quiet paws!"], "museum": ["🏛️", "A museum! Old things from history!"], "hospital": ["🏥", "The hospital helps people feel better!"],
+	"vet": ["🩺", "The vet! Hmm, I don't love it, but they help me!"], "playground": ["🛝", "The playground! Swings and slides!"], "mall": ["🛍️", "The mall! Lots of shops!"], "restaurant": ["🍽️", "A restaurant! Yummy food!"],
+	"cafe": ["☕", "A cafe! Smells so good!"], "bakery": ["🥐", "A bakery! Cakes and bread!"], "airport": ["✈️", "An airport! Planes go whoosh!"], "country": ["🌎", "So many countries in the world!"],
+	"mexico": ["🇲🇽", "Mexico! 🌮 Tacos and pretty colours!"], "spain": ["🇪🇸", "Spain! They speak Spanish there!"], "canada": ["🇨🇦", "Canada! Maple syrup and snow!"], "america": ["🇺🇸", "America! A big country!"],
+	"england": ["🇬🇧", "England! Tea and rain!"], "france": ["🇫🇷", "France! The Eiffel Tower!"], "japan": ["🇯🇵", "Japan! Sushi and cherry blossoms!"], "china": ["🇨🇳", "China! Pandas live there!"],
+	"africa": ["🌍", "Africa! Lions and elephants!"], "australia": ["🇦🇺", "Australia! Kangaroos and koalas!"], "space": ["🚀", "Space! Stars and planets!"], "moon": ["🌙", "The moon! So far away!"],
+	"school": ["🏫", "School is fun!"], "garden": ["🌷", "A garden! Flowers and bugs!"], "kitchen": ["🍳", "The kitchen! Where the snacks are!"], "bedroom": ["🛏️", "My cosy bedroom!"],
+	"bathroom": ["🛁", "The bathroom! Splish splash!"], "yard": ["🌿", "The yard! I love to run there!"], "store": ["🏪", "A store! What are we buying?"], "church": ["⛪", "A church! Quiet and peaceful."],
+	"virginia": ["🌳", "Virginia! 🌄 Pretty mountains!"], "richmond": ["🏙️", "Richmond!"], "wisconsin": ["🧀", "Wisconsin! Cheese everywhere!"],
+}
+
 # Animal names she knows: name -> emoji.
 const ANIMALS := {
 	"horse": "🐴", "cow": "🐮", "pig": "🐷", "sheep": "🐑", "duck": "🦆", "fish": "🐟", "frog": "🐸", "bear": "🐻",
@@ -300,6 +328,7 @@ const EMOJI_TEXTS := ["😻", "🥰💕", "😴💤", "🤩✨", "😹😹😹",
 const RANDOM_MIN_SECONDS := 20.0
 const RANDOM_MAX_SECONDS := 45.0
 
+const EMOJI_BAR := ["😀", "😂", "😍", "🥰", "😎", "🥺", "😭", "😡", "😴", "🤔", "😸", "😻", "💕", "❤️", "💜", "👍", "👋", "🎉", "✨", "🌈", "🐱", "🐶", "🐦", "🐰", "🐹", "🍓", "🍕", "🍰", "🍪", "🥕", "🐟", "🏡", "⚽", "🎵", "📚"]
 const QUICK := {
 	"hi": "👋 Hi!",
 	"love": "❤️ Love you",
@@ -689,6 +718,10 @@ func _style_label(label: Label, size: int, colour: Color = Color(0.45, 0.25, 0.5
 	label.add_theme_color_override("font_color", colour)
 	label.add_theme_color_override("font_outline_color", Color.WHITE)
 	label.add_theme_constant_override("outline_size", 5)
+
+func _add_emoji(emoji: String) -> void:
+	chat_input.insert_text_at_caret(emoji)
+	chat_input.grab_focus()
 
 func _button(text: String, size: int, min_size: Vector2, action: Callable) -> Button:
 	var button := Button.new()
@@ -1341,6 +1374,16 @@ func _build_phone() -> void:
 	typing.add_child(chat_input)
 	typing.add_child(_button("📤", 20, Vector2(56, 46), _send_typed))
 
+	# Emoji bar: tap to add one to the text you're typing.
+	var emoji_scroll := ScrollContainer.new()
+	emoji_scroll.custom_minimum_size = Vector2(0, 54)
+	emoji_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	column.add_child(emoji_scroll)
+	var emoji_bar := HBoxContainer.new()
+	emoji_scroll.add_child(emoji_bar)
+	for e in EMOJI_BAR:
+		emoji_bar.add_child(_button(e, 24, Vector2(46, 46), _add_emoji.bind(e)))
+
 	var replies := GridContainer.new()
 	replies.columns = 2
 	column.add_child(replies)
@@ -1521,7 +1564,7 @@ func _treat_shown(text: String, words: PackedStringArray) -> String:
 	return found
 
 func _is_thing(w: String) -> bool:
-	return THINGS.has(w) or ANIMALS.has(w)
+	return THINGS.has(w) or ANIMALS.has(w) or FOODS.has(w) or _food_word(w) != ""
 
 # "kitten, pink and purple"
 func _list_words(items: Array) -> String:
@@ -1597,6 +1640,43 @@ func _eat_sound(text: String, words: PackedStringArray) -> String:
 		if food != "":
 			return String(FOODS[food][1])
 	return ""
+
+# Foods, animals and places in what was said: every one counts, and "love" is answered too.
+func _topics_reply(words: PackedStringArray) -> String:
+	var found: Array[String] = []
+	var singles: Array[String] = []
+	for w in words:
+		var food := _food_word(w)
+		var base := w.trim_suffix("s")
+		var shown := ""
+		var single := ""
+		if food != "":
+			shown = "%s%s" % [food, FOODS[food][0]]
+			single = "%s%s! %s 😋" % [food.capitalize(), FOODS[food][0], String(["Yummy!", "That sounds so good!", "Can I have some?", "Share with me?"].pick_random())]
+		elif ANIMALS.has(w) or ANIMALS.has(base):
+			var animal := w if ANIMALS.has(w) else base
+			shown = "%s%s" % [animal, ANIMALS[animal]]
+			single = "%s%s! I love %ss! %s" % [animal.capitalize(), ANIMALS[animal], animal, String(ANIMAL_FACTS.get(animal, ""))]
+		elif (PLACES.has(w) or PLACES.has(base)) and not REPLIES.has(w):
+			var place := w if PLACES.has(w) else base
+			shown = "%s%s" % [place, PLACES[place][0]]
+			single = "%s%s! %s" % [place.capitalize(), PLACES[place][0], PLACES[place][1]]
+		if shown == "" or found.has(shown):
+			continue
+		found.append(shown)
+		singles.append(single)
+	if found.is_empty():
+		return ""
+	var loves := false
+	for l in LIKE_WORDS:
+		if words.has(l):
+			loves = true
+	if found.size() == 1 and not loves:
+		return singles[0]
+	var named := found[0] if found.size() == 1 else ", ".join(found.slice(0, found.size() - 1)) + " and " + found[found.size() - 1]
+	if loves:
+		return "You love %s?! 😻 Me too! 💕" % named
+	return "%s! 😸 Ooh, so many things I know! 💕" % named.capitalize()
 
 # The food she knows for this word ("pizzas" -> "pizza"), or "".
 func _food_word(w: String) -> String:
@@ -1783,7 +1863,7 @@ func _reply_to(text: String) -> String:
 		if NAMES.has(w) and w != "pj" and w != "ruthie" and w != "norakate":
 			if w == PetalState.pet_name.to_lower():
 				return "That's MY name! 😸 %s is me!" % PetalState.pet_name
-			var intro := has.call(["my", "name", "called", "im", "am"])
+			var intro: bool = has.call(["my", "name", "called", "im", "am"])
 			var cap := w.capitalize()
 			if intro:
 				return String(["%s! 💖 What a pretty name! Hi %s! 🐾" % [cap, cap], "Hi %s! 😻 I'm %s! Nice to meet you!" % [cap, PetalState.pet_name]].pick_random())
@@ -1823,7 +1903,18 @@ func _reply_to(text: String) -> String:
 		return String(["*leans into it* 🥰 %s", "*loves the attention* 🥰 %s"].pick_random()) % _delight()
 	if has.call(["kiss", "kisses"]):
 		return "Mwah! 😘😻 *blushes*"
-	if has.call(["poop", "fart", "toot", "burp"]):
+	if has.call(["poop", "fart", "toot", "burp", "pee"]):
+		var stinky: Array[String] = []
+		for w in words:
+			if ["poop", "fart", "toot", "burp", "pee"].has(w) and not stinky.has(w):
+				stinky.append(w)
+		var named := stinky[0] if stinky.size() == 1 else ", ".join(stinky.slice(0, stinky.size() - 1)) + " and " + stinky[stinky.size() - 1]
+		if has.call(LIKE_WORDS):
+			return "You love %s?! 😹💨 Hehe, stinky! I love you more though! 💕" % named
+		if stinky.size() > 1:
+			return "%s?! 💨😹 So stinky! Pffft!" % named.capitalize()
+		if stinky.has("pee"):
+			return "Hehe, the potty! 🚽😹 Wash your paws after!"
 		return String(["Hehe! 💨😹 Stinky!", "Pffft! 😹💨 *runs away*"].pick_random())
 	if has.call(["sing", "song"]) and not has.call(["dance"]):
 		return "Meow meow meow~ 🎤😹 La la la!"
@@ -1945,15 +2036,11 @@ func _reply_to(text: String) -> String:
 	for w in words:
 		if REPLIES.has(w):
 			return String(REPLIES[w]).replace("%NAME%", PetalState.pet_name).replace("%YOU%", _you()).replace("%TODAY%", _summary_for(_today_key()))
-	for w in words:
-		var food := _food_word(w)
-		if food != "":
-			var comment: String = String(["Yummy!", "That sounds so good!", "Can I have some?", "Share with me?"].pick_random())
-			return "%s%s! %s 😋" % [food.capitalize(), FOODS[food][0], comment]
-	for w in words:
-		if ANIMALS.has(w):
-			var fact: String = ANIMAL_FACTS.get(w, "")
-			return "%s%s! I love %ss! %s" % [w.capitalize(), ANIMALS[w], w, fact]
+	var topics := _topics_reply(words)
+	if topics != "":
+		return topics
+	if words.size() == 1 and SHORT_WORDS.has(words[0]):
+		return String(SHORT_WORDS[words[0]])
 	for w in words:
 		if FILLER.has(w):
 			return "Mm-hm! 😸 Tell me more!"
