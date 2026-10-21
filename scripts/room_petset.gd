@@ -116,6 +116,7 @@ func _build() -> void:
 	play_actions.add_child(_action_button("🎉 Play!", _on_play))
 	put_away_button = _action_button("🧺 Put away", _on_put_away)
 	play_actions.add_child(put_away_button)
+	play_actions.add_child(_action_button("🌦️ Weather", _on_weather))
 	play_actions.add_child(_action_button("🧹 Clear all", _on_clear))
 	play_actions.add_child(_action_button("✅ I love it!", _on_play_done))
 
@@ -199,6 +200,12 @@ func _build() -> void:
 	name_button.add_theme_font_size_override("font_size", 19)
 	name_button.pressed.connect(_on_name)
 	options.add_child(name_button)
+	var hint := Label.new()
+	hint.text = "💭 %s has a secret favourite colour. Can you find it?" % PetalState.pet_name
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_font_size_override("font_size", 16)
+	hint.add_theme_color_override("font_color", INK)
+	options.add_child(hint)
 
 func _action_row(parent: Control) -> HBoxContainer:
 	var row := HBoxContainer.new()
@@ -242,8 +249,8 @@ func _titled(title: String, content: Control) -> Control:
 func _action_button(text: String, action: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(160, 48)
-	button.add_theme_font_size_override("font_size", 19)
+	button.custom_minimum_size = Vector2(128, 48)
+	button.add_theme_font_size_override("font_size", 18)
 	button.pressed.connect(action)
 	return button
 
@@ -390,6 +397,11 @@ func _on_put_away() -> void:
 	play_stage.remove_selected()
 	Sfx.pop(self)
 
+func _on_weather() -> void:
+	var icon: String = play_stage.next_weather()
+	Sfx.pop(self)
+	_pop("%s" % (icon if icon != "" else "☀️ sunny"), petal)
+
 func _on_clear() -> void:
 	play_stage.clear_all()
 
@@ -438,6 +450,11 @@ func _on_kind(which: String) -> void:
 func _on_swatch(field: String, index: int) -> void:
 	_piece()[field] = index
 	_changed()
+	if field == "color" and index == PetalState.favourite_color(pet_id):
+		_pop("💖 my favourite colour!", petal)
+		Sfx.chime(self)
+		Confetti.burst(self, petal.global_position + petal.size / 2.0, 16)
+		PetCameo.jump_for_joy(petal)
 
 func _on_pattern(id: String) -> void:
 	_piece()["pattern"] = id

@@ -951,6 +951,11 @@ const SET_SHAPES := {
 const SET_NAME_MAX := 14
 var pet_sets := {}
 
+# Each pet secretly loves one colour (an index into SET_COLORS) - the studio
+# cheers when a kid finds it.
+func favourite_color(id: String) -> int:
+	return absi(("fav" + id).hash()) % SET_COLORS.size()
+
 func default_pet_set(id: String) -> Dictionary:
 	var h := absi(id.hash())
 	var main := h % SET_COLORS.size()

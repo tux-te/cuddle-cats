@@ -21,6 +21,37 @@ var drag_moved := false
 func _ready() -> void:
 	clip_contents = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	var timer := Timer.new()
+	timer.wait_time = 0.22
+	timer.autostart = true
+	timer.timeout.connect(_spawn_weather)
+	add_child(timer)
+
+# --- Weather -----------------------------------------------------------------
+
+# Tap the weather button to cycle: nothing, petals, snow, rain, stars.
+const WEATHER := ["", "🌸", "❄️", "💧", "⭐"]
+var weather := 0
+
+func next_weather() -> String:
+	weather = (weather + 1) % WEATHER.size()
+	return WEATHER[weather]
+
+func _spawn_weather() -> void:
+	if weather == 0 or not is_visible_in_tree():
+		return
+	var drop := Label.new()
+	drop.text = WEATHER[weather]
+	drop.add_theme_font_size_override("font_size", randi_range(18, 32))
+	drop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	drop.z_index = 2000
+	drop.position = Vector2(randf_range(0, size.x), -30)
+	add_child(drop)
+	var fall := 2.2 if WEATHER[weather] == "💧" else randf_range(3.0, 4.5)
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(drop, "position:y", size.y + 20, fall)
+	tween.tween_property(drop, "position:x", drop.position.x + randf_range(-60, 60), fall)
+	tween.chain().tween_callback(drop.queue_free)
 
 # --- Items -------------------------------------------------------------------
 
@@ -102,10 +133,31 @@ func _move_to(item: Label, center: Vector2) -> void:
 	item.position = c - item.size / 2.0
 	item.z_index = int(c.y)
 
+# Every toy has its own trick when tapped.
 func bounce(item: Label) -> void:
 	if not is_instance_valid(item):
 		return
 	var tween := create_tween()
+	match String(item.get_meta("id")):
+		"balloon":
+			var home := item.position
+			tween.tween_property(item, "position:y", home.y - 90, 0.5).set_trans(Tween.TRANS_SINE)
+			tween.tween_property(item, "position:y", home.y, 0.7).set_trans(Tween.TRANS_SINE)
+			return
+		"ball", "yarn", "car":
+			var home := item.position
+			var dir := 1.0 if home.x < size.x - 160 else -1.0
+			tween.tween_property(item, "position:x", home.x + 120.0 * dir, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			tween.parallel().tween_property(item, "rotation", 6.0 * dir, 0.5)
+			tween.tween_property(item, "position:x", home.x, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+			tween.parallel().tween_property(item, "rotation", 0.0, 0.5)
+			return
+		"wheel", "horse", "fountain", "rainbow", "castle", "circus", "coaster":
+			tween.tween_property(item, "scale", Vector2(1.5, 1.5), 0.2).set_trans(Tween.TRANS_BACK)
+			tween.tween_property(item, "rotation", TAU, 0.6)
+			tween.tween_property(item, "rotation", 0.0, 0.0)
+			tween.tween_property(item, "scale", Vector2.ONE, 0.2)
+			return
 	tween.tween_property(item, "scale", Vector2(1.35, 1.35), 0.12)
 	tween.tween_property(item, "rotation", 0.3, 0.08)
 	tween.tween_property(item, "rotation", -0.3, 0.1)
