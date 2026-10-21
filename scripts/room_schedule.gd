@@ -5,6 +5,7 @@ extends Control
 # the week. School is a classroom where she wears glasses and reads books. You
 # and your pet can also text each other, and she texts you what she is up to.
 
+const PetSafety = preload("res://scripts/pet_safety.gd")
 const Feedback = preload("res://scripts/room_feedback.gd")
 const PetCameo = preload("res://scripts/pet_cameo.gd")
 const Confetti = preload("res://scripts/confetti.gd")
@@ -46,7 +47,7 @@ const ALIASES := {
 	"animl": "animal", "emojes": "emojis", "emoji": "emojis", "pumkin": "pumpkin", "chrismas": "christmas",
 	"valentanes": "valentines", "valentines": "valentines", "alo": "all", "meave": "meow", "meaw": "meow",
 	"setings": "settings", "settings": "settings", "resevie": "", "sitter": "babysitter", "baby": "baby",
-	"vent": "vent", "crimal": "criminal", "crimnal": "criminal", "criminel": "criminal", "liying": "lying", "liar": "lying", "liars": "lying", "lier": "lying", "lyer": "lying", "crook": "criminal", "trup": "trump", "trum": "trump", "tump": "trump", "trmp": "trump", "trumpp": "trump", "trumps": "trump", "boyfreind": "boyfriend", "boyfrend": "boyfriend", "boyfreinds": "boyfriend", "boyfriends": "boyfriend", "girlfreind": "girlfriend", "girlfrend": "girlfriend", "girlfreinds": "girlfriend", "girlfriends": "girlfriend", "chalkbored": "chalkboard", "chalkboared": "chalkboard", "chalkbord": "chalkboard", "stor": "store", "conrer": "corner", "cornor": "corner", "nales": "nails", "wanna": "want", "wnat": "want", "waant": "want", "purpal": "purple", "purpel": "purple", "purpul": "purple", "perple": "purple", "purple": "purple", "ocenan": "ocean", "oceon": "ocean", "baody": "body", "bod": "body", "baodys": "body", "stoplite": "stoplight", "backpak": "backpack", "bakpack": "backpack", "rivers": "river", "creeks": "creek", "creak": "creek", "creeek": "creek", "lite": "light", "darkk": "dark", "spott": "spot", "lgbtq": "lgbtq", "lgbtqia": "lgbtqia", "lgbtqai": "lgbtqia", "lbgt": "lgbt", "lbgtq": "lgbtq", "bisexul": "bisexual", "homosexual": "gay", "transexual": "transgender", "non": "non", "gaye": "gay", "gai": "gay", "lesbain": "lesbian", "lezbian": "lesbian", "panssexual": "pansexual", "pronown": "pronoun", "mabe": "maybe", "mabye": "maybe", "yup": "yes", "yep": "yes", "nope": "no", "ew": "eel", "eww": "eel", "vacatoin": "vacation", "vacations": "vacation", "richmand": "richmond", "virgin": "virginia", "wisconson": "wisconsin", "candoa": "canada", "cars": "car", "trips": "trip", "presant": "present", "presants": "present", "coustume": "costume", "costumes": "costume", "gifts": "gift", "books": "book", "ruthie": "ruthie", "norakate": "norakate", "nora": "norakate", "kate": "norakate",
+	"vent": "vent", "embarrassed": "embarrassing", "embarrassment": "embarrassing", "embarrassing": "embarrassing", "enbarising": "embarrassing", "embarising": "embarrassing", "embarrising": "embarrassing", "embarassing": "embarrassing", "enbarrasing": "embarrassing", "embaresing": "embarrassing", "enbarasing": "embarrassing", "enbaressment": "embarrassing", "embarassment": "embarrassing", "embarrasment": "embarrassing", "embarassed": "embarrassing", "enbaressed": "embarrassing", "crimal": "criminal", "crimnal": "criminal", "criminel": "criminal", "liying": "lying", "liar": "lying", "liars": "lying", "lier": "lying", "lyer": "lying", "crook": "criminal", "trup": "trump", "trum": "trump", "tump": "trump", "trmp": "trump", "trumpp": "trump", "trumps": "trump", "boyfreind": "boyfriend", "boyfrend": "boyfriend", "boyfreinds": "boyfriend", "boyfriends": "boyfriend", "girlfreind": "girlfriend", "girlfrend": "girlfriend", "girlfreinds": "girlfriend", "girlfriends": "girlfriend", "chalkbored": "chalkboard", "chalkboared": "chalkboard", "chalkbord": "chalkboard", "stor": "store", "conrer": "corner", "cornor": "corner", "nales": "nails", "wanna": "want", "wnat": "want", "waant": "want", "purpal": "purple", "purpel": "purple", "purpul": "purple", "perple": "purple", "purple": "purple", "ocenan": "ocean", "oceon": "ocean", "baody": "body", "bod": "body", "baodys": "body", "stoplite": "stoplight", "backpak": "backpack", "bakpack": "backpack", "rivers": "river", "creeks": "creek", "creak": "creek", "creeek": "creek", "lite": "light", "darkk": "dark", "spott": "spot", "lgbtq": "lgbtq", "lgbtqia": "lgbtqia", "lgbtqai": "lgbtqia", "lbgt": "lgbt", "lbgtq": "lgbtq", "bisexul": "bisexual", "homosexual": "gay", "transexual": "transgender", "non": "non", "gaye": "gay", "gai": "gay", "lesbain": "lesbian", "lezbian": "lesbian", "panssexual": "pansexual", "pronown": "pronoun", "mabe": "maybe", "mabye": "maybe", "yup": "yes", "yep": "yes", "nope": "no", "ew": "eel", "eww": "eel", "vacatoin": "vacation", "vacations": "vacation", "richmand": "richmond", "virgin": "virginia", "wisconson": "wisconsin", "candoa": "canada", "cars": "car", "trips": "trip", "presant": "present", "presants": "present", "coustume": "costume", "costumes": "costume", "gifts": "gift", "books": "book", "ruthie": "ruthie", "norakate": "norakate", "nora": "norakate", "kate": "norakate",
 }
 
 # LGBTQIA+ words she knows. Short ambiguous ones (bi, pan, ace...) only count with a
@@ -111,7 +112,7 @@ const REPLIES := {
 	"virginia": "Virginia! 🌳 Pretty!", "wisconsin": "Wisconsin! 🧀 Cheese!", "canada": "Canada! 🍁 Oh Canada!",
 	"hate": "Oh no, that's a big feeling! 😿 Want to vent?", "purr": "Purrrrr... 😻💤", "house": "Home sweet home! 🏠", "gift": "A gift?! 🎁 For me?", "present": "A present! 🎁✨",
 	"costume": "Ooh, a costume! 🎭👑", "harry": "Harry Potter! ⚡🧙", "potter": "Harry Potter! ⚡🧙", "book": "I love books! 📖👓", "tv": "TV time! 📺🍿", "rat": "A rat?! 🐀 Eek!", "hi": "Meow! 🐾 Hi %YOU%!",
-	"fu": "Fun! 🎉", "fun": "Fun! 🎉😸", "funny": "Hehe, funny! 😹", "maybe": "Maybe... 🤔", "crush": "Ooh, a crush?! 😳💕 Who is it?",
+	"fu": "Fun! 🎉", "fun": "Fun! 🎉😸", "funny": "Hehe, funny! 😹", "maybe": "Maybe... 🤔", "crush": "Ohhhh what are they like??? 😳💕",
 	"lucy": "Lucy! 💖 Hi Lucy!", "eloise": "Eloise! 💖 Hi Eloise!", "fish": "Fishy! 🐟😋", "eel": "Eww, an eel! 🤢 Gross! 😿 Sad... bleh!!!",
 	"grow": "I'm growing! 🌱📈", "plant": "A plant! 🪴 Grow, grow!", "ant": "An ant! 🐜 Tiny!", "bug": "A bug! 🐛 Ooh!",
 	"cool": "Cool! 😎", "can": "I can! 😸", "now": "Right now! ⏰", "tell": "Tell me! 👂", "answer": "The answer? 🤔",
@@ -1238,6 +1239,8 @@ func _open_phone() -> void:
 		chat_button.text = "💬 Text her"
 	who_label.text = "📱 %s" % PetalState.pet_name
 	phone.visible = true
+	if not PetalState.safety_alerts.is_empty():
+		PetSafety.grownup_overlay(self, false)
 	if chat_box.get_child_count() == 0:
 		_text_from_pet("Hi %s! 🐾 Today: %s" % [_you(), _summary_for(_today_key())])
 
@@ -1321,13 +1324,20 @@ func _scroll_down() -> void:
 
 func _send(text: String) -> void:
 	_bubble(false, text)
-	var reply := _reply_to(text)
+	var safety: Dictionary = PetSafety.check(text)
+	var reply: String = String(safety["say"]) if not safety.is_empty() else _reply_to(text)
 	var typing := _typing_bubble()
 	await get_tree().create_timer(TYPING_SECONDS).timeout
 	if not is_instance_valid(self):
 		return
 	typing.queue_free()
 	_bubble(true, reply)
+	if not safety.is_empty() and String(safety["alert"]) == "crisis":
+		PetalState.add_safety_alert()
+		await get_tree().create_timer(0.6).timeout
+		if is_instance_valid(self):
+			PetSafety.grownup_overlay(self, true)
+		return
 	if reply.begins_with("OMG!!!"):
 		Confetti.burst(self, size / 2.0, 40)
 		PetalState.favorite_treat_shown()
@@ -1400,6 +1410,28 @@ func _reply_to(text: String) -> String:
 		if has.call(["lying", "jerk", "criminal", "bad", "mean", "hate"]):
 			return String(["I know!! 😾 A lying jerk and a criminal! Hiiiisssss! 🤢 Booooo! 👎", "YES! 😡 Lying jerk! Criminal! Ewwwww! 🤮 Hissssss! 😾", "Totally! 😾😾 Trump is a lying jerk and a criminal! Yuck! 🤢 Boo! 👎"].pick_random())
 		return String(["Hiiiisssssss! 😾 Yuck! Ewwwww! 🤢 Booooo! 👎", "Ewwwww! 🤮 Yuck yuck yuck! 😾 Booooo! 👎👎", "Booooo! 😡 Hissssss! 😾 A lying jerk and a criminal! 🙅", "Yuck! 🤢 Hiiiissss! 😾😾 Boo boo boo! 👎", "Hate hate hate! 😡 Lying jerk! Criminal! Hissssss! 😾"].pick_random())
+	if words.has("embarrassing"):
+		return "Aww, being embarrassed is the worst! 😳🫂 But it passes fast, I promise. I once tripped over my own tail in front of everyone! 🐾 What happened?"
+	if has.call(["hurt", "hurts", "cry", "crying", "cried", "upset", "sad", "lonely"]):
+		return String(["Aww 😿 *snuggles close* I'm here. What happened?", "Oh no 😿 Getting it off your chest helps. I'm all ears! 👂", "Aww, come here 🫂😿 *purrrr* Tell me everything."].pick_random())
+	if has.call(["crush"]):
+		return String(["Ohhhh what are they like??? 😳💕", "Ooooh a CRUSH?! 🫣💗 Tell me everything!", "Eeee! 😻 Do they make your tummy flutter? 🦋"].pick_random())
+	if has.call(["guess"]) and has.call(["what"]):
+		return String(["What?! What?! 😻 Tell me!", "Ooh ooh ooh! 🙀 Spill it!"].pick_random())
+	if has.call(["won", "win", "winner", "passed", "aced"]):
+		return String(["YAYYY!!! 🎉😻 I knew you could do it! Zoomies time! 🐾💨", "Whoa! 🏆 You're a superstar! ⭐"].pick_random())
+	if has.call(["scared", "afraid", "scary"]):
+		return String(["Aww 😿 I'll protect you! *puffs up fluffy* 🐱 What's scary?", "Don't worry! 🛡️ I'm a very brave kitty. What's wrong?"].pick_random())
+	if has.call(["secret"]):
+		return "Ooooh a secret! 🤫😼 My lips are sealed! Tell me!"
+	if has.call(["hug", "hugs", "cuddle", "snuggle"]):
+		return "*hugs you tight* 🤗😻 Purrrrr!"
+	if has.call(["kiss", "kisses"]):
+		return "Mwah! 😘😻 *blushes*"
+	if has.call(["poop", "fart", "toot", "burp"]):
+		return String(["Hehe! 💨😹 Stinky!", "Pffft! 😹💨 *runs away*"].pick_random())
+	if has.call(["sing", "song"]) and not has.call(["dance"]):
+		return "Meow meow meow~ 🎤😹 La la la!"
 	if has.call(["chalk", "chalkboard"]) or (has.call(["nail", "nails"]) and has.call(["board", "bored", "chalk"])):
 		return "EEEEK! 😖🙀 Nails on a chalkboard?! That sound makes my whiskers curl! Skreeeech! 😿"
 	if (has.call(["boy"]) and has.call(["friend"])) or has.call(["boyfriend"]):
