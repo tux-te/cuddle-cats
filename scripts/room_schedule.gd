@@ -1459,6 +1459,21 @@ func _is_math(text: String) -> bool:
 	var words := _words(text)
 	return (words.has("homework") and (words.has("do") or words.has("help") or words.has("answer"))) or (words.has("answer") and words.has("to") and words.has("what"))
 
+# Does she love this house choice? Telling you also fills in her wish list.
+func _house_survey_reply(words: Array) -> String:
+	var wants := PetalState.house_wants_for_pet()
+	var known := PetalState.house_known_for_pet()
+	for category in PetalState.HOUSE_CHOICES:
+		for choice in PetalState.HOUSE_CHOICES[category]:
+			if not words.has(choice):
+				continue
+			if wants[category] == choice:
+				known[category] = true
+				PetalState.save_game()
+				return "YES! 😻 I love %s! It's exactly what I want!" % choice
+			return String(["Hmm, not really 😐 %s isn't my favourite." % choice.capitalize(), "Meh... 😾 Not %s." % choice, "Nope! 🙅 Try something else!"].pick_random())
+	return ""
+
 # Her answer to whatever was typed. Anything she has no word for is "nonsense".
 func _reply_to(text: String) -> String:
 	var words := _words(text)
@@ -1549,6 +1564,11 @@ func _reply_to(text: String) -> String:
 			riddle_reveal = riddle[2]
 			return "Riddle time! 🧩 %s" % riddle[0]
 		return "Let's cheer up! 😸 " + String(JOKES.pick_random())
+	# House survey by text: "do you like pink?" -> she says whether it's her favourite.
+	if has.call(["house", "home", "post", "scratching"]) or (has.call(["you", "your", "u", "ur"]) and has.call(LIKE_WORDS + ["want", "prefer", "wants"])):
+		var asked := _house_survey_reply(words)
+		if asked != "":
+			return asked
 	if has.call(["wish", "dream", "survey"]) or (has.call(["want", "wants"]) and has.call(["you", "your", "house", "home", "cat"])):
 		var found: Array[String] = []
 		var known := PetalState.house_known_for_pet()
@@ -1557,7 +1577,7 @@ func _reply_to(text: String) -> String:
 			if known.get(category, false):
 				found.append(String(wants[category]))
 		if found.is_empty():
-			return "Ask me in the Cat House (Living room)! 📋🏡"
+			return "Ask me what I like, like \"do you like pink?\" 📋🏡 Then build it in the Cat House (Living room)!"
 		return "I want a house that's %s! 🏡💕" % ", ".join(found)
 	if has.call(["hate", "hates"]):
 		for w in words:

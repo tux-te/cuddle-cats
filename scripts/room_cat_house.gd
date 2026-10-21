@@ -1,9 +1,9 @@
 extends Control
 
 # Design a cat house with a scratching post. Every pet secretly wants a colour,
-# a pattern, a height and a post style. In "Ask her" mode you survey her: tap an
-# option and she tells you whether she likes it. In "Build" mode you pick the
-# choices, then "Show her" to see how many she loves. All four is a Dream House.
+# a pattern, a height and a post style. You find them out by texting her in the
+# planner chat ("do you like pink?"). Pick the choices; she reacts to each one,
+# then "Show her" to see how many she loves. All four is a Dream House.
 
 const PetCameo = preload("res://scripts/pet_cameo.gd")
 const Confetti = preload("res://scripts/confetti.gd")
@@ -23,14 +23,11 @@ const CATEGORIES := {
 	"post": {"emoji": "🪢", "label": "Post"},
 }
 
-var surveying := true
 var house_view: Control = null
 var pet: TextureRect = null
 var speech: Label = null
 var learned: Label = null
 var show_button: Button = null
-var ask_button: Button = null
-var build_button: Button = null
 var buttons := {} # category -> {choice: Button}
 
 func _ready() -> void:
@@ -59,7 +56,7 @@ func _ready() -> void:
 
 	_build_panel()
 	resized.connect(_redraw)
-	_set_mode(true)
+	_set_mode()
 	await get_tree().process_frame
 	_redraw()
 	PetCameo.spawn(pet)
@@ -100,10 +97,6 @@ func _build_panel() -> void:
 	title.add_theme_font_size_override("font_size", 26)
 	title.add_theme_color_override("font_color", Color(0.45, 0.25, 0.55))
 	top.add_child(title)
-	ask_button = _button("📋 Ask her", func() -> void: _set_mode(true))
-	build_button = _button("🎨 Build", func() -> void: _set_mode(false))
-	top.add_child(ask_button)
-	top.add_child(build_button)
 	top.add_child(_button("⬅ Living", func() -> void: PetalState.navigate_to_room.emit("living")))
 
 	speech = Label.new()
@@ -146,12 +139,8 @@ func _button(text: String, action: Callable) -> Button:
 	button.pressed.connect(action)
 	return button
 
-func _set_mode(survey: bool) -> void:
-	surveying = survey
-	show_button.visible = not survey
-	ask_button.modulate = Color(1, 0.9, 0.4) if survey else Color.WHITE
-	build_button.modulate = Color.WHITE if survey else Color(1, 0.9, 0.4)
-	speech.text = "Ask me what I like! Tap an option and I'll tell you 😺" if survey else "Build my dream house! 🏡 Then tap Show her."
+func _set_mode() -> void:
+	speech.text = "Build my dream house! 🏡 Text me to find out what I like, then tap Show her."
 	_refresh()
 
 func _refresh() -> void:
@@ -162,32 +151,20 @@ func _refresh() -> void:
 	for category in CATEGORIES:
 		for choice in buttons[category]:
 			var button: Button = buttons[category][choice]
-			if surveying:
-				button.modulate = Color(0.6, 1.0, 0.6) if known.get(category, false) and wants[category] == choice else Color.WHITE
-			else:
-				button.modulate = Color(1, 0.9, 0.4) if design[category] == choice else Color.WHITE
+			button.modulate = Color(1, 0.9, 0.4) if design[category] == choice else Color.WHITE
 		summary += "%s %s   " % [CATEGORIES[category]["emoji"], wants[category] if known.get(category, false) else "❔"]
 	learned.text = "She wants: " + summary
 	_redraw()
 
 func _choose(category: String, choice: String) -> void:
-	if surveying:
-		_ask(category, choice)
-	else:
-		PetalState.house_design_for_pet()[category] = choice
-		PetalState.save_game()
-		_refresh()
-
-func _ask(category: String, choice: String) -> void:
-	var wants := PetalState.house_wants_for_pet()
-	if wants[category] == choice:
-		PetalState.house_known_for_pet()[category] = true
-		PetalState.save_game()
+	PetalState.house_design_for_pet()[category] = choice
+	PetalState.save_game()
+	_refresh()
+	if PetalState.house_wants_for_pet()[category] == choice:
 		speech.text = "YES! 😻 I love %s!" % choice
 		PetCameo.jump_for_joy(pet)
 	else:
-		speech.text = ["Hmm, not really 😐", "Meh... 😾", "Nope! 🙅"].pick_random()
-	_refresh()
+		speech.text = String(["Hmm, not really 😐", "Meh... 😾", "Nope! 🙅", "Ewww 😿"].pick_random())
 
 func _show_her() -> void:
 	var wants := PetalState.house_wants_for_pet()
