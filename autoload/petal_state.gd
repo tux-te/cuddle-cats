@@ -543,7 +543,7 @@ func _load_slot(slot: int) -> void:
 			if saved_schedule[date] is Array:
 				for entry in saved_schedule[date]:
 					if entry is Dictionary and entry.has("name"):
-						entries.append({"name": String(entry["name"]), "start": int(entry.get("start", -1)), "end": int(entry.get("end", -1)), "place": String(entry.get("place", ""))})
+						entries.append({"name": String(entry["name"]), "start": int(entry.get("start", -1)), "end": int(entry.get("end", -1)), "place": String(entry.get("place", "")), "emoji": String(entry.get("emoji", ""))})
 			if not entries.is_empty():
 				schedule[String(date)] = entries
 	# Merge key by key onto the defaults so pets or accessories added after

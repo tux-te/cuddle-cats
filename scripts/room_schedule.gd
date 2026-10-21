@@ -11,6 +11,9 @@ const Confetti = preload("res://scripts/confetti.gd")
 
 const DAYS := ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const MONTHS := ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+# Pictures to pick for an "Other" activity.
+const OTHER_EMOJIS := ["🎨", "🦷", "🛒", "🎂", "🎬", "🩺", "✂️", "⛪", "🚌", "🧁", "🎳", "🌳",
+	"⚽", "🏀", "🏈", "⚾", "🎾", "🏐", "🏓", "🏸", "🏒", "🥋", "🤸", "🛹", "⛸️", "🚴", "⛳", "🏹"]
 const STEP_SECONDS := 5
 const TYPING_SECONDS := 5.0
 const PET_SIZE := Vector2(280, 260)
@@ -147,6 +150,10 @@ var what_input: LineEdit = null
 var where_input: LineEdit = null
 var go_input: LineEdit = null
 var leave_input: LineEdit = null
+var weekdays_box: CheckBox = null
+var side_cats: Array[Button] = []
+var emoji_buttons: Array[Button] = []
+var picked_emoji := ""
 var riddle_answer: Array = []
 var riddle_reveal := ""
 var chat_input: LineEdit = null
@@ -167,7 +174,7 @@ var ball: Label = null
 
 func _ready() -> void:
 	var paper := ColorRect.new()
-	paper.color = Color(1.0, 0.9, 0.95)
+	paper.color = Color(1.0, 0.82, 0.92)
 	paper.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(paper)
 	_build_planner()
@@ -252,9 +259,11 @@ func _events_on(key: String) -> Array:
 func _minutes_text(minutes: int) -> String:
 	return "%d:%02d %s" % [(minutes / 60 + 11) % 12 + 1, minutes % 60, "AM" if minutes < 720 else "PM"]
 
+func _entry_emoji(entry: Dictionary) -> String:
+	return String(entry["emoji"]) if entry.get("emoji", "") != "" else String(_info(_find_activity(entry["name"]))["emoji"])
+
 func _entry_text(entry: Dictionary) -> String:
-	var info := _info(_find_activity(entry["name"]))
-	var text := "%s %s" % [info["emoji"], entry["name"]]
+	var text := "%s %s" % [_entry_emoji(entry), entry["name"]]
 	if entry["start"] >= 0:
 		text += "  %s-%s" % [_minutes_text(entry["start"]), _minutes_text(entry["end"])]
 	if entry["place"] != "":
@@ -281,6 +290,60 @@ func _add_event(key: String, entry: Dictionary) -> void:
 	entries.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return x["start"] < y["start"])
 	PetalState.schedule[key] = entries
 	PetalState.save_game()
+
+# Like _add_event, but swaps out an older event with the same name that day.
+func _replace_event(key: String, entry: Dictionary) -> void:
+	var kept: Array = []
+	for old in _events_on(key):
+		if String(old["name"]).to_lower() != String(entry["name"]).to_lower():
+			kept.append(old)
+	PetalState.schedule[key] = kept
+	_add_event(key, entry.duplicate())
+
+func _pick_emoji(on: bool, face: String, button: Button) -> void:
+	if on:
+		picked_emoji = face
+		for other in emoji_buttons:
+			if other != button:
+				other.set_pressed_no_signal(false)
+	elif picked_emoji == face:
+		picked_emoji = ""
+
+# The cats get cross when the name, time or place is missing.
+func _cats_mad(message: String) -> void:
+	Feedback.pop(self, message, what_input.global_position + Vector2(0, -50))
+	for cat in side_cats:
+		var face := cat.text
+		cat.text = "😾"
+		cat.pivot_offset = cat.size / 2.0
+		var tween := create_tween()
+		for i in range(3):
+			tween.tween_property(cat, "rotation", 0.25, 0.05)
+			tween.tween_property(cat, "rotation", -0.25, 0.05)
+		tween.tween_property(cat, "rotation", 0.0, 0.05)
+		tween.tween_interval(1.2)
+		tween.tween_callback(func() -> void: cat.text = face)
+
+# A little cat that says meow or purr when clicked.
+func _cat_button(face: String) -> Button:
+	var cat := Button.new()
+	cat.text = face
+	cat.flat = true
+	cat.focus_mode = Control.FOCUS_NONE
+	cat.custom_minimum_size = Vector2(48, 44)
+	cat.add_theme_font_size_override("font_size", 30)
+	cat.pressed.connect(_cat_says.bind(cat))
+	side_cats.append(cat)
+	return cat
+
+func _cat_says(cat: Button) -> void:
+	var sound: String = ["Meow! 😺", "Purrrr... 😻", "Meow meow! 😸", "Purr purr 💖", "Mew! 🎀"].pick_random()
+	Feedback.pop(self, sound, cat.global_position + Vector2(0, -40))
+	cat.pivot_offset = cat.size / 2.0
+	var tween := create_tween()
+	tween.tween_property(cat, "rotation", 0.3, 0.07)
+	tween.tween_property(cat, "rotation", -0.3, 0.1)
+	tween.tween_property(cat, "rotation", 0.0, 0.07)
 
 # One time like "8", "8:30", "800" or "1030" with an optional am/pm -> minutes
 # since midnight, or -1 if it is not a time.
@@ -450,11 +513,13 @@ func _build_planner() -> void:
 	var head := HBoxContainer.new()
 	left.add_child(head)
 	head.add_child(_button("◀", 22, Vector2(56, 44), _change_month.bind(-1)))
+	head.add_child(_cat_button("😺"))
 	month_label = Label.new()
 	month_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	month_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_style_label(month_label, 30, Color(0.78, 0.25, 0.55))
 	head.add_child(month_label)
+	head.add_child(_cat_button("😻"))
 	head.add_child(_button("▶", 22, Vector2(56, 44), _change_month.bind(1)))
 	grid = GridContainer.new()
 	grid.columns = 7
@@ -462,6 +527,12 @@ func _build_planner() -> void:
 	grid.add_theme_constant_override("h_separation", 4)
 	grid.add_theme_constant_override("v_separation", 4)
 	left.add_child(grid)
+	var cats := HBoxContainer.new()
+	cats.alignment = BoxContainer.ALIGNMENT_CENTER
+	cats.add_theme_constant_override("separation", 10)
+	left.add_child(cats)
+	for face in ["🐱", "😸", "😽", "😼", "🐈", "😻", "🐱"]:
+		cats.add_child(_cat_button(face))
 
 	# Right: the chosen day, and the box to type a new event.
 	var right := VBoxContainer.new()
@@ -480,12 +551,34 @@ func _build_planner() -> void:
 	day_list.add_theme_constant_override("separation", 4)
 	scroll.add_child(day_list)
 	what_input = _field(right, "What is it? (school, swimming...)")
+	var pick := HFlowContainer.new()
+	pick.add_theme_constant_override("h_separation", 2)
+	pick.add_theme_constant_override("v_separation", 2)
+	right.add_child(pick)
+	var pick_label := Label.new()
+	pick_label.text = "📌 Other:"
+	pick_label.add_theme_font_size_override("font_size", 16)
+	pick.add_child(pick_label)
+	for face in OTHER_EMOJIS:
+		var choice := Button.new()
+		choice.text = face
+		choice.toggle_mode = true
+		choice.custom_minimum_size = Vector2(36, 36)
+		choice.add_theme_font_size_override("font_size", 20)
+		choice.toggled.connect(_pick_emoji.bind(face, choice))
+		pick.add_child(choice)
+		emoji_buttons.append(choice)
 	where_input = _field(right, "📍 Where are you going?")
 	var times := HBoxContainer.new()
 	times.add_theme_constant_override("separation", 6)
 	right.add_child(times)
 	go_input = _field(times, "⏰ Time you go")
 	leave_input = _field(times, "🏠 Time you leave")
+	weekdays_box = CheckBox.new()
+	weekdays_box.text = "📅 Every weekday (Mon-Fri)"
+	weekdays_box.add_theme_font_size_override("font_size", 18)
+	weekdays_box.add_theme_color_override("font_color", Color(0.78, 0.25, 0.55))
+	right.add_child(weekdays_box)
 	right.add_child(_button("➕ Add to my calendar", 20, Vector2(0, 46), _type_event))
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
@@ -545,7 +638,7 @@ func _refresh_calendar() -> void:
 		if key == today:
 			text += " ⭐"
 		for e in range(mini(events.size(), 2)):
-			text += "\n" + _info(_find_activity(events[e]["name"]))["emoji"] + " " + events[e]["name"]
+			text += "\n" + _entry_emoji(events[e]) + " " + events[e]["name"]
 		if events.size() > 2:
 			text += "\n+%d more" % (events.size() - 2)
 		var cell := Button.new()
@@ -556,8 +649,8 @@ func _refresh_calendar() -> void:
 		cell.custom_minimum_size = Vector2(0, 50)
 		cell.add_theme_font_size_override("font_size", 14)
 		cell.add_theme_color_override("font_color", Color(0.3, 0.15, 0.35) if in_month else Color(0.6, 0.5, 0.65))
-		var fill := Color(1, 0.97, 0.88) if key == selected else (Color(0.93, 0.88, 1.0) if key == today else (Color.WHITE if in_month else Color(0.98, 0.93, 0.96)))
-		var border := Color(0.95, 0.72, 0.15) if key == selected else Color(0.95, 0.65, 0.8)
+		var fill := Color(1, 0.97, 0.88) if key == selected else (Color(1.0, 0.8, 0.9) if key == today else (Color(1.0, 0.95, 0.98) if in_month else Color(0.98, 0.93, 0.96)))
+		var border := Color(0.95, 0.72, 0.15) if key == selected else Color(0.95, 0.5, 0.72)
 		var style := _cell_style(fill, border, 4 if key == selected else 2)
 		for state in ["normal", "hover", "pressed", "focus"]:
 			cell.add_theme_stylebox_override(state, style)
@@ -632,9 +725,6 @@ func _type_event() -> void:
 	if where == "" and go == -1 and leave == -1 and what != "":
 		entry = _parse_event(what) # still understands "school 8-3 at Watkins"
 	if entry.is_empty():
-		if what == "" and where == "":
-			Feedback.pop(self, "😹 Where are you going?", what_input.global_position + Vector2(0, -50))
-			return
 		if go == -2 or leave == -2:
 			Feedback.pop(self, "😹 I don't get that time. Try 8 or 3:30", go_input.global_position + Vector2(0, -50))
 			return
@@ -644,7 +734,34 @@ func _type_event() -> void:
 			leave = mini(go + 60, 24 * 60 - 1)
 		var name := what if what != "" else "Going out"
 		entry = {"name": name.substr(0, 1).to_upper() + name.substr(1), "start": go, "end": leave if go >= 0 else -1, "place": where.capitalize()}
-	_add_event(selected, entry)
+		if what == "":
+			entry["name"] = ""
+	# Every plan needs what, when and where, so kids learn to keep track.
+	var missing: Array[String] = []
+	if entry["name"] == "":
+		missing.append("what")
+	if entry["start"] < 0:
+		missing.append("time")
+	if entry["place"] == "":
+		missing.append("place")
+	if not missing.is_empty():
+		_cats_mad("😾 Grrr! Add the " + " and ".join(missing) + "!")
+		return
+	if picked_emoji != "":
+		entry["emoji"] = picked_emoji
+	var spread := weekdays_box.button_pressed or _find_activity(entry["name"]) == "school"
+	var week_day := _weekday_of(int(selected.split("-")[0]), int(selected.split("-")[1]), int(selected.split("-")[2]))
+	if spread and week_day >= 1 and week_day <= 5:
+		# School (or the ticked box) goes on Monday to Friday, never the weekend.
+		for key in _week_of(selected).slice(1, 6):
+			_replace_event(key, entry)
+		Feedback.pop(self, "😸 Added Mon-Fri!", what_input.global_position + Vector2(0, -50))
+	else:
+		_add_event(selected, entry)
+	weekdays_box.button_pressed = false
+	picked_emoji = ""
+	for choice in emoji_buttons:
+		choice.set_pressed_no_signal(false)
 	for field in [what_input, where_input, go_input, leave_input]:
 		field.text = ""
 	_refresh_calendar()
