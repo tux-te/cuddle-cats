@@ -156,6 +156,7 @@ func _on_karaoke() -> void:
 		return
 	karaoke_busy = true
 	_set_extras_disabled(true)
+	%Background.texture = load("res://Sprites/backgrounds/karaoke.jpg")
 	karaoke_panel.visible = true
 	karaoke_stop.visible = false
 	OS.request_permission("RECORD_AUDIO")
@@ -277,6 +278,7 @@ func _end_karaoke() -> void:
 	if not is_instance_valid(self):
 		return
 	karaoke_panel.visible = false
+	%Background.texture = load(PetalState.room_bg("party", "res://Sprites/backgrounds/party_room.jpg"))
 	_set_extras_disabled(false)
 	karaoke_busy = false
 
