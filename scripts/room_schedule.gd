@@ -1365,6 +1365,16 @@ func _treat_shown(text: String, words: PackedStringArray) -> String:
 func _is_thing(w: String) -> bool:
 	return THINGS.has(w) or ANIMALS.has(w)
 
+# The active pet's noise and face: cat meow, dog woof, bird tweet, gerbil squeak.
+func _pet_species() -> String:
+	return String(PetalState.PETS.get(PetalState.active_pet, {}).get("species", "cat"))
+
+func _pet_sound() -> String:
+	return String({"cat": "meow", "dog": "woof", "bird": "tweet", "gerbil": "squeak"}.get(_pet_species(), "meow"))
+
+func _pet_face() -> String:
+	return String({"cat": "🐱", "dog": "🐶", "bird": "🐦", "gerbil": "🐹"}.get(_pet_species(), "🐾"))
+
 # A sum like "56x189", "7 + 8", "9 times 6", or asking for homework help.
 func _is_math(text: String) -> bool:
 	var t := text.to_lower().replace("×", "x").replace("÷", "/")
@@ -1385,10 +1395,7 @@ func _reply_to(text: String) -> String:
 		return false
 	# Sums ("56x189", "7 plus 8") and homework help: she can't do your homework.
 	if _is_math(text):
-		var species := String(PetalState.PETS.get(PetalState.active_pet, {}).get("species", "cat"))
-		var sound: String = {"cat": "meow", "dog": "woof", "bird": "tweet", "gerbil": "squeak"}.get(species, "meow")
-		var face: String = {"cat": "🐱", "dog": "🐶", "bird": "🐦", "gerbil": "🐹"}.get(species, "🐾")
-		return "Ummmmm... %s? 🤔%s I can't do your homework! 📚 Try it on paper, or ask a grown-up! ✏️" % [sound, face]
+		return "Ummmmm... %s? 🤔%s I can't do your homework! 📚 Try it on paper, or ask a grown-up! ✏️" % [_pet_sound(), _pet_face()]
 	# Said they like trump: she stops talking for the rest of this session.
 	if PetalState.snubbing_player:
 		return String(["Booooo! 👎", "Hisssssss! 😾", "Booooo! Hiiisssss! 😾👎", "😾😾😾 Hissssss!", "Boooooo! 😡"].pick_random())
@@ -1509,7 +1516,7 @@ func _reply_to(text: String) -> String:
 				return "1, 2, 3, 4, 5, 6, 7, 8, 9, 10! 🔢😸 I can count!"
 			if w.length() == 1:
 				return "Number %s! 🔢 Let's count: %s 😸" % [w, " ".join(range(1, maxi(int(w), 1) + 1).map(func(n): return str(n)))]
-			return "Ooh, a big number! 🔢😸 Let's keep numbers like phone numbers and addresses private, okay? 🔒"
+			return "%s? 🤔%s *tilts head*" % [_pet_sound().capitalize(), _pet_face()]
 	var id := _find_activity(text)
 	if id != "" and has.call(["when", "time", "what"]) and not has.call(["doing", "today"]):
 		var times: Array[String] = []
