@@ -11,6 +11,7 @@ const TIPS := [
 	"🍓  Feed, 🛁 wash and 🛏 put your pet to bed to keep them happy",
 	"🎾  Play games to earn 🪙 Treat Coins",
 	"👗  Spend coins on bows, hats and fun things in Dress Up",
+	"🛏️  Design your pet's very own bed and bowl in Pet Set",
 	"📸  Take photos and collect ⭐ stickers",
 	"👤  Tap Switch to let a friend play on their own save",
 ]

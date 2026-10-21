@@ -74,6 +74,7 @@ const CASES := [
 	},
 	{
 		"id": "cookies", "emoji": "🍪", "title": "The Missing Cookies",
+		"bg": "res://Sprites/mystery/bg_cookie_kitchen.jpg",
 		"story": "🫙 Oh no! The cookie jar is EMPTY! Who took the cookies?",
 		"suspects": [
 			{"id": "mimi", "emoji": "🐭", "name": "Mimi", "icons": "tiny • long tail"},
@@ -83,10 +84,10 @@ const CASES := [
 			{"id": "rusty", "emoji": "🐶", "name": "Rusty", "icons": "medium size • fluffy tail"},
 		],
 		"clues": [
-			{"emoji": "👣", "text": "The footprints in the flour are each as small as a button."},
-			{"emoji": "🪟", "text": "The window was shut tight all night, so nobody flew in."},
-			{"emoji": "🍪", "text": "A thin line was dragged through the crumbs, like a piece of string."},
-			{"emoji": "📻", "text": "The radio was playing music in the next room."},
+			{"emoji": "👣", "at": Vector2(0.14, 0.55), "text": "The footprints in the flour are each as small as a button."},
+			{"emoji": "🪟", "at": Vector2(0.38, 0.78), "text": "The window was shut tight all night, so nobody flew in."},
+			{"emoji": "🍪", "at": Vector2(0.62, 0.42), "text": "A thin line was dragged through the crumbs, like a piece of string."},
+			{"emoji": "📻", "at": Vector2(0.86, 0.7), "text": "The radio was playing music in the next room."},
 		],
 		"culprit": "mimi",
 		"alibis": {
@@ -99,6 +100,7 @@ const CASES := [
 	},
 	{
 		"id": "teddy", "emoji": "🧸", "title": "The Missing Teddy",
+		"bg": "res://Sprites/mystery/bg_teddy.jpg",
 		"story": "🧸 Oh no! Teddy is gone from the toy shelf! Who took him?",
 		"suspects": [
 			{"id": "henny", "emoji": "🐥", "name": "Henny", "icons": "yellow • feathers"},
@@ -108,10 +110,10 @@ const CASES := [
 			{"id": "fawny", "emoji": "🦌", "name": "Fawny", "icons": "brown • fur • hooves"},
 		],
 		"clues": [
-			{"emoji": "📦", "text": "Soft tufts of hair are caught on the toy box."},
-			{"emoji": "🧹", "text": "The hairs on the floor are the colour of chocolate. There is no white at all."},
-			{"emoji": "🐾", "text": "Round prints with little claw marks lead out the door, not hoof prints."},
-			{"emoji": "🌧️", "text": "It was raining outside the window last night."},
+			{"emoji": "📦", "at": Vector2(0.14, 0.55), "text": "Soft tufts of hair are caught on the toy box."},
+			{"emoji": "🧹", "at": Vector2(0.38, 0.78), "text": "The hairs on the floor are the colour of chocolate. There is no white at all."},
+			{"emoji": "🐾", "at": Vector2(0.62, 0.42), "text": "Round prints with little claw marks lead out the door, not hoof prints."},
+			{"emoji": "🌧️", "at": Vector2(0.86, 0.7), "text": "It was raining outside the window last night."},
 		],
 		"culprit": "rusty",
 		"alibis": {
@@ -124,6 +126,7 @@ const CASES := [
 	},
 	{
 		"id": "paint", "emoji": "🎨", "title": "The Paint Splash",
+		"bg": "res://Sprites/backgrounds/garden_sunny.jpg",
 		"story": "🎨 Oh no! Someone splashed paint all over the barn wall!",
 		"suspects": [
 			{"id": "sid", "emoji": "🐌", "name": "Sid", "icons": "slimy • no legs"},
@@ -133,10 +136,10 @@ const CASES := [
 			{"id": "hoofy", "emoji": "🐴", "name": "Hoofy", "icons": "brown • hooves • no spots"},
 		],
 		"clues": [
-			{"emoji": "🐾", "text": "Four hoof prints lead away from the wall."},
-			{"emoji": "🧱", "text": "The smudges on the wall are the colour of toast."},
-			{"emoji": "🖌️", "text": "Tiny white dots are scattered all along the paint streaks."},
-			{"emoji": "🌾", "text": "The paintbrush was found lying in the hay."},
+			{"emoji": "🐾", "at": Vector2(0.14, 0.55), "text": "Four hoof prints lead away from the wall."},
+			{"emoji": "🧱", "at": Vector2(0.38, 0.78), "text": "The smudges on the wall are the colour of toast."},
+			{"emoji": "🖌️", "at": Vector2(0.62, 0.42), "text": "Tiny white dots are scattered all along the paint streaks."},
+			{"emoji": "🌾", "at": Vector2(0.86, 0.7), "text": "The paintbrush was found lying in the hay."},
 		],
 		"culprit": "fawny",
 		"alibis": {
@@ -149,6 +152,7 @@ const CASES := [
 	},
 	{
 		"id": "cake", "emoji": "🎂", "title": "The Birthday Cake",
+		"bg": "res://Sprites/mystery/bg_kitchen.jpg",
 		"story": "🎂 Oh no! The birthday cake was on the high shelf and it's GONE!",
 		"suspects": [
 			{"id": "leo", "emoji": "🦁", "name": "Leo", "icons": "huge • big mane"},
@@ -158,10 +162,10 @@ const CASES := [
 			{"id": "fenny", "emoji": "🦊", "name": "Fenny", "icons": "small • fur • loves bugs"},
 		],
 		"clues": [
-			{"emoji": "🪟", "text": "The only open window is tiny. Only a small friend fits through."},
-			{"emoji": "🎂", "text": "Soft tufts of hair are stuck on the shelf."},
-			{"emoji": "🌰", "text": "Cracked-open nutshells are on the floor, and no bug bits."},
-			{"emoji": "🎩", "text": "A party hat is lying on the floor."},
+			{"emoji": "🪟", "at": Vector2(0.14, 0.55), "text": "The only open window is tiny. Only a small friend fits through."},
+			{"emoji": "🎂", "at": Vector2(0.38, 0.78), "text": "Soft tufts of hair are stuck on the shelf."},
+			{"emoji": "🌰", "at": Vector2(0.62, 0.42), "text": "Cracked-open nutshells are on the floor, and no bug bits."},
+			{"emoji": "🎩", "at": Vector2(0.86, 0.7), "text": "A party hat is lying on the floor."},
 		],
 		"culprit": "marmie",
 		"alibis": {
@@ -174,6 +178,7 @@ const CASES := [
 	},
 	{
 		"id": "crown", "emoji": "👑", "title": "The Sparkly Crown",
+		"bg": "res://Sprites/mystery/bg_library.jpg",
 		"story": "👑 Oh no! The sparkly crown vanished in a flash!",
 		"suspects": [
 			{"id": "tilly", "emoji": "🐢", "name": "Tilly", "icons": "a slow, slow turtle"},
@@ -183,10 +188,10 @@ const CASES := [
 			{"id": "batty", "emoji": "🦇", "name": "Batty", "icons": "very fast • wings • loves shiny things"},
 		],
 		"clues": [
-			{"emoji": "⚡", "text": "The crown was gone before the clock could tick twice."},
-			{"emoji": "🪟", "text": "There are wing-shaped smudges on the windowsill."},
-			{"emoji": "🪺", "text": "A cosy nook high up is full of sparkly things."},
-			{"emoji": "🎀", "text": "The curtains are blue."},
+			{"emoji": "⚡", "at": Vector2(0.14, 0.55), "text": "The crown was gone before the clock could tick twice."},
+			{"emoji": "🪟", "at": Vector2(0.38, 0.78), "text": "There are wing-shaped smudges on the windowsill."},
+			{"emoji": "🪺", "at": Vector2(0.62, 0.42), "text": "A cosy nook high up is full of sparkly things."},
+			{"emoji": "🎀", "at": Vector2(0.86, 0.7), "text": "The curtains are blue."},
 		],
 		"culprit": "batty",
 		"alibis": {
