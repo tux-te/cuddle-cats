@@ -13,7 +13,8 @@ const DAYS := ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const MONTHS := ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 # Pictures to pick for an "Other" activity.
 const OTHER_EMOJIS := ["🎨", "🦷", "🛒", "🎂", "🎬", "🩺", "✂️", "⛪", "🚌", "🧁", "🎳", "🌳",
-	"⚽", "🏀", "🏈", "⚾", "🎾", "🏐", "🏓", "🏸", "🏒", "🥋", "🤸", "🛹", "⛸️", "🚴", "⛳", "🏹"]
+	"⚽", "🏀", "🏈", "⚾", "🎾", "🏐", "🏓", "🏸", "🏒", "🥋", "🤸", "🛹", "⛸️", "🚴", "⛳", "🏹",
+	"🎸", "🚂", "🦄", "🌈", "🍕", "🎁", "🧩", "🏖️", "🎪", "🐶"]
 const STEP_SECONDS := 5
 const TYPING_SECONDS := 5.0
 const PET_SIZE := Vector2(280, 260)
@@ -45,7 +46,7 @@ const ALIASES := {
 	"animl": "animal", "emojes": "emojis", "emoji": "emojis", "pumkin": "pumpkin", "chrismas": "christmas",
 	"valentanes": "valentines", "valentines": "valentines", "alo": "all", "meave": "meow", "meaw": "meow",
 	"setings": "settings", "settings": "settings", "resevie": "", "sitter": "babysitter", "baby": "baby",
-	"vent": "vent", "trup": "trump", "trum": "trump", "tump": "trump", "trmp": "trump", "trumpp": "trump", "trumps": "trump", "boyfreind": "boyfriend", "boyfrend": "boyfriend", "boyfreinds": "boyfriend", "boyfriends": "boyfriend", "girlfreind": "girlfriend", "girlfrend": "girlfriend", "girlfreinds": "girlfriend", "girlfriends": "girlfriend", "chalkbored": "chalkboard", "chalkboared": "chalkboard", "chalkbord": "chalkboard", "stor": "store", "conrer": "corner", "cornor": "corner", "nales": "nails", "wanna": "want", "wnat": "want", "waant": "want", "purpal": "purple", "purpel": "purple", "purpul": "purple", "perple": "purple", "purple": "purple", "ocenan": "ocean", "oceon": "ocean", "baody": "body", "bod": "body", "baodys": "body", "stoplite": "stoplight", "backpak": "backpack", "bakpack": "backpack", "rivers": "river", "creeks": "creek", "creak": "creek", "creeek": "creek", "lite": "light", "darkk": "dark", "spott": "spot", "lgbtq": "lgbtq", "lgbtqia": "lgbtqia", "lgbtqai": "lgbtqia", "lbgt": "lgbt", "lbgtq": "lgbtq", "bisexul": "bisexual", "homosexual": "gay", "transexual": "transgender", "non": "non", "gaye": "gay", "gai": "gay", "lesbain": "lesbian", "lezbian": "lesbian", "panssexual": "pansexual", "pronown": "pronoun", "mabe": "maybe", "mabye": "maybe", "yup": "yes", "yep": "yes", "nope": "no", "ew": "eel", "eww": "eel", "vacatoin": "vacation", "vacations": "vacation", "richmand": "richmond", "virgin": "virginia", "wisconson": "wisconsin", "candoa": "canada", "cars": "car", "trips": "trip", "presant": "present", "presants": "present", "coustume": "costume", "costumes": "costume", "gifts": "gift", "books": "book", "ruthie": "ruthie", "norakate": "norakate", "nora": "norakate", "kate": "norakate",
+	"vent": "vent", "crimal": "criminal", "crimnal": "criminal", "criminel": "criminal", "liying": "lying", "liar": "lying", "liars": "lying", "lier": "lying", "lyer": "lying", "crook": "criminal", "trup": "trump", "trum": "trump", "tump": "trump", "trmp": "trump", "trumpp": "trump", "trumps": "trump", "boyfreind": "boyfriend", "boyfrend": "boyfriend", "boyfreinds": "boyfriend", "boyfriends": "boyfriend", "girlfreind": "girlfriend", "girlfrend": "girlfriend", "girlfreinds": "girlfriend", "girlfriends": "girlfriend", "chalkbored": "chalkboard", "chalkboared": "chalkboard", "chalkbord": "chalkboard", "stor": "store", "conrer": "corner", "cornor": "corner", "nales": "nails", "wanna": "want", "wnat": "want", "waant": "want", "purpal": "purple", "purpel": "purple", "purpul": "purple", "perple": "purple", "purple": "purple", "ocenan": "ocean", "oceon": "ocean", "baody": "body", "bod": "body", "baodys": "body", "stoplite": "stoplight", "backpak": "backpack", "bakpack": "backpack", "rivers": "river", "creeks": "creek", "creak": "creek", "creeek": "creek", "lite": "light", "darkk": "dark", "spott": "spot", "lgbtq": "lgbtq", "lgbtqia": "lgbtqia", "lgbtqai": "lgbtqia", "lbgt": "lgbt", "lbgtq": "lgbtq", "bisexul": "bisexual", "homosexual": "gay", "transexual": "transgender", "non": "non", "gaye": "gay", "gai": "gay", "lesbain": "lesbian", "lezbian": "lesbian", "panssexual": "pansexual", "pronown": "pronoun", "mabe": "maybe", "mabye": "maybe", "yup": "yes", "yep": "yes", "nope": "no", "ew": "eel", "eww": "eel", "vacatoin": "vacation", "vacations": "vacation", "richmand": "richmond", "virgin": "virginia", "wisconson": "wisconsin", "candoa": "canada", "cars": "car", "trips": "trip", "presant": "present", "presants": "present", "coustume": "costume", "costumes": "costume", "gifts": "gift", "books": "book", "ruthie": "ruthie", "norakate": "norakate", "nora": "norakate", "kate": "norakate",
 }
 
 # LGBTQIA+ words she knows. Short ambiguous ones (bi, pan, ace...) only count with a
@@ -1356,7 +1357,9 @@ func _reply_to(text: String) -> String:
 	if words.has("trump"):
 		if has.call(["card", "cards", "suit", "game"]):
 			return "A trump card! 🃏 Ooh, a clever one!"
-		return String(["Hiiiisssssss! 😾 Yuck! Ewwwww! 🤢 Booooo! 👎", "Ewwwww! 🤮 Yuck yuck yuck! 😾 Booooo! 👎👎", "Booooo! 😡 Hissssss! 😾 No thank you! 🙅", "Yuck! 🤢 Hiiiissss! 😾😾 Boo boo boo! 👎"].pick_random())
+		if has.call(["lying", "jerk", "criminal", "bad", "mean", "hate"]):
+			return String(["I know!! 😾 A lying jerk and a criminal! Hiiiisssss! 🤢 Booooo! 👎", "YES! 😡 Lying jerk! Criminal! Ewwwww! 🤮 Hissssss! 😾", "Totally! 😾😾 Trump is a lying jerk and a criminal! Yuck! 🤢 Boo! 👎"].pick_random())
+		return String(["Hiiiisssssss! 😾 Yuck! Ewwwww! 🤢 Booooo! 👎", "Ewwwww! 🤮 Yuck yuck yuck! 😾 Booooo! 👎👎", "Booooo! 😡 Hissssss! 😾 A lying jerk and a criminal! 🙅", "Yuck! 🤢 Hiiiissss! 😾😾 Boo boo boo! 👎", "Hate hate hate! 😡 Lying jerk! Criminal! Hissssss! 😾"].pick_random())
 	if has.call(["chalk", "chalkboard"]) or (has.call(["nail", "nails"]) and has.call(["board", "bored", "chalk"])):
 		return "EEEEK! 😖🙀 Nails on a chalkboard?! That sound makes my whiskers curl! Skreeeech! 😿"
 	if (has.call(["boy"]) and has.call(["friend"])) or has.call(["boyfriend"]):
