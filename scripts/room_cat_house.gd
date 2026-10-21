@@ -12,6 +12,7 @@ const COLORS := {
 	"pink": Color(1.0, 0.62, 0.78), "blue": Color(0.55, 0.75, 1.0), "purple": Color(0.75, 0.6, 1.0),
 	"yellow": Color(1.0, 0.9, 0.5), "green": Color(0.6, 0.88, 0.62),
 }
+const COLOR_EMOJI := {"pink": "🩷", "blue": "💙", "purple": "💜", "yellow": "💛", "green": "💚"}
 const PATTERN_EMOJI := {"hearts": "💗", "stars": "⭐", "flowers": "🌸"}
 const POST_COLORS := {"rope": Color(0.82, 0.68, 0.45), "carpet": Color(0.62, 0.52, 0.72), "tree": Color(0.55, 0.38, 0.25)}
 const POST_TOP := {"rope": "🧶", "carpet": "🐾", "tree": "🌳"}
@@ -68,6 +69,8 @@ func _base_y() -> float:
 
 func _label_of(category: String, choice: String) -> String:
 	match category:
+		"color":
+			return "%s %s" % [COLOR_EMOJI.get(choice, "🎨"), choice.capitalize()]
 		"pattern":
 			return "%s %s" % [PATTERN_EMOJI.get(choice, "〰️"), choice.capitalize()]
 		"post":
