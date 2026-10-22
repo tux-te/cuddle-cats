@@ -1,7 +1,9 @@
 extends Control
 
 # "My Home": design the front of your own house and, just for fun, give it an
-# address. Every change is saved straight away (PetalState.my_home).
+# address. Two ways to make the house: build it from parts, or draw it (sketch
+# pad -> Sharpen lines -> pixel art you paint with a bucket). Every change is
+# saved straight away (PetalState.my_home).
 
 const PetCameo = preload("res://scripts/pet_cameo.gd")
 const Confetti = preload("res://scripts/confetti.gd")
@@ -19,6 +21,16 @@ var swatches := {}        # "wall" / "roof" / "door" -> [Button, ...]
 var pick_buttons := {}    # "roof_style" / "window" / "door_style" -> {id: Button}
 var extra_buttons := {}   # extra id -> Button
 var address_fields := {}  # "number" / "street" / "town" -> LineEdit
+var mode := "build"       # "build", "sketch", "pixel" or "drawn" (see _set_mode)
+var sketch: SketchPad
+var pixel_house: PixelHouse
+var build_scroll: ScrollContainer
+var draw_panel: VBoxContainer
+var draw_hint: Label
+var sketch_group: VBoxContainer
+var pixel_group: VBoxContainer
+var result_group: VBoxContainer
+var paint_swatches: Array = []
 
 func _ready() -> void:
 	design = PetalState.my_home_from_save(PetalState.my_home)
@@ -29,6 +41,9 @@ func _ready() -> void:
 	_build()
 	PetCameo.spawn(petal)
 	_refresh()
+	_set_mode("drawn" if String(design["style"]) == "drawn" else "build")
+	if not (design["pixels"] as PackedByteArray).is_empty():
+		pixel_house.set_cells(design["pixels"])
 	tree_exiting.connect(func() -> void: PetalState.save_my_home(design))
 
 func _build() -> void:
@@ -45,20 +60,41 @@ func _build() -> void:
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left.add_theme_constant_override("separation", 6)
 	row.add_child(left)
+	var modes := HBoxContainer.new()
+	modes.add_theme_constant_override("separation", 8)
+	left.add_child(modes)
+	modes.add_child(_action("🧱 Build a house", _on_build_mode))
+	modes.add_child(_action("✏️ Draw my house", _on_draw_mode))
 	canvas = HomeCanvas.new()
 	canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	left.add_child(canvas)
+	sketch = SketchPad.new()
+	sketch.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	left.add_child(sketch)
+	pixel_house = PixelHouse.new()
+	pixel_house.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	pixel_house.changed.connect(_on_pixels_changed)
+	left.add_child(pixel_house)
 	address_label = _label("", 22, INK)
 	left.add_child(address_label)
+	for field in [["number", "House number", PetalState.HOME_NUMBER_MAX], ["street", "Street", PetalState.HOME_STREET_MAX], ["town", "Town (optional)", PetalState.HOME_TOWN_MAX]]:
+		left.add_child(_address_field(field[0], field[1], field[2]))
 
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(520, 0)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	row.add_child(scroll)
+	var right := VBoxContainer.new()
+	right.custom_minimum_size = Vector2(520, 0)
+	row.add_child(right)
+	build_scroll = ScrollContainer.new()
+	build_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	build_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right.add_child(build_scroll)
+	draw_panel = VBoxContainer.new()
+	draw_panel.add_theme_constant_override("separation", 10)
+	right.add_child(draw_panel)
+	_build_draw_panel()
 	var options := VBoxContainer.new()
 	options.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	options.add_theme_constant_override("separation", 8)
-	scroll.add_child(options)
+	build_scroll.add_child(options)
 
 	var top := HBoxContainer.new()
 	options.add_child(top)
@@ -86,15 +122,123 @@ func _build() -> void:
 	options.add_child(_pick_row("door_style", PetalState.HOME_DOORS))
 	options.add_child(_section("✨ Extras"))
 	options.add_child(_extras_row())
-	options.add_child(_section("📮 Your address (just for fun!)"))
-	for field in [["number", "House number", PetalState.HOME_NUMBER_MAX], ["street", "Street", PetalState.HOME_STREET_MAX], ["town", "Town (optional)", PetalState.HOME_TOWN_MAX]]:
-		options.add_child(_address_field(field[0], field[1], field[2]))
 
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 12)
 	options.add_child(buttons)
 	buttons.add_child(_action("🎲 Surprise me", _surprise))
 	buttons.add_child(_action("✅ Done", _done))
+
+func _build_draw_panel() -> void:
+	var heading := _label("✏️ Draw your house", 26, PINK)
+	draw_panel.add_child(heading)
+	draw_hint = _label("", 18, INK)
+	draw_panel.add_child(draw_hint)
+
+	sketch_group = VBoxContainer.new()
+	sketch_group.add_theme_constant_override("separation", 8)
+	draw_panel.add_child(sketch_group)
+	sketch_group.add_child(_action("✨ Sharpen my lines", func() -> void: sketch.sharpen()))
+	sketch_group.add_child(_action("↩ Undo", func() -> void: sketch.undo()))
+	sketch_group.add_child(_action("🗑 Start over", func() -> void: sketch.clear()))
+	sketch_group.add_child(_action("🎨 Make it pixel art!", _to_pixels))
+
+	pixel_group = VBoxContainer.new()
+	pixel_group.add_theme_constant_override("separation", 8)
+	draw_panel.add_child(pixel_group)
+	var palette := HFlowContainer.new()
+	palette.add_theme_constant_override("h_separation", 4)
+	palette.add_theme_constant_override("v_separation", 4)
+	pixel_group.add_child(palette)
+	for i in range(PetalState.SET_COLORS.size()):
+		var swatch := Button.new()
+		swatch.custom_minimum_size = Vector2(40, 40)
+		swatch.pressed.connect(_pick_paint.bind(i))
+		palette.add_child(swatch)
+		paint_swatches.append(swatch)
+	var tools := HBoxContainer.new()
+	tools.add_theme_constant_override("separation", 8)
+	pixel_group.add_child(tools)
+	tools.add_child(_action("🪣 Fill", func() -> void: pixel_house.tool = "fill"))
+	tools.add_child(_action("✏️ Pen", func() -> void: pixel_house.tool = "pen"))
+	pixel_group.add_child(_action("🧽 Erase a spot", func() -> void:
+		pixel_house.tool = "pen"
+		pixel_house.paint = 0))
+	pixel_group.add_child(_action("🔁 Draw again", _back_to_sketch))
+	pixel_group.add_child(_action("✅ Use this house", _use_pixels))
+
+	result_group = VBoxContainer.new()
+	result_group.add_theme_constant_override("separation", 8)
+	draw_panel.add_child(result_group)
+	result_group.add_child(_action("🎨 Paint it more", func() -> void: _set_mode("pixel")))
+	result_group.add_child(_action("🔁 Draw a new house", _back_to_sketch))
+	result_group.add_child(_action("✅ Done", _done))
+
+func _on_build_mode() -> void:
+	design["style"] = "build"
+	_set_mode("build")
+	_refresh()
+
+func _on_draw_mode() -> void:
+	if not (design["pixels"] as PackedByteArray).is_empty():
+		design["style"] = "drawn"
+		_set_mode("drawn")
+		_refresh()
+	else:
+		_set_mode("sketch")
+
+func _set_mode(which: String) -> void:
+	mode = which
+	canvas.visible = mode == "build" or mode == "drawn"
+	sketch.visible = mode == "sketch"
+	pixel_house.visible = mode == "pixel"
+	build_scroll.visible = mode == "build"
+	draw_panel.visible = mode != "build"
+	sketch_group.visible = mode == "sketch"
+	pixel_group.visible = mode == "pixel"
+	result_group.visible = mode == "drawn"
+	match mode:
+		"sketch":
+			draw_hint.text = "Draw the front of your house with your finger or mouse. Then tap Sharpen to make the lines neat!"
+		"pixel":
+			draw_hint.text = "Pick a colour, then tap a space to fill it. Use Pen for single pixels."
+		"drawn":
+			draw_hint.text = "Here is your house!"
+	if mode == "pixel":
+		_pick_paint(clampi(pixel_house.paint - 2, 0, PetalState.SET_COLORS.size() - 1))
+
+func _to_pixels() -> void:
+	if sketch.strokes.is_empty():
+		draw_hint.text = "Draw your house first - then I can turn it into pixel art!"
+		return
+	if not sketch.sharpened:
+		sketch.sharpen()
+	pixel_house.set_cells(sketch.to_pixels(PetalState.HOME_PIX_W, PetalState.HOME_PIX_H))
+	_set_mode("pixel")
+
+func _back_to_sketch() -> void:
+	_set_mode("sketch")
+
+func _use_pixels() -> void:
+	design["pixels"] = pixel_house.cells.duplicate()
+	design["style"] = "drawn"
+	_set_mode("drawn")
+	_refresh()
+	var at := petal.global_position + petal.size / 2.0
+	Confetti.burst(self, at, 20)
+	PetCameo.jump_for_joy(petal)
+
+func _on_pixels_changed() -> void:
+	design["pixels"] = pixel_house.cells.duplicate()
+
+func _pick_paint(index: int) -> void:
+	pixel_house.paint = index + 2
+	if pixel_house.tool != "fill" and pixel_house.tool != "pen":
+		pixel_house.tool = "fill"
+	for i in range(paint_swatches.size()):
+		paint_swatches[i].add_theme_stylebox_override("normal", _swatch_style(i, i == index))
+		paint_swatches[i].add_theme_stylebox_override("hover", _swatch_style(i, true))
+		paint_swatches[i].add_theme_stylebox_override("pressed", _swatch_style(i, true))
 
 func _label(text: String, size: int, color: Color) -> Label:
 	var label := Label.new()

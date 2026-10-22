@@ -101,6 +101,7 @@ func _ready() -> void:
 	%ClosePetPickerButton.pressed.connect(_close_pet_picker)
 
 	_enter_bedroom()
+	_show_daily_reward.call_deferred()
 
 	var idle_timer := Timer.new()
 	idle_timer.wait_time = 1.0
@@ -129,6 +130,19 @@ func _on_sticker_earned(_id: String) -> void:
 	Sfx.chime(self)
 	if room_petal and is_instance_valid(room_petal):
 		Confetti.burst(current_room, room_petal.global_position + room_petal.size / 2.0, 14)
+
+func _show_daily_reward() -> void:
+	var daily := PetalState.claim_daily_reward()
+	if daily.is_empty():
+		return
+	var streak: int = daily["streak"]
+	var text := "🎁 Daily gift: +%d coins!" % daily["coins"]
+	if streak > 1:
+		text += "\n🔥 %d days in a row!" % streak
+	Sfx.fanfare(self)
+	var centre := get_viewport_rect().size / 2.0
+	Confetti.burst(self, centre, 30)
+	Feedback.pop(self, text, centre + Vector2(-120, -80))
 
 func _on_milestone_reached(total: int) -> void:
 	Sfx.fanfare(self)

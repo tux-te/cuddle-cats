@@ -641,6 +641,8 @@ func _reset_progress() -> void:
 	player_name = ""
 	nicknames = {}
 	coins = 0
+	last_visit_day = 0
+	visit_streak = 0
 	earned_stickers = {}
 	solved_cases = []
 	pet_sets = {}
@@ -734,6 +736,8 @@ func save_game() -> void:
 	cfg.set_value("game", "active_pet", active_pet)
 	cfg.set_value("game", "custom_pets", custom_pets)
 	cfg.set_value("game", "coins", coins)
+	cfg.set_value("game", "last_visit_day", last_visit_day)
+	cfg.set_value("game", "visit_streak", visit_streak)
 	cfg.set_value("game", "stickers", earned_stickers)
 	cfg.set_value("game", "schedule", schedule)
 	cfg.set_value("game", "solved_cases", solved_cases)
@@ -783,6 +787,8 @@ func _load_slot(slot: int) -> void:
 			if PETS.has(id):
 				nicknames[id] = String(saved_nicks[id])
 	coins = int(cfg.get_value("game", "coins", 0))
+	last_visit_day = int(cfg.get_value("game", "last_visit_day", 0))
+	visit_streak = int(cfg.get_value("game", "visit_streak", 0))
 	var saved_stickers = cfg.get_value("game", "stickers", {})
 	if saved_stickers is Dictionary:
 		for id in saved_stickers:
@@ -1184,6 +1190,8 @@ const HOME_EXTRAS := {
 	"fence": "Fence", "mailbox": "📬 Mailbox", "lights": "✨ Lights", "flag": "🚩 Flag",
 	"wreath": "💐 Wreath", "balloons": "🎈 Balloons",
 }
+const HOME_PIX_W := 64
+const HOME_PIX_H := 48
 const HOME_NUMBER_MAX := 6
 const HOME_STREET_MAX := 24
 const HOME_TOWN_MAX := 20
@@ -1191,7 +1199,8 @@ var my_home := {}
 
 func default_my_home() -> Dictionary:
 	return {"wall": 3, "roof": 1, "door": 8, "roof_style": "pointy", "window": "square", "door_style": "arch",
-		"extras": ["flowers", "tree"], "number": "", "street": "", "town": ""}
+		"extras": ["flowers", "tree"], "number": "", "street": "", "town": "",
+		"style": "build", "pixels": PackedByteArray()}
 
 # Anything missing or unknown is put back to the default, so a damaged save can't break the room.
 func my_home_from_save(saved) -> Dictionary:
@@ -1212,6 +1221,18 @@ func my_home_from_save(saved) -> Dictionary:
 			if HOME_EXTRAS.has(String(extra)) and not extras.has(String(extra)):
 				extras.append(String(extra))
 		home["extras"] = extras
+	# A drawn pixel house: HOME_PIX_W x HOME_PIX_H cells of 0 (sky), 1 (outline) or 2..13 (palette).
+	var pixels = saved.get("pixels", PackedByteArray())
+	if pixels is PackedByteArray and pixels.size() == HOME_PIX_W * HOME_PIX_H:
+		var valid := true
+		for value in pixels:
+			if value > SET_COLORS.size() + 1:
+				valid = false
+				break
+		if valid:
+			home["pixels"] = pixels
+	if String(saved.get("style", "")) == "drawn" and not (home["pixels"] as PackedByteArray).is_empty():
+		home["style"] = "drawn"
 	home["number"] = String(saved.get("number", "")).strip_edges().left(HOME_NUMBER_MAX)
 	home["street"] = String(saved.get("street", "")).strip_edges().left(HOME_STREET_MAX)
 	home["town"] = String(saved.get("town", "")).strip_edges().left(HOME_TOWN_MAX)
@@ -1514,6 +1535,26 @@ func add_coins(amount: int) -> void:
 	coins_changed.emit()
 	if coins / MILESTONE_STEP > before / MILESTONE_STEP:
 		milestone_reached.emit(coins)
+
+# Daily visit streak: the first visit each calendar day earns a few extra
+# coins, more for each day in a row (capped so it stays a gentle treat).
+# Missing a day just starts the count again at 1 - nothing is ever lost.
+const DAILY_BASE := 5
+const DAILY_STREAK_MAX := 7
+var last_visit_day := 0 # days since 1970, 0 = never
+var visit_streak := 0
+
+# Returns {"streak": n, "coins": n} the first time it's called each day, else {}.
+func claim_daily_reward() -> Dictionary:
+	var today := int(Time.get_unix_time_from_system() / 86400.0)
+	if today == last_visit_day:
+		return {}
+	visit_streak = visit_streak + 1 if today == last_visit_day + 1 else 1
+	last_visit_day = today
+	var reward := DAILY_BASE * mini(visit_streak, DAILY_STREAK_MAX)
+	add_coins(reward)
+	save_game()
+	return {"streak": visit_streak, "coins": reward}
 
 # Saves whenever something worth keeping changes, plus on a timer for the
 # slowly-drifting stats, and when the window closes.

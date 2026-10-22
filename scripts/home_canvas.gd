@@ -11,14 +11,19 @@ const BROWN := Color(0.55, 0.38, 0.25)
 const GRASS := Color(0.55, 0.82, 0.5)
 
 var design: Dictionary = {}
+var pixel_texture: ImageTexture = null
 
 func set_design(value: Dictionary) -> void:
 	design = value
+	pixel_texture = null
+	if String(design.get("style", "build")) == "drawn" and not (design["pixels"] as PackedByteArray).is_empty():
+		pixel_texture = ImageTexture.create_from_image(PixelHouse.make_image(design["pixels"]))
 	queue_redraw()
 
 func _init() -> void:
 	custom_minimum_size = Vector2(560, 450)
 	clip_contents = true
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 func _col(index: int) -> Color:
 	return PetalState.SET_COLORS[clampi(index, 0, PetalState.SET_COLORS.size() - 1)]
@@ -43,6 +48,9 @@ func _draw() -> void:
 		draw_circle(cloud + Vector2(-24, 8), 18, Color.WHITE)
 	draw_rect(Rect2(0, GROUND, WORLD.x, WORLD.y - GROUND), GRASS)
 
+	if pixel_texture != null:
+		_draw_drawn_house()
+		return
 	if _has("tree"):
 		draw_rect(Rect2(40, 260, 22, 115), BROWN)
 		for blob in [[Vector2(51, 235), 52.0], [Vector2(24, 272), 34.0], [Vector2(80, 270), 34.0]]:
@@ -203,3 +211,15 @@ func _draw_street_sign() -> void:
 		var board2 := Rect2(420, 428, 150, 26)
 		draw_rect(board2, Color(0.95, 0.9, 0.7))
 		draw_string(font, Vector2(board2.position.x, board2.position.y + 19), town, HORIZONTAL_ALIGNMENT_CENTER, board2.size.x, 15, Color(0.3, 0.2, 0.15))
+
+# A house the player drew and painted as pixel art, with the address under it.
+func _draw_drawn_house() -> void:
+	draw_texture_rect(pixel_texture, Rect2(60, 20, 480, 360), false)
+	var line := ("%s %s" % [design.get("number", ""), design.get("street", "")]).strip_edges()
+	if String(design.get("town", "")) != "":
+		line = "%s, %s" % [line, design["town"]] if line != "" else String(design["town"])
+	if line != "":
+		var board := Rect2(100, 400, 400, 44)
+		draw_rect(board, Color(0.15, 0.5, 0.35))
+		draw_rect(board, Color.WHITE, false, 3.0)
+		draw_string(ThemeDB.fallback_font, Vector2(board.position.x, board.position.y + 31), line, HORIZONTAL_ALIGNMENT_CENTER, board.size.x, 26, Color.WHITE)

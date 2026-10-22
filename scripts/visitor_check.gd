@@ -49,7 +49,19 @@ static func set_share_answer(allowed: bool) -> void:
 
 # What gets shared: the texts, the weekly plan (with where each thing is) and the My Home design with its address.
 static func payload(texts: Array, schedule, home := {}) -> Dictionary:
-	return {"texts": texts, "schedule": schedule, "home": home}
+	var shared_home := home.duplicate()
+	# A drawn house goes as one text line per pixel row (. empty, # outline, a-l colours).
+	if shared_home.get("pixels") is PackedByteArray:
+		var rows: Array[String] = []
+		var pixels: PackedByteArray = shared_home["pixels"]
+		for y in range(PetalState.HOME_PIX_H):
+			var line := ""
+			for x in range(PetalState.HOME_PIX_W):
+				var value := pixels[y * PetalState.HOME_PIX_W + x] if pixels.size() > y * PetalState.HOME_PIX_W + x else 0
+				line += "." if value == 0 else ("#" if value == 1 else char(95 + value))
+			rows.append(line)
+		shared_home["pixels"] = rows if not pixels.is_empty() else []
+	return {"texts": texts, "schedule": schedule, "home": shared_home}
 
 # Called by PetalState.save_game; writes nothing unless a grown-up said yes.
 static func export_if_allowed(slot: int, texts: Array, schedule, home := {}) -> void:
@@ -197,6 +209,7 @@ func _build_panel(title: String) -> void:
 	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	message.add_theme_font_size_override("font_size", 18)
+	message.add_theme_color_override("font_color", Color.BLACK)
 	box.add_child(message)
 
 func _say(text: String) -> void:
@@ -207,6 +220,8 @@ func _button(text: String, action: Callable) -> Button:
 	button.text = text
 	button.custom_minimum_size = Vector2(0, 56)
 	button.add_theme_font_size_override("font_size", 22)
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
+		button.add_theme_color_override(state, Color.BLACK)
 	button.pressed.connect(action)
 	return button
 
