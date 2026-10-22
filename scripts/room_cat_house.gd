@@ -97,6 +97,9 @@ func _build_panel() -> void:
 	title.add_theme_font_size_override("font_size", 26)
 	title.add_theme_color_override("font_color", Color(0.45, 0.25, 0.55))
 	top.add_child(title)
+	top.add_child(_button("🏡 My house", func() -> void:
+		PetalState.petset_start_mode = "house"
+		PetalState.navigate_to_room.emit("petset")))
 	top.add_child(_button("⬅ Living", func() -> void: PetalState.navigate_to_room.emit("living")))
 
 	speech = Label.new()
@@ -238,7 +241,13 @@ func _redraw() -> void:
 	roof.polygon = PackedVector2Array([Vector2(x0 - 22.0, top), Vector2(x0 + width + 22.0, top), Vector2(x0 + width / 2.0, top - 90.0)])
 	roof.color = color.darkened(0.25)
 	house_view.add_child(roof)
-	_box(Color(0.25, 0.15, 0.2), Vector2(x0 + width / 2.0 - 35.0, base - 95.0), Vector2(70, 95))
+	# The house designed in the Pet Set studio lends its door colour, sign and name.
+	var mine: Dictionary = PetalState.pet_set(PetalState.active_pet)["house"]
+	var door_color: Color = PetalState.SET_COLORS[int(mine["trim"])].darkened(0.3)
+	_box(door_color, Vector2(x0 + width / 2.0 - 35.0, base - 95.0), Vector2(70, 95))
+	_stamp(String(mine["stamp"]), 36, Vector2(x0 + width / 2.0 - 24.0, top - 62.0))
+	var house_name: String = String(mine["name"]) if String(mine["name"]) != "" else "%s's House" % PetalState.pet_name
+	_stamp(house_name, 18, Vector2(x0, base + 2.0))
 
 	# Scratching post beside the house.
 	var post: String = design["post"]

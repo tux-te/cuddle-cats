@@ -494,6 +494,7 @@ func _reset_progress() -> void:
 	play_owned = []
 	play_spaces = {}
 	play_rooms = {}
+	dream_houses = []
 	schedule = {}
 	chat_log = []
 	safety_alerts = []
@@ -583,6 +584,7 @@ func save_game() -> void:
 	cfg.set_value("game", "play_owned", play_owned)
 	cfg.set_value("game", "play_spaces", play_spaces)
 	cfg.set_value("game", "play_rooms", play_rooms)
+	cfg.set_value("game", "dream_houses", dream_houses)
 	cfg.set_value("game", "house", _save_house())
 	cfg.set_value("game", "treats_found", treats_found)
 	cfg.set_value("game", "pet_records", pet_records)
@@ -631,6 +633,11 @@ func _load_slot(slot: int) -> void:
 		for id in saved_spaces:
 			if PETS.has(id) and saved_spaces[id] is Dictionary:
 				play_spaces[id] = play_space_from_save(saved_spaces[id])
+	var saved_dreams = cfg.get_value("game", "dream_houses", [])
+	if saved_dreams is Array:
+		for id in saved_dreams:
+			if PETS.has(id) and not dream_houses.has(String(id)):
+				dream_houses.append(String(id))
 	var saved_rooms = cfg.get_value("game", "play_rooms", {})
 	if saved_rooms is Dictionary:
 		for id in saved_rooms:
@@ -1480,6 +1487,18 @@ func house_judged(matches: int) -> void:
 	if matches == HOUSE_CHOICES.size():
 		award_sticker("cathouse")
 		add_coins(6)
+		if not dream_houses.has(active_pet):
+			dream_houses.append(active_pet)
+		save_game()
+
+# Pets whose Dream House (room_cat_house.gd) was a perfect match; their house
+# in the Pet Set studio wears a gold badge.
+var dream_houses: Array = []
+# Set by a room to ask the Pet Set studio to open on a given tab ("house").
+var petset_start_mode := ""
+
+func has_dream_house(id: String) -> bool:
+	return dream_houses.has(id)
 
 func _save_house() -> Dictionary:
 	return {"wants": house_wants, "design": house_design, "known": house_known}

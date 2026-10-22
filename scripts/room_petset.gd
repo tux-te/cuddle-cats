@@ -78,6 +78,10 @@ func _ready() -> void:
 	canvas.bed_name_default = "%s's Bed" % PetalState.pet_name
 	canvas.bowl_name_default = "%s's Bowl" % PetalState.pet_name
 	canvas.house_name_default = "%s's House" % PetalState.pet_name
+	canvas.dream = PetalState.has_dream_house(pet_id)
+	if PetalState.petset_start_mode != "":
+		mode = PetalState.petset_start_mode
+		PetalState.petset_start_mode = ""
 	canvas.house_deco.text = "%s🌷" % PetalState.species_emoji(PetalState.pet_species())
 	play_stage.load_space(PetalState.play_space(pet_id))
 	room_stage.load_space(PetalState.play_room(pet_id))
@@ -150,6 +154,7 @@ func _build() -> void:
 	house_actions = _action_row(left)
 	house_actions.add_child(_action_button("🚪 Go inside!", _on_enter_house))
 	house_actions.add_child(_action_button("🎲 Surprise me!", _on_house_surprise))
+	house_actions.add_child(_action_button("💝 Dream House", func() -> void: PetalState.navigate_to_room.emit("cathouse")))
 	house_actions.add_child(_action_button("✅ I love it!", _on_house_done))
 	play_actions = _action_row(left)
 	play_actions.add_child(_action_button("🎉 Play!", _on_play))

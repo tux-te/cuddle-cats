@@ -42,6 +42,8 @@ var pillow_stamp: Label
 var house_stamp: Label
 var house_name: Label
 var house_deco: Label
+var house_badge: Label
+var dream := false   # this pet's Dream House was a perfect match
 var house_name_default := "House"
 var view := "set"   # "set" = bed, bowl, toy and pillow; "house" = the house outside
 
@@ -52,6 +54,10 @@ func _ready() -> void:
 	house_name = _make_label(22, Vector2(330, 32))
 	house_name.add_theme_color_override("font_color", Color(0.4, 0.25, 0.3))
 	_place(house_name, Vector2(350, NAME_Y))
+	house_badge = _make_label(22, Vector2(300, 32))
+	house_badge.text = "🌟 Dream House 🌟"
+	house_badge.add_theme_color_override("font_color", Color(0.72, 0.45, 0.05))
+	_place(house_badge, Vector2(350, 22))
 	house_deco = _make_label(40, Vector2(140, 56))
 	_place(house_deco, Vector2(570, 262))
 	toy_stamp = _make_label(22, Vector2(50, 36))
@@ -104,6 +110,7 @@ func _update_labels() -> void:
 		label.visible = not in_house
 	for label in [house_stamp, house_name, house_deco]:
 		label.visible = in_house
+	house_badge.visible = in_house and dream
 	var house: Dictionary = design["house"]
 	house_stamp.text = String(house["stamp"])
 	var stamp_y := {"cottage": 125.0, "tower": 66.0, "tent": 175.0}
