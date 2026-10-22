@@ -52,7 +52,12 @@ func _input(event: InputEvent) -> void:
 # Tapping opens the save-slot picker; a brand-new slot then asks the
 # player's name (with the emoji picker) before the game starts.
 func _on_tapped() -> void:
-	_open_slot_picker()
+	if VisitorCheck.share_asked():
+		_open_slot_picker()
+		return
+	var ask := VisitorCheck.open_share_question(self)
+	overlay = ask
+	ask.done.connect(_open_slot_picker)
 
 func _open_slot_picker() -> void:
 	var picker := SlotPicker.open(self)

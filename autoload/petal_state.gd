@@ -655,6 +655,7 @@ func _reset_progress() -> void:
 	treats_found = {}
 	colors_found = {}
 	finger_print = {}
+	my_home = default_my_home()
 	house_wants = {}
 	house_design = {}
 	house_known = {}
@@ -745,12 +746,13 @@ func save_game() -> void:
 	cfg.set_value("game", "treats_found", treats_found)
 	cfg.set_value("game", "colors_found", colors_found)
 	cfg.set_value("game", "finger_print", finger_print)
+	cfg.set_value("game", "my_home", my_home)
 	cfg.set_value("game", "pet_records", pet_records)
 	cfg.set_value("safety", "alerts", safety_alerts)
 	cfg.set_value("memory", "likes", remembered_likes)
 	cfg.set_value("memory", "chat_log", chat_log)
 	cfg.save(slot_path(current_slot))
-	VisitorExport.export_if_allowed(current_slot, chat_log, schedule)
+	VisitorExport.export_if_allowed(current_slot, chat_log, schedule, my_home)
 
 func _load_slot(slot: int) -> void:
 	var cfg := ConfigFile.new()
@@ -817,6 +819,7 @@ func _load_slot(slot: int) -> void:
 			if PETS.has(id) and saved_rooms[id] is Dictionary:
 				play_rooms[id] = play_room_from_save(saved_rooms[id])
 	_load_house(cfg.get_value("game", "house", {}))
+	my_home = my_home_from_save(cfg.get_value("game", "my_home", {}))
 	var saved_finger = cfg.get_value("game", "finger_print", {})
 	if saved_finger is Dictionary and FingerprintView.KINDS.has(String(saved_finger.get("kind", ""))):
 		finger_print = {"kind": String(saved_finger["kind"]), "seed": int(saved_finger.get("seed", 0))}
@@ -1169,6 +1172,54 @@ const SET_COLOR_NAMES := ["Pink", "Red", "Orange", "Yellow", "Lime", "Green", "T
 # The player's own fingerprint, made from their first real press in the Mystery
 # room's fingerprint lab: {"kind": ..., "seed": ...}. Empty until then; per slot.
 var finger_print := {}
+
+# --- My home -----------------------------------------------------------------
+# "Design your home" (room_myhome.gd): the front of the player's own house and,
+# just for fun, its address. Saved per slot and included in the Send to maker file.
+const HOME_ROOFS := {"pointy": "Pointy", "flat": "Flat", "dome": "Round", "barn": "Barn"}
+const HOME_WINDOWS := {"square": "Square", "round": "Round", "arch": "Arched", "tall": "Tall"}
+const HOME_DOORS := {"arch": "Arched", "square": "Square", "double": "Double"}
+const HOME_EXTRAS := {
+	"chimney": "Chimney", "shutters": "Shutters", "flowers": "🌷 Flowers", "tree": "🌳 Tree",
+	"fence": "Fence", "mailbox": "📬 Mailbox", "lights": "✨ Lights", "flag": "🚩 Flag",
+	"wreath": "💐 Wreath", "balloons": "🎈 Balloons",
+}
+const HOME_NUMBER_MAX := 6
+const HOME_STREET_MAX := 24
+const HOME_TOWN_MAX := 20
+var my_home := {}
+
+func default_my_home() -> Dictionary:
+	return {"wall": 3, "roof": 1, "door": 8, "roof_style": "pointy", "window": "square", "door_style": "arch",
+		"extras": ["flowers", "tree"], "number": "", "street": "", "town": ""}
+
+# Anything missing or unknown is put back to the default, so a damaged save can't break the room.
+func my_home_from_save(saved) -> Dictionary:
+	var home := default_my_home()
+	if not (saved is Dictionary):
+		return home
+	for key in ["wall", "roof", "door"]:
+		home[key] = clampi(int(saved.get(key, home[key])), 0, SET_COLORS.size() - 1)
+	if HOME_ROOFS.has(String(saved.get("roof_style", ""))):
+		home["roof_style"] = String(saved["roof_style"])
+	if HOME_WINDOWS.has(String(saved.get("window", ""))):
+		home["window"] = String(saved["window"])
+	if HOME_DOORS.has(String(saved.get("door_style", ""))):
+		home["door_style"] = String(saved["door_style"])
+	var extras: Array = []
+	if saved.get("extras") is Array:
+		for extra in saved["extras"]:
+			if HOME_EXTRAS.has(String(extra)) and not extras.has(String(extra)):
+				extras.append(String(extra))
+		home["extras"] = extras
+	home["number"] = String(saved.get("number", "")).strip_edges().left(HOME_NUMBER_MAX)
+	home["street"] = String(saved.get("street", "")).strip_edges().left(HOME_STREET_MAX)
+	home["town"] = String(saved.get("town", "")).strip_edges().left(HOME_TOWN_MAX)
+	return home
+
+func save_my_home(design: Dictionary) -> void:
+	my_home = my_home_from_save(design)
+	save_game()
 
 var colors_found := {} # pet id -> true once a kid has picked her favourite colour; saved per slot
 

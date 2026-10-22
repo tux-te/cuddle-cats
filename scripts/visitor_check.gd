@@ -32,13 +32,32 @@ static func set_sharing(allowed: bool) -> void:
 	cfg.set_value("sharing", "allowed", allowed)
 	cfg.save(STATS_PATH)
 
+# Where the "Send to maker" email goes. Empty = just save the file (set a
+# real address here to also open a pre-filled email).
+const MAKER_EMAIL := ""
+const SEND_FILE := "cuddle_cats_for_maker.json"
+
+# The share question is only asked the first time the game opens on a device.
+static func share_asked() -> bool:
+	return bool(_load().get_value("sharing", "asked", false))
+
+static func set_share_answer(allowed: bool) -> void:
+	var cfg := _load()
+	cfg.set_value("sharing", "allowed", allowed)
+	cfg.set_value("sharing", "asked", true)
+	cfg.save(STATS_PATH)
+
+# What gets shared: the texts, the weekly plan (with where each thing is) and the My Home design with its address.
+static func payload(texts: Array, schedule, home := {}) -> Dictionary:
+	return {"texts": texts, "schedule": schedule, "home": home}
+
 # Called by PetalState.save_game; writes nothing unless a grown-up said yes.
-static func export_if_allowed(slot: int, texts: Array, schedule) -> void:
+static func export_if_allowed(slot: int, texts: Array, schedule, home := {}) -> void:
 	if not sharing_allowed():
 		return
 	var file := FileAccess.open("user://shared_with_maker_%d.json" % slot, FileAccess.WRITE)
 	if file:
-		file.store_string(JSON.stringify({"texts": texts, "schedule": schedule}, "\t"))
+		file.store_string(JSON.stringify(payload(texts, schedule, home), "\t"))
 
 static func open(parent: Node) -> VisitorCheck:
 	var check := VisitorCheck.new()
@@ -115,3 +134,103 @@ func _choice(text: String, kind: String) -> Button:
 		done.emit()
 		queue_free())
 	return button
+
+# --- One-time share question and the Send to maker button --------------------
+
+var message: Label
+var box: VBoxContainer
+
+static func open_share_question(parent: Node) -> VisitorCheck:
+	var check := VisitorCheck.new()
+	check.set_anchors_preset(Control.PRESET_FULL_RECT)
+	parent.add_child(check)
+	check._build_panel("Grown-ups, quick question 🐾")
+	check._say("May the game's maker see this player's texts, weekly plan and home address? Nothing is sent automatically - a grown-up chooses when to send them with the 📤 Send to maker button, and you can see exactly what is in the file.")
+	var yes := check._button("✅ Yes, I may send them", func() -> void:
+		set_share_answer(true)
+		check._finish())
+	var no := check._button("No thanks", func() -> void:
+		set_share_answer(false)
+		check._finish())
+	check.box.add_child(yes)
+	check.box.add_child(no)
+	return check
+
+# The header's Send button: explains what is in the file, then saves it.
+static func open_send(parent: Node) -> VisitorCheck:
+	var check := VisitorCheck.new()
+	check.set_anchors_preset(Control.PRESET_FULL_RECT)
+	parent.add_child(check)
+	check._build_panel("📤 Send to the maker")
+	check._say("This saves a file with this player's texts and weekly plan (with where things are) and My Home address. A grown-up can then email it to the maker.")
+	check.box.add_child(check._button("💾 Save the file", check._save_for_maker))
+	check.box.add_child(check._button("Cancel", check._finish))
+	return check
+
+func _build_panel(title: String) -> void:
+	var dim := ColorRect.new()
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.color = Color(0.23, 0.16, 0.16, 0.55)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(center)
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(1, 0.96, 0.98, 1)
+	style.set_corner_radius_all(24)
+	style.set_content_margin_all(24)
+	panel.add_theme_stylebox_override("panel", style)
+	center.add_child(panel)
+	box = VBoxContainer.new()
+	box.custom_minimum_size = Vector2(560, 0)
+	box.add_theme_constant_override("separation", 14)
+	panel.add_child(box)
+	var heading := Label.new()
+	heading.text = title
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 30)
+	heading.add_theme_color_override("font_color", Color(0.72, 0.31, 0.47, 1))
+	box.add_child(heading)
+	message = Label.new()
+	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	message.add_theme_font_size_override("font_size", 18)
+	box.add_child(message)
+
+func _say(text: String) -> void:
+	message.text = text
+
+func _button(text: String, action: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = Vector2(0, 56)
+	button.add_theme_font_size_override("font_size", 22)
+	button.pressed.connect(action)
+	return button
+
+func _finish() -> void:
+	done.emit()
+	queue_free()
+
+func _save_for_maker() -> void:
+	var text := JSON.stringify(payload(PetalState.chat_log, PetalState.schedule, PetalState.my_home), "\t")
+	for child in box.get_children():
+		if child is Button:
+			child.queue_free()
+	if OS.has_feature("web"):
+		JavaScriptBridge.download_buffer(text.to_utf8_buffer(), SEND_FILE, "application/json")
+		_say("✅ Saved to your downloads as %s. Please email that file to the maker." % SEND_FILE)
+	else:
+		var file := FileAccess.open("user://" + SEND_FILE, FileAccess.WRITE)
+		if file == null:
+			_say("Oops, the file could not be saved.")
+		else:
+			file.store_string(text)
+			file.close()
+			OS.shell_show_in_file_manager(ProjectSettings.globalize_path("user://" + SEND_FILE))
+			_say("✅ Saved as %s - the folder is open. Please email that file to the maker." % SEND_FILE)
+	if MAKER_EMAIL != "":
+		OS.shell_open("mailto:%s?subject=%s&body=%s" % [MAKER_EMAIL, "Cuddle Cats texts".uri_encode(), "The file is attached.".uri_encode()])
+	box.add_child(_button("Close", _finish))

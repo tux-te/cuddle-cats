@@ -26,6 +26,7 @@ const ROOMS := {
 	"mystery": preload("res://scenes/rooms/mystery.tscn"),
 	"petset": preload("res://scenes/rooms/pet_set.tscn"),
 	"stickers": preload("res://scenes/rooms/sticker_book.tscn"),
+	"myhome": preload("res://scenes/rooms/my_home.tscn"),
 }
 
 const OWNER_WALK_FRAME_COUNT := 5
@@ -92,6 +93,8 @@ func _ready() -> void:
 
 	pets_button.pressed.connect(_open_pet_picker)
 	_add_header_button("❓ Help", func() -> void: HowToPlay.open(self))
+	_add_header_button("📤 Send to maker", func() -> void: VisitorCheck.open_send(self))
+	_add_header_button("🏠 My Home", _show_room.bind("myhome"))
 	_add_header_button("🕵️ Mystery", _show_room.bind("mystery"))
 	_add_header_button("🛏️ Pet Set", _show_room.bind("petset"))
 	_add_header_button("👤 Switch", _switch_player)
