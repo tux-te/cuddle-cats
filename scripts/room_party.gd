@@ -66,6 +66,43 @@ var name_heard := false
 var bad_heard := false
 var speech_supported := false
 
+# Each song style has its own lyric cards, background tint and cheers. {pet}
+# is replaced with the pet's name.
+const LYRIC_SECONDS := 4.5
+const STYLES := {
+	"lullaby": {
+		"label": "🌙 Lullaby", "tint": Color(0.7, 0.75, 1.0), "intro": "🌙 Sing a soft lullaby for %s!",
+		"lyrics": ["Sleepy sleepy {pet}, close your eyes", "Twinkle twinkle in the sky", "Soft little paws and a cozy bed", "Dream of fish and butterflies", "Goodnight {pet}, sweet dreams"],
+		"good": "That was so soothing. A little more voice and it's perfect!",
+		"best": "So dreamy and sweet. I'm yawning with happiness!",
+	},
+	"rock": {
+		"label": "🎸 Rock Star", "tint": Color(1.0, 0.65, 0.75), "intro": "🎸 Rock out for %s!",
+		"lyrics": ["{pet} is the rock star of the world", "Shake it shake it, jump up high", "Meow meow, hear me roar", "Turn it up, we want more", "Yeah yeah yeah, {pet} rocks"],
+		"good": "That rocked! A bit more power and it's perfect!",
+		"best": "ROCK STAR! My fur is standing on end!",
+	},
+	"opera": {
+		"label": "🎭 Opera", "tint": Color(1.0, 0.9, 0.6), "intro": "🎭 Sing a grand opera for %s!",
+		"lyrics": ["Ooooh {pet}, my darling {pet}", "La la laaaa, la la laaaa", "Fish and cuddles, hear my song", "Ahhh, ahhh, a high note now", "Bravo bravo, {pet}, bravo"],
+		"good": "Lovely! Hold the big notes a bit louder!",
+		"best": "BRAVISSIMO! You hit the high notes!",
+	},
+	"rap": {
+		"label": "🎤 Rap", "tint": Color(0.7, 1.0, 0.8), "intro": "🎤 Drop a rap about %s!",
+		"lyrics": ["Yo, I'm {pet}, I'm a cool little cat", "Got my paws up, wearing a hat", "Snacks and naps, that's how I roll", "Beat goes boom, I'm in control", "Mic drop, {pet}, that's a wrap"],
+		"good": "Nice flow! A bit more voice and it's perfect!",
+		"best": "Mic drop! That beat was fire!",
+	},
+}
+var style_row: HBoxContainer
+var lyric_label: Label
+var style_key := ""
+var lyric_index := 0
+var lyric_time := 0.0
+var shown_lyrics := ""
+var lyrics_heard := 0
+
 func _setup_karaoke() -> void:
 	karaoke_panel = PanelContainer.new()
 	karaoke_panel.visible = false
@@ -80,6 +117,22 @@ func _setup_karaoke() -> void:
 	karaoke_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	karaoke_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(karaoke_label)
+	style_row = HBoxContainer.new()
+	style_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	style_row.visible = false
+	for key in STYLES:
+		var b := Button.new()
+		b.text = STYLES[key]["label"]
+		b.add_theme_font_size_override("font_size", 22)
+		b.pressed.connect(_begin_singing.bind(key))
+		style_row.add_child(b)
+	box.add_child(style_row)
+	lyric_label = Label.new()
+	lyric_label.add_theme_font_size_override("font_size", 30)
+	lyric_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lyric_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lyric_label.visible = false
+	box.add_child(lyric_label)
 	level_bar = ProgressBar.new()
 	level_bar.min_value = -50.0
 	level_bar.max_value = -5.0
@@ -165,6 +218,13 @@ func _on_karaoke() -> void:
 		await get_tree().create_timer(3.0).timeout
 		_end_karaoke()
 		return
+	karaoke_label.text = "🎶 Pick a song style!"
+	style_row.visible = true
+
+func _begin_singing(key: String) -> void:
+	style_key = key
+	style_row.visible = false
+	%Background.modulate = STYLES[key]["tint"]
 	_ensure_karaoke_buses()
 	mic_player = AudioStreamPlayer.new()
 	mic_player.stream = AudioStreamMicrophone.new()
@@ -180,7 +240,13 @@ func _on_karaoke() -> void:
 	bad_heard = false
 	speech_supported = _start_speech()
 	level_bar.visible = true
-	karaoke_label.text = "🎤 Sing a song about %s!" % PetalState.pet_name
+	karaoke_label.text = STYLES[key]["intro"] % PetalState.pet_name
+	lyric_index = 0
+	lyric_time = 0.0
+	shown_lyrics = ""
+	lyrics_heard = 0
+	lyric_label.visible = true
+	_show_lyric()
 	karaoke_stop.visible = true
 	_sing_along()
 
@@ -196,6 +262,11 @@ func _process(delta: float) -> void:
 	if not singing:
 		return
 	sing_time += delta
+	lyric_time += delta
+	if lyric_time >= LYRIC_SECONDS:
+		lyric_time = 0.0
+		lyric_index += 1
+		_show_lyric()
 	var rec_idx := AudioServer.get_bus_index(REC_BUS)
 	var db := AudioServer.get_bus_peak_volume_left_db(rec_idx, 0)
 	level_bar.value = lerpf(level_bar.value, db, 0.4)
@@ -206,10 +277,25 @@ func _process(delta: float) -> void:
 	if sing_time >= MAX_SING_SECONDS:
 		_stop_karaoke()
 
+func _show_lyric() -> void:
+	var lines: Array = STYLES[style_key]["lyrics"]
+	var line: String = lines[lyric_index % lines.size()].replace("{pet}", PetalState.pet_name)
+	lyric_label.text = "♪ %s ♪" % line
+	shown_lyrics += " " + _letters_only(line) + " "
+
+# Counts distinct lyric words (4+ letters) that the speech recogniser heard.
+func _lyric_words_heard(heard: String) -> int:
+	var seen := {}
+	for w in shown_lyrics.split(" ", false):
+		if w.length() >= 4 and not seen.has(w) and (" " + heard + " ").contains(" " + w + " "):
+			seen[w] = true
+	return seen.size()
+
 func _stop_karaoke() -> void:
 	if not singing:
 		return
 	singing = false
+	lyric_label.visible = false
 	_stop_speech()
 	karaoke_stop.visible = false
 	level_bar.visible = false
@@ -256,11 +342,14 @@ func _rate_song() -> void:
 		lines = ["%s says: Nice and gentle, but I couldn't hear much. Louder please!" % pet]
 	elif strong_time < 1.5:
 		stars = 4
-		lines = ["%s says: Good singing! A bit more voice and it's perfect!" % pet]
+		lines = ["%s says: %s" % [pet, STYLES[style_key]["good"]]]
 	else:
 		stars = 5
-		lines = ["%s says: WOW, so powerful! Best song ever!" % pet]
+		lines = ["%s says: %s" % [pet, STYLES[style_key]["best"]]]
 	var line: String = lines.pick_random()
+	if lyrics_heard >= 3 and stars >= 3:
+		stars = mini(5, stars + 1)
+		line += " You sang the words too!"
 	if name_heard:
 		stars = mini(5, stars + 1)
 		line = "%s says: I heard my name! That song was about ME!" % pet
@@ -278,6 +367,9 @@ func _end_karaoke() -> void:
 	if not is_instance_valid(self):
 		return
 	karaoke_panel.visible = false
+	style_row.visible = false
+	lyric_label.visible = false
+	%Background.modulate = Color.WHITE
 	%Background.texture = load(PetalState.room_bg("party", "res://Sprites/backgrounds/party_room.jpg"))
 	_set_extras_disabled(false)
 	karaoke_busy = false
@@ -330,6 +422,7 @@ func _name_check() -> void:
 	for word in BAD_WORDS:
 		if heard.contains(" " + word + " ") or (" " + heard + " ").contains(" " + word + " "):
 			bad_heard = true
+	lyrics_heard = _lyric_words_heard(heard)
 	if name_heard:
 		return
 	for candidate in [PetalState.pet_name, String(PetalState.PETS[PetalState.active_pet]["name"])]:
