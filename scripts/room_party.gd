@@ -102,6 +102,7 @@ var lyric_index := 0
 var lyric_time := 0.0
 var shown_lyrics := ""
 var lyrics_heard := 0
+var pet_mic: TextureRect
 
 func _setup_karaoke() -> void:
 	karaoke_panel = PanelContainer.new()
@@ -248,6 +249,7 @@ func _begin_singing(key: String) -> void:
 	lyric_label.visible = true
 	_show_lyric()
 	karaoke_stop.visible = true
+	_hold_mic()
 	_sing_along()
 
 # The pet bobs along for as long as the player is singing.
@@ -277,6 +279,20 @@ func _process(delta: float) -> void:
 	if sing_time >= MAX_SING_SECONDS:
 		_stop_karaoke()
 
+# The mic is a child of the pet, so it hops and dances along with her. The
+# spot is a rough guess at where a paw is on the pose art.
+func _hold_mic() -> void:
+	if pet_mic == null:
+		pet_mic = TextureRect.new()
+		pet_mic.texture = load("res://Sprites/karaoke_mic.png")
+		pet_mic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		pet_mic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		pet_mic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pet_mic.size = Vector2(30, 64)
+		%Petal.add_child(pet_mic)
+	pet_mic.position = Vector2(%Petal.size.x * 0.62, %Petal.size.y * 0.3)
+	pet_mic.visible = true
+
 func _show_lyric() -> void:
 	var lines: Array = STYLES[style_key]["lyrics"]
 	var line: String = lines[lyric_index % lines.size()].replace("{pet}", PetalState.pet_name)
@@ -296,6 +312,8 @@ func _stop_karaoke() -> void:
 		return
 	singing = false
 	lyric_label.visible = false
+	if pet_mic != null:
+		pet_mic.visible = false
 	_stop_speech()
 	karaoke_stop.visible = false
 	level_bar.visible = false
@@ -369,6 +387,8 @@ func _end_karaoke() -> void:
 	karaoke_panel.visible = false
 	style_row.visible = false
 	lyric_label.visible = false
+	if pet_mic != null:
+		pet_mic.visible = false
 	%Background.modulate = Color.WHITE
 	%Background.texture = load(PetalState.room_bg("party", "res://Sprites/backgrounds/party_room.jpg"))
 	_set_extras_disabled(false)
