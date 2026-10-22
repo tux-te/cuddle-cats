@@ -1579,8 +1579,8 @@ func _you() -> String:
 func _bubble(from_pet: bool, text: String) -> void:
 	if from_pet:
 		text = _in_pet_voice(text)
-	PetalState.chat_log.append({"from": "pet" if from_pet else "you", "text": text})
-	if PetalState.chat_log.size() > 200:
+	PetalState.chat_log.append({"from": "pet" if from_pet else "you", "text": text, "time": int(Time.get_unix_time_from_system())})
+	if PetalState.chat_log.size() > PetalState.CHAT_LOG_MAX:
 		PetalState.chat_log.pop_front()
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_BEGIN if from_pet else BoxContainer.ALIGNMENT_END

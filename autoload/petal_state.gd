@@ -29,7 +29,7 @@ const DECAY_PER_SEC := 0.15
 # TextureRect so it lands right no matter which room-sized box she's in).
 # "exclusive_groups" lists accessory ids that can't be worn together (e.g.
 # only one collar at a time) - toggling one off clears the rest.
-const PETS := {
+var PETS := {
 	"petal": {
 		"name": "Princess Petal",
 		"species": "cat",
@@ -50,6 +50,25 @@ const PETS := {
 			"mascara": {"icon": "res://Sprites/mascara.png", "anchor": {"l": 0.373, "t": 0.294, "r": 0.633, "b": 0.44}, "cost": 10},
 			"lipstick": {"icon": "res://Sprites/lipstick.png", "anchor": {"l": 0.40, "t": 0.44, "r": 0.60, "b": 0.52}, "cost": 10},
 		},
+		"exclusive_groups": [],
+	},
+	# Art for the Persian Blue breed in the cat creator. Never listed as a pet of
+	# its own (base_only); custom cats copy it. Frames come from
+	# dev/slice_persian_blue.py. It has no dress-up accessories yet.
+	"persian_blue": {
+		"name": "Persian Blue",
+		"species": "cat",
+		"base_only": true,
+		"cutout": "res://Sprites/persian_blue/stand/frame_00.png",
+		"walk": {"path": "res://Sprites/persian_blue/walk/frame_%02d.png", "count": 4},
+		"jump": {"path": "res://Sprites/persian_blue/jump/frame_%02d.png", "count": 4},
+		"dance": {"path": "res://Sprites/persian_blue/dance/frame_%02d.png", "count": 4},
+		"play": {"path": "res://Sprites/persian_blue/dance/frame_%02d.png", "count": 4},
+		"inline_play": true,
+		"eat": {"path": "res://Sprites/persian_blue/eat/frame_%02d.png", "count": 6},
+		"sleep": {"path": "res://Sprites/persian_blue/sleep/frame_%02d.png", "count": 6},
+		"bath_comic": {"path": "res://Sprites/persian_blue/bath/frame_%02d.png", "count": 8},
+		"accessories": {},
 		"exclusive_groups": [],
 	},
 	"noodles": {
@@ -381,29 +400,162 @@ var pet_records := {}
 func available_pet_ids() -> Array[String]:
 	var ids: Array[String] = []
 	for id in PETS:
-		if ResourceLoader.exists(String(PETS[id]["cutout"])):
+		if not PETS[id].get("base_only", false) and ResourceLoader.exists(String(PETS[id]["cutout"])):
 			ids.append(id)
 	return ids
 
 func _init_pet_records() -> void:
 	for id in PETS:
-		var acc := {}
-		var unlocked := {}
-		for acc_id in PETS[id]["accessories"]:
-			acc[acc_id] = false
-			unlocked[acc_id] = int(PETS[id]["accessories"][acc_id].get("cost", 0)) <= 0
-		var perch := {}
-		for item_id in PETS[id].get("perch_items", []):
-			perch[item_id] = true
-		pet_records[id] = {
-			"hunger": 80.0,
-			"happiness": 80.0,
-			"energy": 80.0,
-			"cleanliness": 80.0,
-			"accessories": acc,
-			"unlocked_accessories": unlocked,
-			"perch_decor": perch,
-		}
+		pet_records[id] = _new_pet_record(id)
+
+func _new_pet_record(id: String) -> Dictionary:
+	var acc := {}
+	var unlocked := {}
+	for acc_id in PETS[id]["accessories"]:
+		acc[acc_id] = false
+		unlocked[acc_id] = int(PETS[id]["accessories"][acc_id].get("cost", 0)) <= 0
+	var perch := {}
+	for item_id in PETS[id].get("perch_items", []):
+		perch[item_id] = true
+	return {
+		"hunger": 80.0,
+		"happiness": 80.0,
+		"energy": 80.0,
+		"cleanliness": 80.0,
+		"accessories": acc,
+		"unlocked_accessories": unlocked,
+		"perch_decor": perch,
+	}
+
+# --- Custom cats ------------------------------------------------------------
+# The "+" in the pet picker lets a kid make a cat of their own: pick a breed,
+# fur colour, name, girl/boy, age, personality and favourite treat. A custom cat
+# is a copy of one of the drawn cats (the breed's "base") run through the coat
+# tint shader, so it gets every room, animation and accessory for free. Only
+# the plain choices are saved (custom_pets); the PETS entry is rebuilt on load.
+const CUSTOM_MAX := 6
+const CUSTOM_PREFIX := "custom_"
+const CUSTOM_NAME_MAX := 14
+
+const CAT_BREEDS := {
+	"persian": {"label": "Persian", "base": "petal", "tint": {}},
+	"persian_blue": {"label": "Persian Blue", "base": "persian_blue", "tint": {}},
+	"maine_coon": {"label": "Maine Coon", "base": "petal", "tint": {"shadow": Color(0.12, 0.08, 0.05), "highlight": Color(0.78, 0.62, 0.42)}},
+	"bengal": {"label": "Bengal", "base": "stardust", "tint": {}},
+	"orange_tabby": {"label": "Orange Tabby", "base": "ginger", "tint": {}},
+	"brown_tabby": {"label": "Brown Tabby", "base": "noodles", "tint": {"shadow": Color(0.10, 0.06, 0.04), "highlight": Color(0.74, 0.50, 0.30)}},
+	"siamese": {"label": "Siamese", "base": "noodles", "tint": {"shadow": Color(0.16, 0.09, 0.06), "highlight": Color(0.96, 0.90, 0.78)}},
+	"russian_blue": {"label": "Russian Blue", "base": "noodles", "tint": {"shadow": Color(0.07, 0.08, 0.11), "highlight": Color(0.62, 0.68, 0.78)}},
+	"black_cat": {"label": "Black Cat", "base": "noodles", "tint": {"shadow": Color(0.02, 0.02, 0.03), "highlight": Color(0.30, 0.28, 0.34)}},
+}
+
+# "Natural" keeps the breed's own colour; the rest recolour any breed.
+const CAT_COATS := {
+	"natural": {"label": "Natural", "swatch": Color(0.96, 0.92, 0.84)},
+	"snow": {"label": "Snow", "swatch": Color(0.97, 0.97, 1.0), "tint": {"shadow": Color(0.30, 0.28, 0.38), "highlight": Color(1, 1, 1)}},
+	"pink": {"label": "Pink", "swatch": Color(1.0, 0.72, 0.82), "tint": {"shadow": Color(0.30, 0.10, 0.18), "highlight": Color(1.0, 0.72, 0.82)}},
+	"lilac": {"label": "Lilac", "swatch": Color(0.78, 0.68, 0.96), "tint": {"shadow": Color(0.16, 0.10, 0.30), "highlight": Color(0.78, 0.68, 0.96)}},
+	"mint": {"label": "Mint", "swatch": Color(0.66, 0.92, 0.78), "tint": {"shadow": Color(0.06, 0.20, 0.14), "highlight": Color(0.66, 0.92, 0.78)}},
+	"sky": {"label": "Sky", "swatch": Color(0.66, 0.84, 1.0), "tint": {"shadow": Color(0.06, 0.12, 0.28), "highlight": Color(0.66, 0.84, 1.0)}},
+	"gold": {"label": "Gold", "swatch": Color(0.98, 0.84, 0.42), "tint": {"shadow": Color(0.26, 0.15, 0.03), "highlight": Color(0.98, 0.84, 0.42)}},
+}
+
+const CAT_GENDERS := {"girl": "👧 Girl", "boy": "👦 Boy"}
+const CAT_AGES := {"kitten": "🍼 Kitten", "young": "🌱 Young", "adult": "🐈 Grown-up", "senior": "👴 Senior"}
+const CAT_PERSONALITIES := {
+	"playful": {"label": "🧶 Playful", "idle": ["🧶 pounce!", "🐾 zoomies?"]},
+	"sleepy": {"label": "😴 Sleepy", "idle": ["😴 nap time?", "💤 zzz..."]},
+	"cuddly": {"label": "🤗 Cuddly", "idle": ["🤗 hug me?", "💕 purrrr"]},
+	"curious": {"label": "🔍 Curious", "idle": ["🔍 what's that?", "👀 sniff sniff"]},
+	"greedy": {"label": "🍤 Foodie", "idle": ["🍤 snack?", "😋 tummy rumble"]},
+	"shy": {"label": "🙈 Shy", "idle": ["🙈 peek-a-boo", "🫣 hides a little"]},
+	"brave": {"label": "🦁 Brave", "idle": ["🦁 roar!", "😼 on patrol"]},
+}
+const CAT_NAME_IDEAS := ["Mittens", "Luna", "Biscuit", "Pumpkin", "Mochi", "Clover", "Whiskers", "Peaches", "Pixel", "Cocoa", "Sprinkle", "Nova"]
+
+var custom_pets := {}   # custom id -> plain choices (see _clean_custom_spec); saved per slot
+
+func is_custom(id: String) -> bool:
+	return custom_pets.has(id)
+
+func can_make_custom_pet() -> bool:
+	return custom_pets.size() < CUSTOM_MAX
+
+# Fills in anything missing and drops anything unknown, so a damaged or older
+# save can never build a cat that isn't in the tables above.
+func _clean_custom_spec(spec: Dictionary) -> Dictionary:
+	var treats: Array = SPECIES_TREATS["cat"]
+	var name_text := String(spec.get("name", "")).strip_edges().left(CUSTOM_NAME_MAX)
+	return {
+		"name": name_text if name_text != "" else "Kitty",
+		"breed": String(spec.get("breed", "")) if CAT_BREEDS.has(String(spec.get("breed", ""))) else "persian",
+		"coat": String(spec.get("coat", "")) if CAT_COATS.has(String(spec.get("coat", ""))) else "natural",
+		"gender": String(spec.get("gender", "")) if CAT_GENDERS.has(String(spec.get("gender", ""))) else "girl",
+		"age": String(spec.get("age", "")) if CAT_AGES.has(String(spec.get("age", ""))) else "young",
+		"personality": String(spec.get("personality", "")) if CAT_PERSONALITIES.has(String(spec.get("personality", ""))) else "playful",
+		"treat": String(spec.get("treat", "")) if treats.has(String(spec.get("treat", ""))) else String(treats[0]),
+	}
+
+# The colour ramp a choice of breed + coat gives ({} = art as drawn).
+func spec_tint(spec: Dictionary) -> Dictionary:
+	var coat: Dictionary = CAT_COATS.get(String(spec.get("coat", "natural")), {})
+	if coat.has("tint"):
+		return coat["tint"]
+	var breed: Dictionary = CAT_BREEDS.get(String(spec.get("breed", "persian")), CAT_BREEDS["persian"])
+	return breed["tint"]
+
+func spec_cutout(spec: Dictionary) -> String:
+	var breed: Dictionary = CAT_BREEDS.get(String(spec.get("breed", "persian")), CAT_BREEDS["persian"])
+	return String(PETS[breed["base"]]["cutout"])
+
+func spec_profile(spec: Dictionary) -> String:
+	var breed: Dictionary = CAT_BREEDS.get(String(spec.get("breed", "persian")), CAT_BREEDS["persian"])
+	return "%s · %s · %s · %s" % [CAT_GENDERS.get(spec.get("gender", "girl"), ""), CAT_AGES.get(spec.get("age", "young"), ""), breed["label"], CAT_PERSONALITIES.get(spec.get("personality", "playful"), {}).get("label", "")]
+
+func _register_custom_pet(id: String) -> void:
+	var spec: Dictionary = custom_pets[id]
+	var breed: Dictionary = CAT_BREEDS[spec["breed"]]
+	var entry: Dictionary = PETS[breed["base"]].duplicate(true)
+	entry["name"] = spec["name"]
+	entry["custom"] = true
+	entry.erase("base_only")
+	var tint := spec_tint(spec)
+	if tint.is_empty():
+		entry.erase("tint")
+	else:
+		entry["tint"] = tint
+	PETS[id] = entry
+	pet_records[id] = _new_pet_record(id)
+
+# Makes the cat and returns its id, or "" when this slot already has CUSTOM_MAX.
+func create_custom_pet(spec: Dictionary) -> String:
+	if not can_make_custom_pet():
+		return ""
+	var n := 1
+	while custom_pets.has(CUSTOM_PREFIX + str(n)):
+		n += 1
+	var id := CUSTOM_PREFIX + str(n)
+	custom_pets[id] = _clean_custom_spec(spec)
+	_register_custom_pet(id)
+	save_game()
+	return id
+
+func delete_custom_pet(id: String) -> void:
+	if not custom_pets.has(id):
+		return
+	if active_pet == id:
+		switch_pet("petal")
+	custom_pets.erase(id)
+	for table in [PETS, pet_records, nicknames, pet_sets, play_spaces, play_rooms, treats_found, colors_found, house_wants, house_design, house_known]:
+		table.erase(id)
+	dream_houses.erase(id)
+	save_game()
+
+func _clear_custom_pets() -> void:
+	for id in custom_pets:
+		PETS.erase(id)
+		pet_records.erase(id)
+	custom_pets = {}
 
 # Names kids type in (with emoji from the NameEditor picker) live in the
 # active save slot along with the rest of their progress - see "Save slots".
@@ -484,6 +636,7 @@ func delete_slot(slot: int) -> void:
 		current_slot = 0
 
 func _reset_progress() -> void:
+	_clear_custom_pets()
 	active_pet = "petal"
 	player_name = ""
 	nicknames = {}
@@ -500,6 +653,8 @@ func _reset_progress() -> void:
 	safety_alerts = []
 	remembered_likes = []
 	treats_found = {}
+	colors_found = {}
+	finger_print = {}
 	house_wants = {}
 	house_design = {}
 	house_known = {}
@@ -576,6 +731,7 @@ func save_game() -> void:
 	cfg.set_value("names", "player", player_name)
 	cfg.set_value("names", "pets", nicknames)
 	cfg.set_value("game", "active_pet", active_pet)
+	cfg.set_value("game", "custom_pets", custom_pets)
 	cfg.set_value("game", "coins", coins)
 	cfg.set_value("game", "stickers", earned_stickers)
 	cfg.set_value("game", "schedule", schedule)
@@ -587,9 +743,12 @@ func save_game() -> void:
 	cfg.set_value("game", "dream_houses", dream_houses)
 	cfg.set_value("game", "house", _save_house())
 	cfg.set_value("game", "treats_found", treats_found)
+	cfg.set_value("game", "colors_found", colors_found)
+	cfg.set_value("game", "finger_print", finger_print)
 	cfg.set_value("game", "pet_records", pet_records)
 	cfg.set_value("safety", "alerts", safety_alerts)
 	cfg.set_value("memory", "likes", remembered_likes)
+	cfg.set_value("memory", "chat_log", chat_log)
 	cfg.save(slot_path(current_slot))
 	VisitorExport.export_if_allowed(current_slot, chat_log, schedule)
 
@@ -598,8 +757,22 @@ func _load_slot(slot: int) -> void:
 	if cfg.load(slot_path(slot)) != OK:
 		return
 	player_name = String(cfg.get_value("names", "player", ""))
+	# Custom cats first: everything below checks PETS.has(id).
+	var saved_custom = cfg.get_value("game", "custom_pets", {})
+	if saved_custom is Dictionary:
+		for id in saved_custom:
+			if String(id).begins_with(CUSTOM_PREFIX) and saved_custom[id] is Dictionary and custom_pets.size() < CUSTOM_MAX:
+				custom_pets[String(id)] = _clean_custom_spec(saved_custom[id])
+				_register_custom_pet(String(id))
 	var saved_likes = cfg.get_value("memory", "likes", [])
 	remembered_likes = (saved_likes as Array).duplicate() if saved_likes is Array else []
+	# The texts live in the save so the shared copy (visitor_check.gd) keeps growing across sessions.
+	var saved_chat = cfg.get_value("memory", "chat_log", [])
+	if saved_chat is Array:
+		for entry in saved_chat:
+			if entry is Dictionary and entry.has("text"):
+				chat_log.append({"from": String(entry.get("from", "you")), "text": String(entry["text"]), "time": int(entry.get("time", 0))})
+	chat_log = chat_log.slice(maxi(0, chat_log.size() - CHAT_LOG_MAX))
 	var saved_alerts = cfg.get_value("safety", "alerts", [])
 	safety_alerts = (saved_alerts as Array).duplicate() if saved_alerts is Array else []
 	var saved_nicks = cfg.get_value("names", "pets", {})
@@ -644,6 +817,14 @@ func _load_slot(slot: int) -> void:
 			if PETS.has(id) and saved_rooms[id] is Dictionary:
 				play_rooms[id] = play_room_from_save(saved_rooms[id])
 	_load_house(cfg.get_value("game", "house", {}))
+	var saved_finger = cfg.get_value("game", "finger_print", {})
+	if saved_finger is Dictionary and FingerprintView.KINDS.has(String(saved_finger.get("kind", ""))):
+		finger_print = {"kind": String(saved_finger["kind"]), "seed": int(saved_finger.get("seed", 0))}
+	var saved_colors = cfg.get_value("game", "colors_found", {})
+	if saved_colors is Dictionary:
+		for id in saved_colors:
+			if PETS.has(id) and saved_colors[id] == true:
+				colors_found[id] = true
 	var saved_treats = cfg.get_value("game", "treats_found", {})
 	if saved_treats is Dictionary:
 		for id in saved_treats:
@@ -703,7 +884,9 @@ const PET_TINT_SHADER := preload("res://shaders/pet_tint.gdshader")
 # Gives a pet's TextureRect the active pet's coat colour (or clears it for
 # pets that use their art as drawn).
 func apply_tint(node: CanvasItem, id: String = "") -> void:
-	var info: Dictionary = PETS[active_pet if id == "" else id].get("tint", {})
+	apply_tint_info(node, PETS[active_pet if id == "" else id].get("tint", {}))
+
+func apply_tint_info(node: CanvasItem, info: Dictionary) -> void:
 	if info.is_empty():
 		node.material = null
 		return
@@ -788,7 +971,8 @@ var treats_found := {} # pet id -> true once their favourite has been shown
 # Each kind of pet secretly loves its first treat most of all (cats: fish), the same
 # food she names when asked her favourite.
 func favorite_treat() -> String:
-	return treat_emojis()[0]
+	var own := String(custom_pets.get(active_pet, {}).get("treat", ""))
+	return own if own != "" else treat_emojis()[0]
 
 # She is shown her favourite: very happy, and a reward the first time.
 func favorite_treat_shown() -> void:
@@ -829,7 +1013,10 @@ func friend_emoji(id: String) -> String:
 func idle_reactions() -> Array:
 	var species := String(PETS[active_pet].get("species", "cat"))
 	var animal := species_emoji(species)
-	return ["%s blink" % animal, "%s stretch~" % animal, "💤 yawn~", "😊 happy sigh"]
+	var reactions := ["%s blink" % animal, "%s stretch~" % animal, "💤 yawn~", "😊 happy sigh"]
+	if custom_pets.has(active_pet):
+		reactions.append_array(CAT_PERSONALITIES[custom_pets[active_pet]["personality"]]["idle"])
+	return reactions
 
 func static_pose(key: String) -> String:
 	return String(PETS[active_pet].get(key, PETS[active_pet]["cutout"]))
@@ -977,6 +1164,20 @@ var pet_sets := {}
 # cheers when a kid finds it.
 func favourite_color(id: String) -> int:
 	return absi(("fav" + id).hash()) % SET_COLORS.size()
+
+const SET_COLOR_NAMES := ["Pink", "Red", "Orange", "Yellow", "Lime", "Green", "Teal", "Sky blue", "Blue", "Purple", "Brown", "White"]
+# The player's own fingerprint, made from their first real press in the Mystery
+# room's fingerprint lab: {"kind": ..., "seed": ...}. Empty until then; per slot.
+var finger_print := {}
+
+var colors_found := {} # pet id -> true once a kid has picked her favourite colour; saved per slot
+
+func favourite_color_found(id: String) -> bool:
+	return colors_found.get(id, false)
+
+func mark_favourite_color_found(id: String) -> void:
+	colors_found[id] = true
+	save_game()
 
 func default_pet_set(id: String) -> Dictionary:
 	var species := String(PETS[id].get("species", "cat"))
@@ -1218,6 +1419,7 @@ var solved_cases: Array = []
 # order, each {"name", "start" and "end" in minutes (-1 = all day), "place"}.
 var schedule := {}
 # Texts with the pet, newest last: {"from": "pet" or "you", "text": String}.
+const CHAT_LOG_MAX := 200
 var chat_log: Array = []
 var remembered_likes: Array = []   # harmless things she was told you like (kittens, pink...); saved per slot
 var safety_alerts: Array = []   # unix times of worrying messages (never the words); saved per slot

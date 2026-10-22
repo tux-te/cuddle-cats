@@ -42,6 +42,7 @@ var stamp_buttons := {}
 var shape_row: HFlowContainer
 var shape_buttons := {}
 var name_button: Button
+var fav_color_label: Label   # appears once the favourite colour has been found
 
 var play_stage: Control
 var room_stage: Control
@@ -206,6 +207,10 @@ func _build() -> void:
 	_build_play_options()
 	_build_room_options()
 
+	fav_color_label = Label.new()
+	fav_color_label.add_theme_font_size_override("font_size", 20)
+	options.add_child(fav_color_label)
+
 	var tabs := HBoxContainer.new()
 	kind_tabs = tabs
 	tabs.add_theme_constant_override("separation", 8)
@@ -351,8 +356,15 @@ func _refresh() -> void:
 	var piece := _piece()
 	for id in kind_buttons:
 		kind_buttons[id].set_pressed_no_signal(id == kind)
+	var fav := PetalState.favourite_color(pet_id)
+	var fav_found := PetalState.favourite_color_found(pet_id)
+	fav_color_label.visible = fav_found
+	if fav_found:
+		fav_color_label.text = "💖 %s's favourite colour: %s" % [PetalState.pet_display_name(pet_id), PetalState.SET_COLOR_NAMES[fav]]
+		fav_color_label.add_theme_color_override("font_color", PetalState.SET_COLORS[fav].darkened(0.35))
 	for field in swatches:
 		for i in range(swatches[field].size()):
+			swatches[field][i].text = "💖" if fav_found and field == "color" and i == fav else ""
 			swatches[field][i].add_theme_stylebox_override("normal", _swatch_style(i, i == int(piece[field])))
 			swatches[field][i].add_theme_stylebox_override("hover", _swatch_style(i, true))
 			swatches[field][i].add_theme_stylebox_override("pressed", _swatch_style(i, true))
@@ -641,6 +653,8 @@ func _on_swatch(field: String, index: int) -> void:
 	_piece()[field] = index
 	_changed()
 	if field == "color" and index == PetalState.favourite_color(pet_id):
+		PetalState.mark_favourite_color_found(pet_id)
+		_refresh()
 		_pop("💖 my favourite colour!", petal)
 		Sfx.chime(self)
 		Confetti.burst(self, petal.global_position + petal.size / 2.0, 16)

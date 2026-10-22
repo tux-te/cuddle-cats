@@ -207,7 +207,18 @@ func _open_pet_picker() -> void:
 		btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 		btn.custom_minimum_size = Vector2(150, 210)
 		btn.pressed.connect(_on_pet_picked.bind(id))
-		rows[gi].add_child(btn)
+		if PetalState.is_custom(id):
+			rows[gi].add_child(_custom_pet_card(id, btn))
+		else:
+			rows[gi].add_child(btn)
+	# The + at the end of the Cats row makes a new cat (up to CUSTOM_MAX per save).
+	var add_button := Button.new()
+	add_button.text = "＋\nNew cat" if PetalState.can_make_custom_pet() else "Cat\nlimit"
+	add_button.disabled = not PetalState.can_make_custom_pet()
+	add_button.add_theme_font_size_override("font_size", 28)
+	add_button.custom_minimum_size = Vector2(150, 210)
+	add_button.pressed.connect(_on_add_pet)
+	rows[0].add_child(add_button)
 	var open_group := _pet_group_index(String(PetalState.PETS[PetalState.active_pet].get("species", "cat")))
 	for i in range(PET_GROUPS.size()):
 		headers[i].visible = counts[i] > 0
@@ -215,6 +226,31 @@ func _open_pet_picker() -> void:
 		rows[i].visible = i == open_group
 		_update_pet_header(headers[i], i, rows[i].visible, counts[i])
 	pet_picker.visible = true
+
+# A made-up cat in the picker: its picture, name and profile, with a remove button.
+func _custom_pet_card(id: String, picture: TextureButton) -> VBoxContainer:
+	var card := VBoxContainer.new()
+	card.add_child(picture)
+	var caption := Label.new()
+	caption.text = PetalState.pet_display_name(id)
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caption.add_theme_font_size_override("font_size", 18)
+	card.add_child(caption)
+	var remove := Button.new()
+	remove.text = "🗑 Remove"
+	remove.pressed.connect(func() -> void:
+		if remove.text == "🗑 Remove":
+			remove.text = "Really?"
+			return
+		PetalState.delete_custom_pet(id)
+		_open_pet_picker())
+	card.add_child(remove)
+	return card
+
+func _on_add_pet() -> void:
+	_close_pet_picker()
+	var creator := PetCreator.open(self)
+	creator.created.connect(PetalState.switch_pet)
 
 func _toggle_pet_group(index: int, rows: Array[HBoxContainer], headers: Array[Button]) -> void:
 	var opening := not rows[index].visible
