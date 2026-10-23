@@ -1133,6 +1133,7 @@ const STICKERS := {
 	"bell": {"emoji": "🔔", "label": "Jingle Bells"},
 	"swim": {"emoji": "🏊", "label": "Splash Time"},
 	"spa": {"emoji": "💆", "label": "Spa Day"},
+	"critters": {"emoji": "🦋", "label": "Bug Buddy"},
 	"vet": {"emoji": "🩺", "label": "Brave at the Vet"},
 	"week": {"emoji": "📅", "label": "Whole Week"},
 	"cathouse": {"emoji": "🏡", "label": "Dream House"},
@@ -1633,6 +1634,18 @@ func stroll() -> void:
 	energy = maxf(0.0, energy - 10.0)
 	stats_changed.emit()
 	award_sticker("stroll")
+	add_coins(4)
+
+# Garden critters (room_garden.gd): each tap-catch is a small treat.
+func catch_critter() -> void:
+	happiness = minf(MAX_STAT, happiness + 3.0)
+	stats_changed.emit()
+	add_coins(1)
+
+func critter_buddy() -> void:
+	happiness = minf(MAX_STAT, happiness + 10.0)
+	stats_changed.emit()
+	award_sticker("critters")
 	add_coins(4)
 
 func obstacle_course() -> void:
