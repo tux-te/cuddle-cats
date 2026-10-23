@@ -24,6 +24,7 @@ var your_caption: Label
 var pet_caption: Label
 var paw_button: Button
 var scan_button: Button
+var scroll: ScrollContainer
 var results: VBoxContainer
 var matching: Array = []
 const HOLD_SECONDS := 1.2
@@ -63,10 +64,16 @@ func _build() -> void:
 	panel.add_theme_stylebox_override("panel", style)
 	center.add_child(panel)
 
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(820, 560)
+	# Fit inside whatever room we were opened in, with Close pinned underneath
+	# the scrolling part so it can never be pushed off the bottom.
+	var parent_height: float = (get_parent() as Control).size.y if get_parent() is Control else 800.0
+	scroll = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(820, clampf(parent_height - 24.0 - 36.0 - 62.0, 240.0, 560.0))
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	panel.add_child(scroll)
+	var frame := VBoxContainer.new()
+	frame.add_theme_constant_override("separation", 8)
+	panel.add_child(frame)
+	frame.add_child(scroll)
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 10)
@@ -113,7 +120,7 @@ func _build() -> void:
 
 	var close := _button("Close", func() -> void: _close())
 	close.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	box.add_child(close)
+	frame.add_child(close)
 
 func _label(text: String, size: int, color: Color) -> Label:
 	var label := Label.new()
@@ -249,6 +256,11 @@ func _compare() -> void:
 		cell.add_child(view)
 		cell.add_child(_label("✅ Same kind of foot" if same else "❌ Different foot", 16, Color(0.6, 0.15, 0.25) if same else INK))
 		grid.add_child(cell)
+	# Bring the suspects' footprints into view (they are below the fold).
+	grid.ready.connect(func() -> void:
+		await get_tree().process_frame
+		if is_instance_valid(scroll):
+			scroll.ensure_control_visible(grid), CONNECT_ONE_SHOT)
 	results.add_child(_label("Careful: lots of animals have the same kind of foot, so this only narrows it down. Use the clues too!", 16, PURPLE))
 
 func _pet_verdict() -> String:

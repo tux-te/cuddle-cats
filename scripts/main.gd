@@ -239,10 +239,6 @@ func _add_surprise_button() -> void:
 		button.add_theme_color_override(state, Color.WHITE)
 	button.pressed.connect(_on_surprise)
 	pets_button.get_parent().add_child(button)
-	var pulse := button.create_tween().set_loops()
-	button.pivot_offset = button.custom_minimum_size / 2.0
-	pulse.tween_property(button, "scale", Vector2(1.06, 1.06), 0.7).set_trans(Tween.TRANS_SINE)
-	pulse.tween_property(button, "scale", Vector2.ONE, 0.7).set_trans(Tween.TRANS_SINE)
 
 func _on_surprise() -> void:
 	var id := _next_surprise()

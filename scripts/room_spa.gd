@@ -13,9 +13,13 @@ const BUBBLE_SECONDS := 3.0
 const MASK_SECONDS := 60
 const SLEEP_SECONDS := 4.0
 const TRAY_POS := Vector2(1010, 330)
-const HINT := "👆 Tap to brush   🧴 Lotion then rub her   🥒 Drag cucumbers to her eyes"
+const HINT := "👆 Tap to brush   🧴 Tap the lotion, then rub her   🥒 Drag cucumbers to her eyes"
 const TREATMENTS := ["brush", "lotion", "bubbles", "candles", "mask", "nails", "tea", "sleep"]
 const LOTION_DISTANCE := 800.0
+# How far one squirt of lotion lasts while rubbing (so it takes two squirts).
+const SQUIRT_RUB_DISTANCE := 400.0
+const BOTTLE_POS := Vector2(70, 250)
+const BOTTLE_SIZE := Vector2(102, 180)
 const CANDLE_SECONDS := 3.0
 const NAIL_COLOURS := [Color(1, 0.4, 0.7), Color(0.65, 0.4, 1), Color(0.3, 0.7, 1), Color(1, 0.8, 0.2)]
 
@@ -43,6 +47,9 @@ var mask_on := false
 var lotion_on := false
 var rub_distance := 0.0
 var rub_since_dab := 0.0
+var cream_left := 0.0
+var cream_blobs: Array[Label] = []
+var bottle: TextureButton = null
 var candles_on := false
 var candle_time := 0.0
 var candle_nodes: Array[Label] = []
@@ -59,7 +66,8 @@ func _ready() -> void:
 	%BackButton.pressed.connect(func() -> void: PetalState.navigate_to_room.emit("grooming"))
 	bubble_button.pressed.connect(_toggle_bubbles)
 	sleep_button.pressed.connect(_sleep)
-	lotion_button.pressed.connect(_toggle_lotion)
+	lotion_button.visible = false
+	_build_bottle()
 	candle_button.pressed.connect(_toggle_candles)
 	nail_button.pressed.connect(_paint_nails)
 	tea_button.pressed.connect(_serve_tea)
@@ -231,15 +239,55 @@ func _sleep() -> void:
 
 # --- Lotion: switch it on, then rub her -------------------------------------
 
-func _toggle_lotion() -> void:
+# The lotion bottle: tap it for a squirt on her fur, rub her to work it in, and
+# tap it again when it has all been rubbed in to get more.
+func _build_bottle() -> void:
+	bottle = TextureButton.new()
+	bottle.texture_normal = load("res://Sprites/spa_lotion_bottle.png")
+	bottle.ignore_texture_size = true
+	bottle.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	bottle.custom_minimum_size = BOTTLE_SIZE
+	bottle.size = BOTTLE_SIZE
+	bottle.position = BOTTLE_POS
+	bottle.pivot_offset = Vector2(BOTTLE_SIZE.x / 2.0, BOTTLE_SIZE.y)
+	bottle.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	bottle.pressed.connect(_squirt_lotion)
+	add_child(bottle)
+
+func _squirt_lotion() -> void:
 	if sleeping:
 		return
-	lotion_on = not lotion_on
-	lotion_button.text = "🧴 Lotion: on" if lotion_on else "🧴 Lotion: off"
-	if lotion_on:
-		hint.text = "🧴 Rub her with your finger!"
-	else:
-		hint.text = HINT
+	_clear_cream()
+	cream_left = 1.0
+	lotion_on = true
+	hint.text = "🧴 Rub her with your finger to rub the lotion in!"
+	# The bottle gets squeezed...
+	var squeeze := bottle.create_tween()
+	squeeze.tween_property(bottle, "scale", Vector2(1.12, 0.84), 0.1)
+	squeeze.tween_property(bottle, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_ELASTIC)
+	# ...and blobs of lotion drop onto her fur.
+	var nozzle := bottle.position + Vector2(BOTTLE_SIZE.x * 0.5, 10.0)
+	for i in range(3):
+		var blob := Label.new()
+		blob.text = "🤍"
+		blob.add_theme_font_size_override("font_size", 52)
+		blob.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		blob.z_index = 6
+		blob.position = nozzle
+		blob.scale = Vector2(0.4, 0.4)
+		add_child(blob)
+		cream_blobs.append(blob)
+		var target := pet.position + Vector2(pet.size.x * randf_range(0.3, 0.7), pet.size.y * randf_range(0.3, 0.7)) - Vector2(26, 26)
+		var drop := blob.create_tween().set_parallel(true)
+		drop.tween_property(blob, "position", target, 0.45).set_delay(0.12 * i).set_trans(Tween.TRANS_QUAD)
+		drop.tween_property(blob, "scale", Vector2.ONE, 0.45).set_delay(0.12 * i)
+	Feedback.pop(self, "🧴 squirt!", bottle.global_position + Vector2(0, -30))
+
+func _clear_cream() -> void:
+	for blob in cream_blobs:
+		if is_instance_valid(blob):
+			blob.queue_free()
+	cream_blobs.clear()
 
 func _rub(event: InputEvent) -> void:
 	if not (event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_LEFT):
@@ -247,13 +295,29 @@ func _rub(event: InputEvent) -> void:
 	var step: float = event.relative.length()
 	rub_distance += step
 	rub_since_dab += step
+	cream_left = maxf(0.0, cream_left - step / SQUIRT_RUB_DISTANCE)
+	# The lotion on her fur fades as it is rubbed in.
+	for blob in cream_blobs:
+		if is_instance_valid(blob):
+			blob.modulate.a = clampf(cream_left * 1.5, 0.0, 1.0)
 	if rub_since_dab >= 45.0:
 		rub_since_dab = 0.0
 		_dab(pet.global_position + get_local_mouse_position() - pet.position)
 	if rub_distance >= LOTION_DISTANCE:
 		rub_distance = 0.0
+		cream_left = 0.0
+		lotion_on = false
+		_clear_cream()
+		hint.text = HINT
 		_drift("💗", 80.0)
 		_finish("lotion", "🧴 so smooth!")
+	elif cream_left <= 0.0:
+		lotion_on = false
+		_clear_cream()
+		hint.text = "🧴 All rubbed in! Tap the lotion bottle for more!"
+		var wiggle := bottle.create_tween()
+		for angle in [-8.0, 8.0, -6.0, 6.0, 0.0]:
+			wiggle.tween_property(bottle, "rotation_degrees", angle, 0.1)
 
 # A little blob of cream that fades away.
 func _dab(at: Vector2) -> void:
