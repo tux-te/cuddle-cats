@@ -1,6 +1,8 @@
 extends Control
 
-# A visit to the vet. Weigh the pet, measure her, listen to her heartbeat,
+# A visit to the vet. It isn't a room you wander into: the game offers an
+# appointment now and then (see main.gd). room_groomer.gd reuses all of this.
+# Weigh the pet, measure her, listen to her heartbeat,
 # give her a brave little shot and check her teeth. Finish all five for a
 # check-up certificate, a sticker and a bonus. Nothing here can go wrong or
 # hurt: the shot is a tiny pinch and a bandage, and she's always "so brave".
@@ -40,6 +42,44 @@ var weight_kg := 0.0
 var height_cm := 0
 var bpm := 0
 
+# --- Hooks the groomer overrides -------------------------------------------
+func _steps() -> Dictionary:
+	return STEPS
+
+func _title() -> String:
+	return "🏥 Vet Check-up"
+
+func _intro_hint() -> String:
+	return "Tap each tool to give %s a check-up" % PetalState.pet_name
+
+func _progress_text() -> String:
+	return "Check-up %d / %d" % [done.size(), _steps().size()]
+
+func _background_path() -> String:
+	return PetalState.room_bg("vet", BACKGROUNDS.get(PetalState.pet_species(), ""))
+
+func _step_reward() -> void:
+	_step_reward()
+
+func _complete_reward() -> void:
+	PetalState.vet_checkup_complete()
+
+func _certificate_lines() -> Array:
+	return [
+		["🏅 Check-up Certificate 🏅", 34],
+		["%s is healthy and brave!" % PetalState.pet_name, 26],
+		["⚖️ %.1f kg     📏 %d cm     💓 %d bpm" % [weight_kg, height_cm, bpm], 24],
+		["💉 Shot done   🦷 Teeth sparkly", 24],
+	]
+
+func _run_step(id: String) -> void:
+	match id:
+		"weigh": await _weigh()
+		"measure": await _measure()
+		"heart": await _heartbeat()
+		"shot": await _shot()
+		"teeth": await _teeth()
+
 func _ready() -> void:
 	# The same pet always weighs the same, so a visit feels like a real record.
 	var seed_value := absi(PetalState.active_pet.hash())
@@ -52,7 +92,7 @@ func _ready() -> void:
 	PetCameo.spawn(pet)
 
 func _build() -> void:
-	var bg_path := PetalState.room_bg("vet", BACKGROUNDS.get(PetalState.pet_species(), ""))
+	var bg_path := _background_path()
 	if ResourceLoader.exists(bg_path):
 		var bg := TextureRect.new()
 		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -73,7 +113,7 @@ func _build() -> void:
 		floor_strip.color = Color(0.7, 0.88, 0.9)
 		add_child(floor_strip)
 
-	var title := _label("🏥 Vet Check-up", 30, Vector2(20, 12))
+	var title := _label(_title(), 30, Vector2(20, 12))
 	title.size = Vector2(420, 48)
 	var back := Button.new()
 	back.text = "⬅ Home"
@@ -118,7 +158,7 @@ func _build() -> void:
 	readout.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	readout.z_index = 5
 
-	hint = _label("Tap each tool to give %s a check-up" % PetalState.pet_name, 22, Vector2.ZERO)
+	hint = _label(_intro_hint(), 22, Vector2.ZERO)
 	hint.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	hint.offset_left = -400.0
 	hint.offset_right = 400.0
@@ -136,11 +176,11 @@ func _build() -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 10)
 	add_child(row)
-	for id in STEPS:
+	for id in _steps():
 		var b := Button.new()
 		b.custom_minimum_size = Vector2(170, 80)
 		b.add_theme_font_size_override("font_size", 20)
-		b.text = STEPS[id]
+		b.text = _steps()[id]
 		b.pressed.connect(_on_step.bind(id))
 		row.add_child(b)
 		buttons[id] = b
@@ -159,20 +199,15 @@ func _label(text: String, size: int, at: Vector2) -> Label:
 	return l
 
 func _refresh_progress() -> void:
-	progress.text = "Check-up %d / %d" % [done.size(), STEPS.size()]
+	progress.text = _progress_text()
 	for id in buttons:
-		buttons[id].text = ("✅ " if done.has(id) else "") + STEPS[id]
+		buttons[id].text = ("✅ " if done.has(id) else "") + _steps()[id]
 
 func _on_step(id: String) -> void:
 	if busy:
 		return
 	busy = true
-	match id:
-		"weigh": await _weigh()
-		"measure": await _measure()
-		"heart": await _heartbeat()
-		"shot": await _shot()
-		"teeth": await _teeth()
+	await _run_step(id)
 	if not is_instance_valid(self):
 		return
 	busy = false
@@ -196,7 +231,7 @@ func _finish_step(id: String) -> void:
 	done[id] = true
 	_refresh_progress()
 	PetalState.vet_step()
-	if done.size() == STEPS.size():
+	if done.size() == _steps().size():
 		await _wait(0.8)
 		if is_instance_valid(self):
 			_certificate()
@@ -309,8 +344,7 @@ func _teeth() -> void:
 	await _finish_step("teeth")
 
 func _certificate() -> void:
-	PetalState.vet_checkup_complete()
-	var name_text := PetalState.pet_name
+	_complete_reward()
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0.1, 0.25, 0.3, 0.6)
@@ -332,12 +366,7 @@ func _certificate() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
 	panel.add_child(box)
-	var lines := [
-		["🏅 Check-up Certificate 🏅", 34],
-		["%s is healthy and brave!" % name_text, 26],
-		["⚖️ %.1f kg     📏 %d cm     💓 %d bpm" % [weight_kg, height_cm, bpm], 24],
-		["💉 Shot done   🦷 Teeth sparkly", 24],
-	]
+	var lines := _certificate_lines()
 	for line in lines:
 		var l := Label.new()
 		l.text = line[0]
@@ -350,10 +379,7 @@ func _certificate() -> void:
 	ok.custom_minimum_size = Vector2(200, 60)
 	ok.add_theme_font_size_override("font_size", 24)
 	ok.pressed.connect(func() -> void:
-		dim.queue_free()
-		center.queue_free()
-		done.clear()
-		_refresh_progress()
-		hint.text = "Tap each tool for another check-up")
+		# The appointment is over: head back home.
+		PetalState.navigate_to_room.emit("living"))
 	box.add_child(ok)
 	Confetti.burst(self, get_viewport_rect().size / 2.0, 40)

@@ -1135,6 +1135,8 @@ const STICKERS := {
 	"spa": {"emoji": "💆", "label": "Spa Day"},
 	"critters": {"emoji": "🦋", "label": "Bug Buddy"},
 	"poolparty": {"emoji": "🛟", "label": "Pool Party"},
+	"fashion": {"emoji": "💃", "label": "Fashion Star"},
+	"groomed": {"emoji": "✂️", "label": "Groomed & Gorgeous"},
 	"vet": {"emoji": "🩺", "label": "Brave at the Vet"},
 	"week": {"emoji": "📅", "label": "Whole Week"},
 	"cathouse": {"emoji": "🏡", "label": "Dream House"},
@@ -1666,6 +1668,14 @@ func pool_party() -> void:
 	award_sticker("poolparty")
 	add_coins(4)
 
+# Dress-Up fashion show (room_dressup.gd): the more she's wearing, the more
+# the judges love it.
+func fashion_show(worn: int) -> void:
+	happiness = minf(MAX_STAT, happiness + 12.0)
+	stats_changed.emit()
+	award_sticker("fashion")
+	add_coins(mini(worn, 3) + 2)
+
 func obstacle_course() -> void:
 	happiness = minf(MAX_STAT, happiness + 25.0)
 	energy = maxf(0.0, energy - 15.0)
@@ -1762,6 +1772,19 @@ func vet_checkup_complete() -> void:
 	energy = minf(MAX_STAT, energy + 5.0)
 	stats_changed.emit()
 	award_sticker("vet")
+	add_coins(8)
+
+# Grooming appointments (room_groomer.gd).
+func groomer_step() -> void:
+	cleanliness = minf(MAX_STAT, cleanliness + 8.0)
+	stats_changed.emit()
+	add_coins(1)
+
+func groomer_complete() -> void:
+	cleanliness = MAX_STAT
+	happiness = minf(MAX_STAT, happiness + 15.0)
+	stats_changed.emit()
+	award_sticker("groomed")
 	add_coins(8)
 
 # The Cat House (room_cathouse.gd). Every pet secretly wants one choice in each

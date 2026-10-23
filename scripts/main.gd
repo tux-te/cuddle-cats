@@ -18,6 +18,7 @@ const ROOMS := {
 	"fishing": preload("res://scenes/rooms/fishing_pond.tscn"),
 	"spa": preload("res://scenes/rooms/spa.tscn"),
 	"vet": preload("res://scenes/rooms/vet.tscn"),
+	"groomer": preload("res://scenes/rooms/groomer.tscn"),
 	"swimpool": preload("res://scenes/rooms/swim_pool.tscn"),
 	"photo": preload("res://scenes/rooms/photo_booth.tscn"),
 	"photobook": preload("res://scenes/rooms/photo_book.tscn"),
@@ -87,7 +88,6 @@ func _ready() -> void:
 	%GroomingButton.pressed.connect(_show_room.bind("grooming"))
 	%ObstacleButton.pressed.connect(_show_room.bind("obstacle"))
 	%GardenButton.pressed.connect(_show_room.bind("garden"))
-	%VetButton.pressed.connect(_show_room.bind("vet"))
 	%PhotoButton.pressed.connect(_show_room.bind("photo"))
 	%PartyButton.pressed.connect(_show_room.bind("party"))
 	%WeekButton.pressed.connect(_show_room.bind("week"))
@@ -105,6 +105,7 @@ func _ready() -> void:
 	%ClosePetPickerButton.pressed.connect(_close_pet_picker)
 
 	_enter_bedroom()
+	_start_appointments()
 
 	var idle_timer := Timer.new()
 	idle_timer.wait_time = 1.0
@@ -218,7 +219,7 @@ func _add_header_button(label: String, action: Callable) -> void:
 const SURPRISE_ROOMS := {
 	"living": "🛋️ Living Room", "dressup": "👑 Dress-Up", "grooming": "🧴 Grooming",
 	"bath": "🛁 Bath", "obstacle": "🏃 Course", "garden": "🌷 Garden",
-	"fishing": "🎣 Fishing Pond", "spa": "💆 Spa", "vet": "🩺 Vet", "swimpool": "🏊 Pool",
+	"fishing": "🎣 Fishing Pond", "spa": "💆 Spa", "swimpool": "🏊 Pool",
 	"photo": "📸 Photo Booth", "party": "🎉 Party", "cathouse": "🏠 Cat House",
 }
 # Shuffled like a deck of cards so every room turns up before any repeats.
@@ -290,6 +291,99 @@ func _on_idle_tick() -> void:
 		return
 	_bounce_pet()
 	Feedback.pop(self, PetalState.idle_reactions().pick_random(), room_petal.global_position + Vector2(60, 0))
+
+# --- Appointments -----------------------------------------------------------
+# The vet and the groomer aren't rooms in the menu: every few minutes the
+# pet is due an appointment and a banner offers to go. "Later" just asks
+# again soon, so nothing is ever missed or counted against anyone.
+const APPOINTMENT_FIRST := 100.0
+const APPOINTMENT_MIN := 240.0
+const APPOINTMENT_MAX := 420.0
+const APPOINTMENT_LATER := 120.0
+const APPOINTMENTS := {
+	"vet": {"emoji": "🩺", "text": "%s has a vet check-up!", "button": "Go to the vet"},
+	"groomer": {"emoji": "✂️", "text": "%s has a grooming appointment!", "button": "Go to the groomer"},
+}
+const APPOINTMENT_ROOMS := ["vet", "groomer"]
+var appointment_timer: Timer
+var appointment_banner: Control = null
+var last_appointment := ""
+
+func _start_appointments() -> void:
+	appointment_timer = Timer.new()
+	appointment_timer.one_shot = true
+	appointment_timer.timeout.connect(_offer_appointment)
+	add_child(appointment_timer)
+	appointment_timer.start(APPOINTMENT_FIRST)
+
+# Offers the next appointment, alternating at random. Held back while
+# something else is going on, and retried a little later.
+func _offer_appointment(kind: String = "") -> void:
+	if is_instance_valid(appointment_banner):
+		return
+	if is_playing or current_room_id in APPOINTMENT_ROOMS or pet_picker.visible:
+		appointment_timer.start(30.0)
+		return
+	if kind == "":
+		var options := APPOINTMENT_ROOMS.filter(func(k): return k != last_appointment)
+		kind = options.pick_random()
+	last_appointment = kind
+	var info: Dictionary = APPOINTMENTS[kind]
+
+	var banner := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(1, 0.96, 0.98)
+	style.border_color = Color(1.0, 0.45, 0.7)
+	style.set_border_width_all(5)
+	style.set_corner_radius_all(22)
+	style.set_content_margin_all(16)
+	banner.add_theme_stylebox_override("panel", style)
+	banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	banner.offset_top = 90.0
+	banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	banner.z_index = 50
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	banner.add_child(box)
+	var label := Label.new()
+	label.text = "%s  %s" % [info["emoji"], info["text"] % PetalState.pet_name]
+	label.add_theme_font_size_override("font_size", 28)
+	label.add_theme_color_override("font_color", Color(0.3, 0.15, 0.35))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(label)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 12)
+	box.add_child(row)
+	var go := Button.new()
+	go.text = "%s  %s" % [info["emoji"], info["button"]]
+	go.custom_minimum_size = Vector2(240, 56)
+	go.add_theme_font_size_override("font_size", 22)
+	go.pressed.connect(_accept_appointment.bind(kind))
+	row.add_child(go)
+	var later := Button.new()
+	later.text = "Later"
+	later.custom_minimum_size = Vector2(120, 56)
+	later.add_theme_font_size_override("font_size", 22)
+	later.pressed.connect(_postpone_appointment)
+	row.add_child(later)
+	add_child(banner)
+	appointment_banner = banner
+	Sfx.chime(self)
+
+func _close_appointment_banner() -> void:
+	if is_instance_valid(appointment_banner):
+		appointment_banner.queue_free()
+	appointment_banner = null
+
+func _accept_appointment(kind: String) -> void:
+	_close_appointment_banner()
+	appointment_timer.start(randf_range(APPOINTMENT_MIN, APPOINTMENT_MAX))
+	_show_room(kind)
+
+func _postpone_appointment() -> void:
+	_close_appointment_banner()
+	appointment_timer.start(APPOINTMENT_LATER)
 
 func _show_room(id: String) -> void:
 	current_room_id = id
