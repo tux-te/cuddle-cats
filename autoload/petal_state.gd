@@ -641,8 +641,6 @@ func _reset_progress() -> void:
 	player_name = ""
 	nicknames = {}
 	coins = 0
-	last_visit_day = 0
-	visit_streak = 0
 	earned_stickers = {}
 	solved_cases = []
 	pet_sets = {}
@@ -736,8 +734,6 @@ func save_game() -> void:
 	cfg.set_value("game", "active_pet", active_pet)
 	cfg.set_value("game", "custom_pets", custom_pets)
 	cfg.set_value("game", "coins", coins)
-	cfg.set_value("game", "last_visit_day", last_visit_day)
-	cfg.set_value("game", "visit_streak", visit_streak)
 	cfg.set_value("game", "stickers", earned_stickers)
 	cfg.set_value("game", "schedule", schedule)
 	cfg.set_value("game", "solved_cases", solved_cases)
@@ -787,8 +783,6 @@ func _load_slot(slot: int) -> void:
 			if PETS.has(id):
 				nicknames[id] = String(saved_nicks[id])
 	coins = int(cfg.get_value("game", "coins", 0))
-	last_visit_day = int(cfg.get_value("game", "last_visit_day", 0))
-	visit_streak = int(cfg.get_value("game", "visit_streak", 0))
 	var saved_stickers = cfg.get_value("game", "stickers", {})
 	if saved_stickers is Dictionary:
 		for id in saved_stickers:
@@ -1059,7 +1053,12 @@ func do_trick(trick_id: String) -> void:
 
 const FRIENDS := {
 	"marigold": {"name": "Princess Marigold", "species": "cat", "cutout": "res://Sprites/friend_cutout.png"},
-	"blossom": {"name": "Princess Blossom", "species": "cat", "cutout": "res://Sprites/friend_blossom.png"},
+	# Her crown is painted into her picture, so the nap uses a crown-less copy
+	# plus the crown on its own (made by dev/split_blossom_crown.py); "box" is
+	# where the crown sits as fractions of her picture.
+	"blossom": {"name": "Princess Blossom", "species": "cat", "cutout": "res://Sprites/friend_blossom.png",
+		"nap_crown": {"body": "res://Sprites/friend_blossom_nocrown.png", "crown": "res://Sprites/friend_blossom_crown.png",
+			"box": Rect2(0.218, 0.013, 0.231, 0.154), "effect": "crown_tiara"}},
 	"iris": {"name": "Princess Iris", "species": "cat", "cutout": "res://Sprites/friend_iris.png"},
 	"lily": {"name": "Princess Lily", "species": "cat", "cutout": "res://Sprites/friend_lily.png"},
 	"biscuit": {"name": "Biscuit", "species": "dog", "cutout": "res://Sprites/friend_biscuit.png"},
@@ -1535,26 +1534,6 @@ func add_coins(amount: int) -> void:
 	coins_changed.emit()
 	if coins / MILESTONE_STEP > before / MILESTONE_STEP:
 		milestone_reached.emit(coins)
-
-# Daily visit streak: the first visit each calendar day earns a few extra
-# coins, more for each day in a row (capped so it stays a gentle treat).
-# Missing a day just starts the count again at 1 - nothing is ever lost.
-const DAILY_BASE := 5
-const DAILY_STREAK_MAX := 7
-var last_visit_day := 0 # days since 1970, 0 = never
-var visit_streak := 0
-
-# Returns {"streak": n, "coins": n} the first time it's called each day, else {}.
-func claim_daily_reward() -> Dictionary:
-	var today := int(Time.get_unix_time_from_system() / 86400.0)
-	if today == last_visit_day:
-		return {}
-	visit_streak = visit_streak + 1 if today == last_visit_day + 1 else 1
-	last_visit_day = today
-	var reward := DAILY_BASE * mini(visit_streak, DAILY_STREAK_MAX)
-	add_coins(reward)
-	save_game()
-	return {"streak": visit_streak, "coins": reward}
 
 # Saves whenever something worth keeping changes, plus on a timer for the
 # slowly-drifting stats, and when the window closes.

@@ -465,7 +465,7 @@ func _refresh() -> void:
 		for suspect in case_data["suspects"]:
 			if lab_results[case_data["id"]].has(suspect["id"]):
 				names.append(String(suspect["name"]))
-		lines.append("🖐 Fingerprints: the crime scene print is a %s. Same pattern: %s." % [FingerprintView.KINDS[_print_kinds()["crime"]], ", ".join(names)])
+		lines.append("🐾 Prints: the crime scene has a %s. Same kind of foot: %s." % [FingerprintView.FOOT_NAMES[_prints()["crime"]], ", ".join(names)])
 	notebook_label.text = "\n".join(lines)
 	var ready := found.size() == clues.size()
 	accuse_button.disabled = solved_now or not ready
@@ -533,45 +533,38 @@ func _on_next() -> void:
 	_start_case((index + 1) % CASES.size())
 
 # --- Fingerprints -----------------------------------------------------------
-# Every suspect has a print pattern. The culprit's matches the crime scene, and
-# so does exactly one innocent decoy, so a match narrows the field to two.
+# The print left at the scene is the culprit's own kind of foot, so the lab can
+# rule out suspects who walk on something else (a hoof is not a paw).
 
-func _print_kinds() -> Dictionary:
-	var kinds: Array = FingerprintView.KINDS.keys()
-	var base := absi(String(case_data["id"]).hash()) % kinds.size()
-	var by_suspect := {}
-	var others: Array = []
+const SUSPECT_FOOT := {
+	"mimi": "paw", "rusty": "paw", "snowy": "paw", "leo": "paw", "fox": "paw", "bruno": "paw", "hop": "paw",
+	"marmie": "paw", "pom": "paw", "frenchie": "paw", "fossy": "paw", "fenny": "paw",
+	"woolly": "hoof_split", "fawny": "hoof_split", "daisy": "hoof_split", "clover": "hoof_split", "hoofy": "hoof_round",
+	"pip": "bird", "henny": "bird", "tilly": "claw", "axel": "claw", "batty": "claw", "sid": "trail",
+}
+const SPECIES_FOOT := {"bird": "bird"}
+
+func _foot_of(suspect_id: String) -> String:
+	return String(SUSPECT_FOOT.get(suspect_id, "paw"))
+
+func _prints() -> Dictionary:
+	var feet := {}
 	for suspect in case_data["suspects"]:
-		if suspect["id"] == case_data["culprit"]:
-			by_suspect[suspect["id"]] = kinds[base]
-		else:
-			others.append(suspect["id"])
-	var decoy := absi((String(case_data["id"]) + "decoy").hash()) % others.size()
-	var shift := 1
-	for i in range(others.size()):
-		if i == decoy:
-			by_suspect[others[i]] = kinds[base]
-		else:
-			by_suspect[others[i]] = kinds[(base + shift) % kinds.size()]
-			shift = shift % (kinds.size() - 1) + 1
-	return {
-		"crime": kinds[base], "suspects": by_suspect,
-		"you": kinds[absi(("me" + PetalState.player_name).hash()) % kinds.size()],
-		"pet": kinds[absi(("paw" + PetalState.active_pet).hash()) % kinds.size()],
-	}
+		feet[suspect["id"]] = _foot_of(String(suspect["id"]))
+	var species := String(PetalState.PETS[PetalState.active_pet].get("species", "cat"))
+	return {"crime": feet[case_data["culprit"]], "suspects": feet, "pet": String(SPECIES_FOOT.get(species, "paw"))}
 
 func _on_lab() -> void:
-	var kinds := _print_kinds()
+	var prints := _prints()
 	var suspects: Array = []
 	for suspect in case_data["suspects"]:
-		suspects.append({"id": suspect["id"], "name": suspect["name"], "emoji": suspect["emoji"], "kind": kinds["suspects"][suspect["id"]]})
+		suspects.append({"id": suspect["id"], "name": suspect["name"], "emoji": suspect["emoji"], "foot": prints["suspects"][suspect["id"]]})
 	var lab := FingerprintLab.open(self, {
-		"crime_kind": kinds["crime"], "suspects": suspects,
-		"pet_kind": kinds["pet"], "pet_name": PetalState.pet_name,
+		"crime_foot": prints["crime"], "suspects": suspects, "pet_foot": prints["pet"], "pet_name": PetalState.pet_name,
 	})
 	var case_id: String = case_data["id"]
 	lab.closed.connect(func(matching: Array) -> void:
 		if not matching.is_empty():
 			lab_results[case_id] = matching
-			_say("🖐 The crime scene print is the same pattern as %d suspects. Now check the clues!" % matching.size())
+			_say("🐾 The print at the scene is a %s. %d suspects have that kind of foot. Now check the clues!" % [FingerprintView.FOOT_NAMES[prints["crime"]], matching.size()])
 			_refresh())

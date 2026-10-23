@@ -2,10 +2,10 @@ class_name FingerprintLab
 extends Control
 
 # The Mystery room's fingerprint lab. The kid presses their finger, then the
-# pet presses a paw, and both prints are compared with the one left at the
-# crime scene - it never matches either of them. Then every suspect's print is
-# compared too; a match only means "same pattern", so it narrows the suspects
-# without naming the culprit (see room_mystery.gd for who shares a pattern).
+# pet leaves its footprint (a paw, a hoof, a bird foot...), and both are compared
+# with the print left at the crime scene, which is the culprit's own kind of foot.
+# Then every suspect's footprint is compared too: a hoof rules out the animals
+# with paws, and so on, so it narrows the suspects (see room_mystery.gd).
 
 signal closed(matching: Array)
 
@@ -13,9 +13,9 @@ const Sfx = preload("res://scripts/sfx.gd")
 const INK := Color(0.23, 0.16, 0.16, 1)
 const PURPLE := Color(0.25, 0.2, 0.55, 1)
 
-var crime_kind := ""
+var crime_foot := ""
 var suspects: Array = []   # [{"id", "name", "emoji", "kind"}]
-var pet_kind := ""
+var pet_foot := ""
 var pet_label := ""
 
 var your_view: FingerprintView
@@ -23,23 +23,23 @@ var pet_view: FingerprintView
 var your_caption: Label
 var pet_caption: Label
 var paw_button: Button
+var scan_button: Button
 var results: VBoxContainer
 var matching: Array = []
-const HOLD_SECONDS := 0.8
-const INK_SPEED := 190.0   # pixels per second the ink spreads while held
+const HOLD_SECONDS := 1.2
 var pressing := false
 var pad_done := false
 var press_time := 0.0
 var your_kind := ""
 var your_seed := 0
 
-# `data`: crime_kind, suspects, your_kind, pet_kind, pet_name.
+# `data`: crime_foot, suspects ({id, name, emoji, foot}), pet_foot, pet_name.
 static func open(parent: Node, data: Dictionary) -> FingerprintLab:
 	var lab := FingerprintLab.new()
 	lab.set_anchors_preset(Control.PRESET_FULL_RECT)
-	lab.crime_kind = String(data["crime_kind"])
+	lab.crime_foot = String(data["crime_foot"])
 	lab.suspects = data["suspects"]
-	lab.pet_kind = String(data["pet_kind"])
+	lab.pet_foot = String(data["pet_foot"])
 	lab.pet_label = String(data["pet_name"])
 	parent.add_child(lab)
 	lab._build()
@@ -73,21 +73,26 @@ func _build() -> void:
 	scroll.add_child(box)
 
 	box.add_child(_label("🖐 Fingerprint lab", 30, PURPLE))
-	box.add_child(_label("A print was left at the crime scene. Hold your finger on your card until the ink spreads, then it's your pet's turn!", 18, INK))
+	box.add_child(_label("A print was left at the crime scene. Press your finger on your card and the scanner makes your print, then it's your pet's turn!", 18, INK))
 
 	var prints := HBoxContainer.new()
 	prints.alignment = BoxContainer.ALIGNMENT_CENTER
 	prints.add_theme_constant_override("separation", 24)
 	box.add_child(prints)
 	var crime_view := FingerprintView.new()
-	crime_view.kind = crime_kind
+	crime_view.foot = crime_foot
+	crime_view.seed_value = absi(crime_foot.hash())
 	crime_view.ink = Color(0.6, 0.15, 0.25)
-	prints.add_child(_slot("🔍 Crime scene", crime_view, FingerprintView.KINDS[crime_kind]))
+	prints.add_child(_slot("🔍 Crime scene", crime_view, FingerprintView.FOOT_NAMES[crime_foot]))
 	your_view = FingerprintView.new()
 	your_view.mouse_filter = Control.MOUSE_FILTER_STOP
 	your_view.gui_input.connect(_on_pad_input)
-	your_caption = _label("👆 Hold your finger on the card", 18, INK)
-	prints.add_child(_slot_with(PetalState.player_name if PetalState.player_name != "" else "You", your_view, your_caption))
+	your_caption = _label("👆 Press your finger on the card", 18, INK)
+	var your_slot := _slot_with(PetalState.player_name if PetalState.player_name != "" else "You", your_view, your_caption)
+	# The whole slot (name, card and words) takes the press, not just the card.
+	your_slot.mouse_filter = Control.MOUSE_FILTER_STOP
+	your_slot.gui_input.connect(_on_pad_input)
+	prints.add_child(your_slot)
 	pet_view = FingerprintView.new()
 	pet_caption = _label("?", 18, INK)
 	prints.add_child(_slot_with(pet_label, pet_view, pet_caption))
@@ -96,6 +101,8 @@ func _build() -> void:
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override("separation", 14)
 	box.add_child(buttons)
+	scan_button = _button("👆 Scan my finger", _start_scan)
+	buttons.add_child(scan_button)
 	paw_button = _button("🐾 %s's turn" % pet_label, _on_paw)
 	paw_button.disabled = true
 	buttons.add_child(paw_button)
@@ -146,18 +153,21 @@ func _stamp(view: FingerprintView, kind: String) -> void:
 	tween.tween_property(view, "modulate:a", 1.0, 0.4)
 	tween.tween_property(view, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_BACK)
 
-# Holding a finger on the card: the ink spreads out from where it touches. The
-# print is made from that real press the first time (where and when you touched)
-# and then kept, so it is always your print.
+# Pressing the card (or the Scan button) starts the scanner: it sweeps down the
+# card and the print appears behind it. The print is made from that real press
+# the first time (where and when you touched) and then kept, so it is always
+# your print.
 func _on_pad_input(event: InputEvent) -> void:
+	var is_down: bool = (event is InputEventMouseButton and event.pressed) or (event is InputEventScreenTouch and event.pressed)
+	if is_down:
+		_start_scan(event.position)
+
+func _start_scan(at := Vector2.ZERO) -> void:
 	if pad_done or pressing:
 		return
-	var is_down: bool = (event is InputEventMouseButton and event.pressed) or (event is InputEventScreenTouch and event.pressed)
-	if not is_down:
-		return
-	var at: Vector2 = event.position
 	pressing = true
 	press_time = 0.0
+	scan_button.disabled = true
 	if PetalState.finger_print.is_empty():
 		your_seed = hash([at, Time.get_ticks_usec()])
 		your_kind = FingerprintView.KINDS.keys()[absi(your_seed) % FingerprintView.KINDS.size()]
@@ -165,35 +175,29 @@ func _on_pad_input(event: InputEvent) -> void:
 		your_seed = int(PetalState.finger_print["seed"])
 		your_kind = String(PetalState.finger_print["kind"])
 	your_view.seed_value = your_seed
-	your_view.reveal_center = at
-	your_view.reveal_radius = 0.0
 	your_view.kind = your_kind
-	your_caption.text = "Scanning… keep holding 🔍"
+	your_view.reveal = 0.0
+	your_caption.text = "Scanning… 🔍"
+	Sfx.pop(self)
 	set_process(true)
 
+# A press (a quick click or a long hold) starts the scan, and it finishes by itself.
 func _process(delta: float) -> void:
 	if not pressing:
 		set_process(false)
 		return
 	press_time += delta
-	your_view.reveal_radius = press_time * INK_SPEED
-	your_view.scan_position = absf(fmod(press_time * 1.4, 2.0) - 1.0)
+	var fraction := minf(press_time / HOLD_SECONDS, 1.0)
+	your_view.reveal = fraction
+	your_view.scan_position = fraction
+	if press_time >= HOLD_SECONDS:
+		_finish_scan()
 
-func _input(event: InputEvent) -> void:
-	var is_up: bool = (event is InputEventMouseButton and not event.pressed) or (event is InputEventScreenTouch and not event.pressed)
-	if pressing and is_up:
-		_lift_finger()
-
-func _lift_finger() -> void:
+func _finish_scan() -> void:
 	pressing = false
 	your_view.scan_position = -1.0
-	if press_time < HOLD_SECONDS:
-		your_view.kind = ""
-		your_view.reveal_radius = -1.0
-		your_caption.text = "Hold a little longer! 👆"
-		return
 	pad_done = true
-	your_view.reveal_radius = -1.0
+	your_view.reveal = -1.0
 	your_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if PetalState.finger_print.is_empty():
 		PetalState.finger_print = {"kind": your_kind, "seed": your_seed}
@@ -213,17 +217,18 @@ func _stamp_pop(view: FingerprintView) -> void:
 
 func _on_paw() -> void:
 	paw_button.disabled = true
+	pet_view.foot = pet_foot
 	pet_view.seed_value = absi(("paw" + PetalState.active_pet).hash())
-	_stamp(pet_view, pet_kind)
-	pet_caption.text = FingerprintView.KINDS[pet_kind]
+	_stamp(pet_view, pet_foot)
+	pet_caption.text = FingerprintView.FOOT_NAMES[pet_foot]
 	_compare()
 
 func _compare() -> void:
 	for child in results.get_children():
 		child.queue_free()
-	results.add_child(_label(_verdict("You", your_kind), 18, INK))
-	results.add_child(_label(_verdict(pet_label, pet_kind), 18, INK))
-	results.add_child(_label("🕵️ Suspects' prints - same pattern as the crime scene?", 20, PURPLE))
+	results.add_child(_label("You: a %s fingerprint. The crime scene has a %s - so it wasn't you! ✅" % [FingerprintView.KINDS[your_kind], FingerprintView.FOOT_NAMES[crime_foot]], 18, INK))
+	results.add_child(_label(_pet_verdict(), 18, INK))
+	results.add_child(_label("🕵️ Suspects' footprints - the same kind of foot as the crime scene?", 20, PURPLE))
 	var grid := HFlowContainer.new()
 	grid.alignment = FlowContainer.ALIGNMENT_CENTER
 	grid.add_theme_constant_override("h_separation", 12)
@@ -231,24 +236,26 @@ func _compare() -> void:
 	results.add_child(grid)
 	matching = []
 	for suspect in suspects:
-		var same: bool = suspect["kind"] == crime_kind
+		var same: bool = suspect["foot"] == crime_foot
 		if same:
 			matching.append(suspect["id"])
 		var view := FingerprintView.new()
 		view.custom_minimum_size = Vector2(96, 108)
-		view.kind = String(suspect["kind"])
+		view.foot = String(suspect["foot"])
+		view.seed_value = absi(String(suspect["id"]).hash())
 		view.ink = Color(0.6, 0.15, 0.25) if same else Color(0.2, 0.17, 0.4)
 		var cell := VBoxContainer.new()
 		cell.add_child(_label("%s %s" % [suspect["emoji"], suspect["name"]], 16, INK))
 		cell.add_child(view)
-		cell.add_child(_label("✅ Same pattern" if same else "❌ Different", 16, Color(0.6, 0.15, 0.25) if same else INK))
+		cell.add_child(_label("✅ Same kind of foot" if same else "❌ Different foot", 16, Color(0.6, 0.15, 0.25) if same else INK))
 		grid.add_child(cell)
-	results.add_child(_label("Careful: lots of animals share a pattern, so a match only narrows it down. Use the clues too!", 16, PURPLE))
+	results.add_child(_label("Careful: lots of animals have the same kind of foot, so this only narrows it down. Use the clues too!", 16, PURPLE))
 
-func _verdict(who: String, kind: String) -> String:
-	if kind == crime_kind:
-		return "%s: a %s too - but %s was right here, so it's only a lookalike pattern!" % [who, FingerprintView.KINDS[kind], who]
-	return "%s: a %s. The crime scene is a %s - different, so it wasn't %s! ✅" % [who, FingerprintView.KINDS[kind], FingerprintView.KINDS[crime_kind], who]
+func _pet_verdict() -> String:
+	var foot_name: String = FingerprintView.FOOT_NAMES[pet_foot]
+	if pet_foot == crime_foot:
+		return "%s: a %s too - but %s was right here, so it's only a lookalike! Lots of animals have the same kind of foot." % [pet_label, foot_name, pet_label]
+	return "%s: a %s. The crime scene has a %s - different, so it wasn't %s! ✅" % [pet_label, foot_name, FingerprintView.FOOT_NAMES[crime_foot], pet_label]
 
 func _close() -> void:
 	closed.emit(matching)

@@ -2,10 +2,17 @@ extends Control
 
 const Feedback = preload("res://scripts/room_feedback.gd")
 const PetCameo = preload("res://scripts/pet_cameo.gd")
+const CrownFx = preload("res://scripts/crown_fx.gd")
+const Sfx = preload("res://scripts/sfx.gd")
 
 @onready var background: TextureRect = %Background
 
 var perch_busy := false
+var fallen_crown: TextureRect = null
+var crown_head := Vector2.ZERO
+var crown_id := ""
+# Called once a fallen crown is back on (puts the sleeper's picture right again).
+var crown_restore := Callable()
 
 func _ready() -> void:
 	_refresh_background()
@@ -244,8 +251,140 @@ func _on_cuddle() -> void:
 
 func _on_nap() -> void:
 	PetalState.nap()
-	PetCameo.sleep(%Petal)
 	Feedback.pop(self, "💤 zzz", %NapButton.global_position)
+	_friend_nap()
+	await PetCameo.sleep(%Petal)
+	_drop_crown()
+
+# The id of a crown she is wearing right now ("" if none).
+func _worn_crown() -> String:
+	for id in PetalState.accessories:
+		if String(id).begins_with("crown_") and PetalState.accessories[id]:
+			return String(id)
+	return ""
+
+# While she sleeps a worn crown slips off her head and tumbles to the floor;
+# tapping it puts it back on.
+func _drop_crown() -> void:
+	if is_instance_valid(fallen_crown):
+		return
+	var id := _worn_crown()
+	var worn := %Petal.get_node_or_null("Accessory_%s" % id) as TextureRect
+	if id == "" or worn == null or not worn.visible:
+		return
+	crown_head = worn.global_position + worn.size / 2.0
+	var crown := TextureRect.new()
+	crown.texture = worn.texture
+	crown.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	crown.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	crown.size = worn.size
+	crown.pivot_offset = worn.size / 2.0
+	crown.mouse_filter = Control.MOUSE_FILTER_STOP
+	crown.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	add_child(crown)
+	crown.global_position = worn.global_position
+	worn.visible = false
+	fallen_crown = crown
+	crown_id = id
+	crown_restore = func() -> void:
+		var back_on := %Petal.get_node_or_null("Accessory_%s" % id) as TextureRect
+		if back_on:
+			back_on.visible = PetalState.accessories.get(id, false)
+	var floor_spot: Vector2 = %Petal.global_position + Vector2(%Petal.size.x * 0.82, %Petal.size.y * 0.8) - worn.size / 2.0
+	var fall := crown.create_tween()
+	fall.set_parallel(true)
+	fall.tween_property(crown, "global_position:x", floor_spot.x, 0.7)
+	fall.tween_property(crown, "rotation_degrees", 70.0, 0.7)
+	fall.tween_property(crown, "global_position:y", floor_spot.y, 0.7).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	await fall.finished
+	if not is_instance_valid(crown):
+		return
+	Feedback.pop(self, "😮 Oh no! Her crown fell off! Tap it to put it back on 👑", floor_spot + Vector2(-120, -60))
+	var wiggle := crown.create_tween().set_loops()
+	wiggle.tween_property(crown, "scale", Vector2(1.15, 1.15), 0.5).set_trans(Tween.TRANS_SINE)
+	wiggle.tween_property(crown, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_SINE)
+	crown.gui_input.connect(_on_fallen_crown_input)
+
+func _on_fallen_crown_input(event: InputEvent) -> void:
+	var tapped: bool = (event is InputEventMouseButton and event.pressed) or (event is InputEventScreenTouch and event.pressed)
+	if not tapped or not is_instance_valid(fallen_crown):
+		return
+	var crown := fallen_crown
+	fallen_crown = null
+	crown.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var back := crown.create_tween().set_parallel(true)
+	back.tween_property(crown, "global_position", crown_head - crown.size / 2.0, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	back.tween_property(crown, "rotation_degrees", 0.0, 0.45)
+	back.tween_property(crown, "scale", Vector2.ONE, 0.2)
+	await back.finished
+	if not is_instance_valid(self):
+		return
+	crown.queue_free()
+	if crown_restore.is_valid():
+		crown_restore.call()
+	Sfx.chime(self)
+	CrownFx.play(self, crown_head, crown_id)
+	Feedback.pop(self, "👑 Back on! Sweet dreams 💤", crown_head + Vector2(-60, -50))
 
 func _on_photo_book() -> void:
 	PetalState.navigate_to_room.emit("photobook")
+
+# A visiting friend with a painted-on crown (see FRIENDS "nap_crown") curls up
+# when you nap, and her crown slips off just like the pet's.
+func _friend_nap() -> void:
+	var id: String = PetalState.visiting_friend
+	if id == "" or is_instance_valid(fallen_crown) or not PetalState.FRIENDS[id].has("nap_crown"):
+		return
+	var info: Dictionary = PetalState.FRIENDS[id]["nap_crown"]
+	var friend: TextureRect = %Friend
+	var crown_tex: Texture2D = load(String(info["crown"]))
+	var body_tex: Texture2D = load(String(info["body"]))
+	# Where the crown sits on the screen (the picture is centred and kept in proportion).
+	var shown := body_tex.get_size() * minf(friend.size.x / body_tex.get_size().x, friend.size.y / body_tex.get_size().y)
+	var origin := friend.global_position + (friend.size - shown) / 2.0
+	var box: Rect2 = info["box"]
+	var rect := Rect2(origin + box.position * shown, box.size * shown)
+
+	friend.texture = body_tex
+	friend.pivot_offset = friend.size / 2.0
+	var curl := friend.create_tween().set_parallel(true)
+	curl.tween_property(friend, "rotation_degrees", -9.0, 0.6).set_trans(Tween.TRANS_SINE)
+	curl.tween_property(friend, "scale", Vector2(1.04, 0.9), 0.6).set_trans(Tween.TRANS_SINE)
+	Feedback.pop(self, "💤 zzz", friend.global_position + Vector2(40, -10))
+
+	var crown := TextureRect.new()
+	crown.texture = crown_tex
+	crown.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	crown.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	crown.size = rect.size
+	crown.pivot_offset = rect.size / 2.0
+	crown.mouse_filter = Control.MOUSE_FILTER_STOP
+	crown.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	add_child(crown)
+	crown.global_position = rect.position
+	fallen_crown = crown
+	crown_id = String(info["effect"])
+	crown_head = rect.get_center()
+	crown_restore = func() -> void:
+		if is_instance_valid(friend):
+			friend.texture = load(PetalState.FRIENDS[id]["cutout"])
+			var up := friend.create_tween().set_parallel(true)
+			up.tween_property(friend, "rotation_degrees", 0.0, 0.3)
+			up.tween_property(friend, "scale", Vector2.ONE, 0.3)
+
+	await get_tree().create_timer(0.9).timeout
+	if not is_instance_valid(crown):
+		return
+	var floor_spot := Vector2(friend.global_position.x - rect.size.x * 0.9, friend.global_position.y + friend.size.y - rect.size.y * 1.1)
+	var fall := crown.create_tween().set_parallel(true)
+	fall.tween_property(crown, "global_position:x", floor_spot.x, 0.7)
+	fall.tween_property(crown, "rotation_degrees", -60.0, 0.7)
+	fall.tween_property(crown, "global_position:y", floor_spot.y, 0.7).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	await fall.finished
+	if not is_instance_valid(crown):
+		return
+	Feedback.pop(self, "😮 Oh no! %s's crown fell off! Tap it to put it back on 👑" % PetalState.FRIENDS[id]["name"], floor_spot + Vector2(-120, -60))
+	var wiggle := crown.create_tween().set_loops()
+	wiggle.tween_property(crown, "scale", Vector2(1.15, 1.15), 0.5).set_trans(Tween.TRANS_SINE)
+	wiggle.tween_property(crown, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_SINE)
+	crown.gui_input.connect(_on_fallen_crown_input)

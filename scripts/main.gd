@@ -92,6 +92,8 @@ func _ready() -> void:
 	%StickersButton.pressed.connect(_show_room.bind("stickers"))
 
 	pets_button.pressed.connect(_open_pet_picker)
+	_add_surprise_button()
+	_build_drawers()
 	_add_header_button("❓ Help", func() -> void: HowToPlay.open(self))
 	_add_header_button("📤 Send to maker", func() -> void: VisitorCheck.open_send(self))
 	_add_header_button("🏠 My Home", _show_room.bind("myhome"))
@@ -101,13 +103,103 @@ func _ready() -> void:
 	%ClosePetPickerButton.pressed.connect(_close_pet_picker)
 
 	_enter_bedroom()
-	_show_daily_reward.call_deferred()
 
 	var idle_timer := Timer.new()
 	idle_timer.wait_time = 1.0
 	idle_timer.autostart = true
 	idle_timer.timeout.connect(_on_idle_tick)
 	add_child(idle_timer)
+
+# The extra header buttons and the room buttons live in two slide-out drawers
+# so the screen stays calm; a small tab opens each one, and picking something
+# (or pressing the tab again) slides it shut.
+const TOP_DRAWER_HEIGHT := 56.0
+const BOTTOM_DRAWER_HEIGHT := 60.0
+var top_menu: HBoxContainer
+var top_drawer: Control
+var bottom_drawer: Control
+var top_tab: Button
+var bottom_tab: Button
+
+func _build_drawers() -> void:
+	var root: VBoxContainer = $Root
+	top_menu = HBoxContainer.new()
+	top_menu.alignment = BoxContainer.ALIGNMENT_CENTER
+	top_menu.add_theme_constant_override("separation", 8)
+	top_drawer = _make_drawer(top_menu, TOP_DRAWER_HEIGHT)
+	root.add_child(top_drawer)
+	root.move_child(top_drawer, $Root/Header.get_index() + 1)
+
+	top_tab = _make_tab("☰ Menu ▾")
+	top_tab.pressed.connect(_toggle_drawer.bind(top_drawer, top_tab, "☰ Menu"))
+	$Root/Header.add_child(top_tab)
+
+	var nav: Control = $Root/NavBar
+	var nav_index := nav.get_index()
+	root.remove_child(nav)
+	bottom_drawer = _make_drawer(nav, BOTTOM_DRAWER_HEIGHT)
+	root.add_child(bottom_drawer)
+	root.move_child(bottom_drawer, nav_index)
+	# Moving the bar cleared its scene owner, which the %UniqueName lookups
+	# (%BedroomButton etc.) depend on.
+	nav.owner = self
+	for child in nav.get_children():
+		child.owner = self
+	for child in nav.get_children():
+		if child is Button:
+			child.pressed.connect(_close_drawers)
+
+	var tab_row := HBoxContainer.new()
+	tab_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	bottom_tab = _make_tab("🚪 Rooms ▴")
+	bottom_tab.pressed.connect(_toggle_drawer.bind(bottom_drawer, bottom_tab, "🚪 Rooms"))
+	tab_row.add_child(bottom_tab)
+	root.add_child(tab_row)
+	root.move_child(tab_row, bottom_drawer.get_index())
+
+func _make_tab(text: String) -> Button:
+	var tab := Button.new()
+	tab.text = text
+	tab.custom_minimum_size = Vector2(150, 36)
+	tab.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	tab.add_theme_font_size_override("font_size", 16)
+	return tab
+
+# A clipped box that starts closed; `bar` sits inside at its full height.
+func _make_drawer(bar: Control, height: float) -> Control:
+	var drawer := Control.new()
+	drawer.clip_contents = true
+	drawer.set_meta("height", height)
+	drawer.add_child(bar)
+	bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	bar.offset_left = 0.0
+	bar.offset_right = 0.0
+	bar.offset_top = 0.0
+	bar.offset_bottom = height
+	bar.modulate.a = 0.0
+	return drawer
+
+func _toggle_drawer(drawer: Control, tab: Button, name_text: String) -> void:
+	var open: bool = not drawer.get_meta("open", false)
+	_slide_drawer(drawer, open)
+	tab.text = "%s %s" % [name_text, "▴" if (drawer == top_drawer) == open else "▾"]
+
+func _slide_drawer(drawer: Control, open: bool) -> void:
+	if drawer.has_meta("open") and drawer.get_meta("open") == open:
+		return
+	drawer.set_meta("open", open)
+	var bar: Control = drawer.get_child(0)
+	var tween := drawer.create_tween().set_parallel(true)
+	tween.tween_property(drawer, "custom_minimum_size:y", float(drawer.get_meta("height")) if open else 0.0, 0.25).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(bar, "modulate:a", 1.0 if open else 0.0, 0.2)
+
+func _close_drawers() -> void:
+	if top_drawer == null:
+		return
+	_slide_drawer(top_drawer, false)
+	_slide_drawer(bottom_drawer, false)
+	top_tab.text = "☰ Menu ▾"
+	bottom_tab.text = "🚪 Rooms ▴"
 
 func _add_header_button(label: String, action: Callable) -> void:
 	var button := Button.new()
@@ -116,7 +208,58 @@ func _add_header_button(label: String, action: Callable) -> void:
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 16)
 	button.pressed.connect(action)
+	button.pressed.connect(_close_drawers)
+	top_menu.add_child(button)
+
+# Rooms the Surprise button can pick, with the name shown in the pop-up.
+# Reading-heavy screens (mystery, week plan, My Home...) are left out.
+const SURPRISE_ROOMS := {
+	"living": "🛋️ Living Room", "dressup": "👑 Dress-Up", "grooming": "🧴 Grooming",
+	"bath": "🛁 Bath", "obstacle": "🏃 Course", "garden": "🌷 Garden",
+	"fishing": "🎣 Fishing Pond", "spa": "💆 Spa", "swimpool": "🏊 Pool",
+	"photo": "📸 Photo Booth", "party": "🎉 Party", "cathouse": "🏠 Cat House",
+}
+# Shuffled like a deck of cards so every room turns up before any repeats.
+var surprise_deck: Array = []
+
+# Big pink button that jumps to a random activity, so nobody has to decide.
+func _add_surprise_button() -> void:
+	var button := Button.new()
+	button.text = "🎲 Surprise me!"
+	button.custom_minimum_size = Vector2(210, 58)
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.add_theme_font_size_override("font_size", 24)
+	for state in ["normal", "hover", "pressed", "focus"]:
+		var box := StyleBoxFlat.new()
+		box.bg_color = Color(1.0, 0.45, 0.7) if state != "hover" else Color(1.0, 0.55, 0.78)
+		box.set_corner_radius_all(18)
+		box.set_content_margin_all(8)
+		button.add_theme_stylebox_override(state, box)
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		button.add_theme_color_override(state, Color.WHITE)
+	button.pressed.connect(_on_surprise)
 	pets_button.get_parent().add_child(button)
+	var pulse := button.create_tween().set_loops()
+	button.pivot_offset = button.custom_minimum_size / 2.0
+	pulse.tween_property(button, "scale", Vector2(1.06, 1.06), 0.7).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(button, "scale", Vector2.ONE, 0.7).set_trans(Tween.TRANS_SINE)
+
+func _on_surprise() -> void:
+	var id := _next_surprise()
+	Sfx.chime(self)
+	_show_room(id)
+	var at := get_viewport_rect().size / 2.0 + Vector2(-140, -120)
+	Confetti.burst(self, at + Vector2(140, 120), 16)
+	Feedback.pop(self, "🎲 Surprise! %s" % SURPRISE_ROOMS[id], at)
+
+func _next_surprise() -> String:
+	if surprise_deck.is_empty():
+		surprise_deck = SURPRISE_ROOMS.keys()
+		surprise_deck.shuffle()
+		# Never open the room you are already in as the first pick.
+		if surprise_deck.back() == current_room_id:
+			surprise_deck.reverse()
+	return String(surprise_deck.pop_back())
 
 # Back to the title screen, whose slot picker lets another kid take over.
 func _switch_player() -> void:
@@ -130,19 +273,6 @@ func _on_sticker_earned(_id: String) -> void:
 	Sfx.chime(self)
 	if room_petal and is_instance_valid(room_petal):
 		Confetti.burst(current_room, room_petal.global_position + room_petal.size / 2.0, 14)
-
-func _show_daily_reward() -> void:
-	var daily := PetalState.claim_daily_reward()
-	if daily.is_empty():
-		return
-	var streak: int = daily["streak"]
-	var text := "🎁 Daily gift: +%d coins!" % daily["coins"]
-	if streak > 1:
-		text += "\n🔥 %d days in a row!" % streak
-	Sfx.fanfare(self)
-	var centre := get_viewport_rect().size / 2.0
-	Confetti.burst(self, centre, 30)
-	Feedback.pop(self, text, centre + Vector2(-120, -80))
 
 func _on_milestone_reached(total: int) -> void:
 	Sfx.fanfare(self)
