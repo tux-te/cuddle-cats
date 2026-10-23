@@ -1134,6 +1134,7 @@ const STICKERS := {
 	"swim": {"emoji": "🏊", "label": "Splash Time"},
 	"spa": {"emoji": "💆", "label": "Spa Day"},
 	"critters": {"emoji": "🦋", "label": "Bug Buddy"},
+	"poolparty": {"emoji": "🛟", "label": "Pool Party"},
 	"vet": {"emoji": "🩺", "label": "Brave at the Vet"},
 	"week": {"emoji": "📅", "label": "Whole Week"},
 	"cathouse": {"emoji": "🏡", "label": "Dream House"},
@@ -1646,6 +1647,23 @@ func critter_buddy() -> void:
 	happiness = minf(MAX_STAT, happiness + 10.0)
 	stats_changed.emit()
 	award_sticker("critters")
+	add_coins(4)
+
+# The Swim Pool's extras (room_swim.gd).
+func splash() -> void:
+	happiness = minf(MAX_STAT, happiness + 2.0)
+	cleanliness = maxf(0.0, cleanliness - 1.0)
+	stats_changed.emit()
+
+func pop_pool_toy() -> void:
+	happiness = minf(MAX_STAT, happiness + 3.0)
+	stats_changed.emit()
+	add_coins(1)
+
+func pool_party() -> void:
+	happiness = minf(MAX_STAT, happiness + 10.0)
+	stats_changed.emit()
+	award_sticker("poolparty")
 	add_coins(4)
 
 func obstacle_course() -> void:
