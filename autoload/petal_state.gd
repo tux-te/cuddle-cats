@@ -1133,6 +1133,7 @@ const STICKERS := {
 	"bell": {"emoji": "🔔", "label": "Jingle Bells"},
 	"swim": {"emoji": "🏊", "label": "Splash Time"},
 	"spa": {"emoji": "💆", "label": "Spa Day"},
+	"vet": {"emoji": "🩺", "label": "Brave at the Vet"},
 	"week": {"emoji": "📅", "label": "Whole Week"},
 	"cathouse": {"emoji": "🏡", "label": "Dream House"},
 	"treat": {"emoji": "💝", "label": "Favourite Treat"},
@@ -1717,6 +1718,20 @@ func spa_day_complete() -> void:
 	stats_changed.emit()
 	award_sticker("spa")
 	add_coins(6)
+
+# The Vet (room_vet.gd). Each step of the check-up is a small treat; finishing
+# all five gives the big prize and a sticker.
+func vet_step() -> void:
+	happiness = minf(MAX_STAT, happiness + 3.0)
+	stats_changed.emit()
+	add_coins(1)
+
+func vet_checkup_complete() -> void:
+	happiness = minf(MAX_STAT, happiness + 15.0)
+	energy = minf(MAX_STAT, energy + 5.0)
+	stats_changed.emit()
+	award_sticker("vet")
+	add_coins(8)
 
 # The Cat House (room_cathouse.gd). Every pet secretly wants one choice in each
 # category; the survey uncovers them and the design is judged against them.

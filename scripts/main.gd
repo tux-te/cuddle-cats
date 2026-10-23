@@ -17,6 +17,7 @@ const ROOMS := {
 	"garden": preload("res://scenes/rooms/garden.tscn"),
 	"fishing": preload("res://scenes/rooms/fishing_pond.tscn"),
 	"spa": preload("res://scenes/rooms/spa.tscn"),
+	"vet": preload("res://scenes/rooms/vet.tscn"),
 	"swimpool": preload("res://scenes/rooms/swim_pool.tscn"),
 	"photo": preload("res://scenes/rooms/photo_booth.tscn"),
 	"photobook": preload("res://scenes/rooms/photo_book.tscn"),
@@ -86,6 +87,7 @@ func _ready() -> void:
 	%GroomingButton.pressed.connect(_show_room.bind("grooming"))
 	%ObstacleButton.pressed.connect(_show_room.bind("obstacle"))
 	%GardenButton.pressed.connect(_show_room.bind("garden"))
+	%VetButton.pressed.connect(_show_room.bind("vet"))
 	%PhotoButton.pressed.connect(_show_room.bind("photo"))
 	%PartyButton.pressed.connect(_show_room.bind("party"))
 	%WeekButton.pressed.connect(_show_room.bind("week"))
@@ -216,7 +218,7 @@ func _add_header_button(label: String, action: Callable) -> void:
 const SURPRISE_ROOMS := {
 	"living": "🛋️ Living Room", "dressup": "👑 Dress-Up", "grooming": "🧴 Grooming",
 	"bath": "🛁 Bath", "obstacle": "🏃 Course", "garden": "🌷 Garden",
-	"fishing": "🎣 Fishing Pond", "spa": "💆 Spa", "swimpool": "🏊 Pool",
+	"fishing": "🎣 Fishing Pond", "spa": "💆 Spa", "vet": "🩺 Vet", "swimpool": "🏊 Pool",
 	"photo": "📸 Photo Booth", "party": "🎉 Party", "cathouse": "🏠 Cat House",
 }
 # Shuffled like a deck of cards so every room turns up before any repeats.
